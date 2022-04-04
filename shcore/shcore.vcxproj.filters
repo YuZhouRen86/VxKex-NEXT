@@ -18,5 +18,13 @@
     <ClCompile Include="shcore.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="exports.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shcore.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
