@@ -89,6 +89,9 @@
       <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shlwapi.lib;KexComm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -105,6 +108,9 @@
       <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shlwapi.lib;KexComm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -125,6 +131,9 @@
       <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shlwapi.lib;KexComm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -145,9 +154,15 @@
       <AdditionalLibraryDirectories>$(TargetDir)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;shlwapi.lib;KexComm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="KexCfg.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="KexCfg.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
