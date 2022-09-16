@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="File.c" />
+    <ClCompile Include="KexData.c" />
     <ClCompile Include="Memory.c" />
     <ClCompile Include="Msgbox.c" />
     <ClCompile Include="Registry.c" />
@@ -93,7 +94,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>psapi.lib;ntdll_x86.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -117,7 +118,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>psapi.lib;ntdll_x64.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -149,7 +150,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>psapi.lib;ntdll_x86.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -181,7 +182,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>psapi.lib;ntdll_x64.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
