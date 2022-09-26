@@ -24,7 +24,9 @@
     <ClCompile Include="Memory.c" />
     <ClCompile Include="Msgbox.c" />
     <ClCompile Include="Registry.c" />
+    <ClCompile Include="String.c" />
     <ClCompile Include="System.c" />
+    <ClCompile Include="Window.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\KexComm.h" />

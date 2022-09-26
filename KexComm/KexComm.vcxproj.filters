@@ -33,6 +33,12 @@
     <ClCompile Include="KexData.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Window.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="String.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\KexComm.h">
