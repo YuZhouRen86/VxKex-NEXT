@@ -8,7 +8,7 @@ To download and install, see the [releases page](https://github.com/YuZhouRen86/
 如需下载和安装，请参阅[版本页面](https://github.com/YuZhouRen86/VxKex-NEXT/releases)。
 
 After installation, usage is easy. Here are the ways to enable VxKex NEXT:
-1. Just right click on a program (.exe or .msi), open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program. For shortcuts, select "Shortcut" tab in the Properties dialog, click "Open File Location" button, and then perform the actions above.
+1. Just right click on a program (.exe or .msi), open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program. For shortcuts, select "Shortcut" tab in the Properties dialog, click "Open file location" button, and then perform the actions above.
 2. Find "VxKex NEXT Global Settings" from start menu and open it, click "Add" button, select a program (.exe or .msi), click "Open" button, and try to run the program.
 
 安装后，使用很简单。以下是启用 VxKex NEXT 的方法：
