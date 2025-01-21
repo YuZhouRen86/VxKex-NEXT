@@ -119,3 +119,11 @@ Specifically, the "VerifierDlls" value is set to point to a VxKex NEXT DLL. This
 
 API extension is accomplished by editing the program's DLL import table so that instead of importing from Windows 8/8.1/10/11 DLLs, it imports VxKex NEXT DLLs instead. These VxKex NEXT DLLs contain implementations of Windows API functions which were introduced in newer versions of Windows.  
 API 扩展是通过编辑程序的动态链接库导入表来实现的，这样程序就不会从 Windows 8/8.1/10/11 动态链接库中导入，而是导入 VxKex NEXT 动态链接库。这些 VxKex NEXT 动态链接库包含较新版本 Windows 中引入的 Windows API 函数的实现。
+
+Donations  捐赠
+=========
+
+If you would like to support development, consider making a donation.  
+如果您想支持开发，请考虑捐款。
+- Alipay 支付宝 / WeChat Pay 微信支付
+![Scan the QR codes and donate](/donation.png)
