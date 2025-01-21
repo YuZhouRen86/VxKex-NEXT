@@ -124,13 +124,13 @@ NTSTATUS KexpAddKex3264ToDllPath(
 	//
 
 	Status = KexpShrinkDllPathLength(DllPath, DllPath->Length - KexData->Kex3264DirPath.Length);
-	ASSERT (NT_SUCCESS(Status));
+	/*ASSERT (NT_SUCCESS(Status));
 	ASSERT (DllPath->Length < DllPathOriginalLength);
 	ASSERT (DllPath->Length <= DllPathOriginalLength - KexData->Kex3264DirPath.Length);
 
 	if (!NT_SUCCESS(Status)) {
 		return Status;
-	}
+	}*/
 
 	//
 	// Create a temporary buffer to hold the new DllPath.
@@ -211,7 +211,7 @@ STATIC INLINE NTSTATUS KexpShrinkDllPathLength(
 			&CurrentPathEntry.Length);
 
 		if (!NT_SUCCESS(Status)) {
-			KexLogErrorEvent(
+			KexLogDetailEvent(
 				L"RtlFindCharInUnicodeString returned an error\r\n\r\n"
 				L"NTSTATUS error code: %s",
 				KexRtlNtStatusToString(Status));

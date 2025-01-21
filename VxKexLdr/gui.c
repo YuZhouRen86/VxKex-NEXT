@@ -139,10 +139,12 @@ INT_PTR CALLBACK VklDialogProc(
 			RtlZeroMemory(&OpenFileInfo, sizeof(OpenFileInfo));
 			OpenFileInfo.lStructSize	= sizeof(OpenFileInfo);
 			OpenFileInfo.hwndOwner		= Window;
-			OpenFileInfo.lpstrFilter	= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0All Files (*.*)\0*.*\0";
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrFilter	= L"程序（*.exe、*.msi）\0*.exe;*.msi\0所有文件（*.*）\0*.*\0";
+			else OpenFileInfo.lpstrFilter	= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0All Files (*.*)\0*.*\0";
 			OpenFileInfo.lpstrFile		= FilePath;
 			OpenFileInfo.nMaxFile		= ARRAYSIZE(FilePath);
-			OpenFileInfo.lpstrTitle		= L"Select Program";
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrTitle		= L"选择程序";
+			else OpenFileInfo.lpstrTitle		= L"Select Program";
 			OpenFileInfo.Flags			= OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 			OpenFileInfo.lpstrDefExt	= L"exe";
 
@@ -170,7 +172,7 @@ INT_PTR CALLBACK VklDialogProc(
 				GetWindowRect(Window, &WindowRect);
 				WindowWidth = WindowRect.right - WindowRect.left;
 				CollapsedWindowHeight = WindowRect.bottom - WindowRect.top;
-				ExpandedWindowHeight = CollapsedWindowHeight + DpiScaleY(95);
+				ExpandedWindowHeight = CollapsedWindowHeight + DpiScaleY(125);
 			}
 
 			//
@@ -191,7 +193,8 @@ INT_PTR CALLBACK VklDialogProc(
 					SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOREDRAW |
 					SWP_NOSENDCHANGING | SWP_NOZORDER);
 
-				SetDlgItemText(Window, IDC_MOREOPTIONS, L"▼ More &options");
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▼ 更多选项(&O)");
+				else SetDlgItemText(Window, IDC_MOREOPTIONS, L"▼ More &options");
 			} else {
 				//
 				// The extra options are currently not displayed and we need
@@ -205,8 +208,9 @@ INT_PTR CALLBACK VklDialogProc(
 					WindowWidth, ExpandedWindowHeight,
 					SWP_NOACTIVATE | SWP_NOMOVE |
 					SWP_NOSENDCHANGING | SWP_NOZORDER);
-
-				SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ Hide &options");
+				
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ 隐藏选项(&O)");
+				else SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ Hide &options");
 			}
 
 			MoreOptionsDisplayed = !MoreOptionsDisplayed;

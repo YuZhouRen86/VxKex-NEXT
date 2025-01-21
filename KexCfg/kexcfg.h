@@ -7,6 +7,9 @@
 // Use KexCfgMessageBox instead
 #undef MessageBox
 
+EXTERN LANGID CURRENTLANG;
+EXTERN PWSTR FRIENDLYAPPNAME;
+
 //
 // cmdline.c
 //

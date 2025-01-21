@@ -35,6 +35,9 @@
     <ClCompile Include="iid.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dx11.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="dx12stub.c">
       <Filter>Source Files</Filter>
     </ClCompile>

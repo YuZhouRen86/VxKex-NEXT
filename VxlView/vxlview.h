@@ -3,9 +3,10 @@
 #include <KexComm.h>
 #include <KexDll.h>
 
-#define FRIENDLYAPPNAME L"Log Viewer"
-
 #define UNCONST(Type) *(Type*)&
+
+EXTERN LANGID CURRENTLANG;
+EXTERN PWSTR FRIENDLYAPPNAME;
 
 typedef enum {
 	ColumnSeverity,

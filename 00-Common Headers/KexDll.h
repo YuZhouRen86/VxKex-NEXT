@@ -671,7 +671,7 @@ KEXAPI NTSTATUS NTAPI KexRewriteDllPath(
 // kexhe.c
 //
 
-VOID KexMessageBox(
+ULONG KexMessageBox(
 	IN	ULONG	Flags,
 	IN	PCWSTR	Caption OPTIONAL,
 	IN	PCWSTR	Message OPTIONAL);

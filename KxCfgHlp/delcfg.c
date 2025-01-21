@@ -312,11 +312,14 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 					PCWSTR ExeBaseName;
 
 					ExeBaseName = PathFindFileName(ExeFullPath);
-
-					Status = LdrOpenImageFileOptionsKey(
-						NULL,
-						FALSE,
-						(PHANDLE) &IfeoKeyHandle);
+					
+					Status = RegOpenKeyExW (
+						HKEY_LOCAL_MACHINE,
+						L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+						L"Image File Execution Options",
+						0,
+						KEY_READ | KEY_WRITE,
+						&IfeoKeyHandle);
 
 					ASSERT (NT_SUCCESS(Status));
 
@@ -417,11 +420,14 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgDeleteLegacyConfiguration(
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-
-	Status = LdrOpenImageFileOptionsKey(
-		NULL,
-		FALSE,
-		(PHANDLE) &IfeoKey);
+	
+	Status = RegOpenKeyExW (
+		HKEY_LOCAL_MACHINE,
+		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+		L"Image File Execution Options",
+		0,
+		KEY_READ | KEY_WRITE,
+		&IfeoKey);
 
 	if (!NT_SUCCESS(Status)) {
 		SetLastError(RtlNtStatusToDosError(Status));

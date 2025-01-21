@@ -183,6 +183,7 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 	OUT	PULONG				DpiY)
 {
 	HDC DeviceContext;
+	BOOL ISPROCESSDPIAWARE;
 
 	if (DpiType >= MDT_MAXIMUM_DPI) {
 		return E_INVALIDARG;
@@ -192,7 +193,13 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 		return E_INVALIDARG;
 	}
 
-	if (!IsProcessDPIAware()) {
+	if (!Monitor) {
+		return E_INVALIDARG;
+	}
+	
+	ISPROCESSDPIAWARE = IsProcessDPIAware();
+
+	if ((MDT_EFFECTIVE_DPI && !ISPROCESSDPIAWARE) || (DpiType == MDT_ANGULAR_DPI && ISPROCESSDPIAWARE)) {
 		*DpiX = USER_DEFAULT_SCREEN_DPI;
 		*DpiY = USER_DEFAULT_SCREEN_DPI;
 		return S_OK;
@@ -205,23 +212,56 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 		return S_OK;
 	}
 
-	*DpiX = GetDeviceCaps(DeviceContext, LOGPIXELSX);
-	*DpiY = GetDeviceCaps(DeviceContext, LOGPIXELSY);
-
-	if (DpiType == MDT_EFFECTIVE_DPI) {
-		DEVICE_SCALE_FACTOR ScaleFactor;
-
-		// We have to multiply the DPI values by the scaling factor.
-		GetScaleFactorForMonitor(Monitor, &ScaleFactor);
-
-		*DpiX *= ScaleFactor;
-		*DpiY *= ScaleFactor;
-		*DpiX /= 100;
-		*DpiY /= 100;
+	if (DpiType == MDT_ANGULAR_DPI && !ISPROCESSDPIAWARE) {
+		*DpiX = GetSystemMetrics(SM_CXSCREEN) * 96 / GetDeviceCaps(DeviceContext, DESKTOPHORZRES);
+		*DpiY = GetSystemMetrics(SM_CYSCREEN) * 96 / GetDeviceCaps(DeviceContext, DESKTOPVERTRES);
+	} else {
+		*DpiX = GetDeviceCaps(DeviceContext, LOGPIXELSX);
+		*DpiY = GetDeviceCaps(DeviceContext, LOGPIXELSY);
 	}
+
+	unless (KexData->IfeoParameters.DisableAppSpecific){
+		if (AshExeBaseNameIs(L"ABDownloadManager.exe")
+			|| AshExeBaseNameIs(L"jetbrains_client64.exe")
+			|| AshExeBaseNameIs(L"jetbrains-toolbox.exe")
+			|| AshExeBaseNameIs(L"Fleet.exe")
+			|| AshExeBaseNameIs(L"aqua64.exe")
+			|| AshExeBaseNameIs(L"clion64.exe")
+			|| AshExeBaseNameIs(L"datagrip64.exe")
+			|| AshExeBaseNameIs(L"dataspell64.exe")
+			|| AshExeBaseNameIs(L"goland64.exe")
+			|| AshExeBaseNameIs(L"idea64.exe")
+			|| AshExeBaseNameIs(L"phpstorm64.exe")
+			|| AshExeBaseNameIs(L"pycharm64.exe")
+			|| AshExeBaseNameIs(L"rider64.exe")
+			|| AshExeBaseNameIs(L"rubymine64.exe")
+			|| AshExeBaseNameIs(L"rustrover64.exe")
+			|| AshExeBaseNameIs(L"webstorm64.exe")
+			|| AshExeBaseNameIs(L"writerside64.exe")) {
+			*DpiX = USER_DEFAULT_SCREEN_DPI;
+			*DpiY = USER_DEFAULT_SCREEN_DPI;
+		};
+	};
 
 	ReleaseDC(NULL, DeviceContext);
 	return S_OK;
+}
+
+KXUSERAPI DEVICE_SCALE_FACTOR WINAPI GetScaleFactorForDevice(
+	IN	DISPLAY_DEVICE_TYPE		deviceType)
+{
+	HDC DeviceContext;
+	ULONG LogPixelsX;
+
+	DeviceContext = GetDC(NULL);
+	if (!DeviceContext) {
+		return SCALE_100_PERCENT;
+	}
+
+	LogPixelsX = IsProcessDPIAware() ? GetDeviceCaps(DeviceContext, LOGPIXELSX) : GetDeviceCaps(DeviceContext, DESKTOPHORZRES) * 96 / GetSystemMetrics(SM_CXSCREEN);
+
+	ReleaseDC(NULL, DeviceContext);
+	return (DEVICE_SCALE_FACTOR) (LogPixelsX * 100 / 96);
 }
 
 KXUSERAPI HRESULT WINAPI GetScaleFactorForMonitor(
@@ -237,10 +277,10 @@ KXUSERAPI HRESULT WINAPI GetScaleFactorForMonitor(
 		return S_OK;
 	}
 
-	LogPixelsX = GetDeviceCaps(DeviceContext, LOGPIXELSX);
-	ReleaseDC(NULL, DeviceContext);
+	LogPixelsX = IsProcessDPIAware() ? GetDeviceCaps(DeviceContext, LOGPIXELSX) : GetDeviceCaps(DeviceContext, DESKTOPHORZRES) * 96 / GetSystemMetrics(SM_CXSCREEN);
 
-	*ScaleFactor = (DEVICE_SCALE_FACTOR) (9600 / LogPixelsX);
+	ReleaseDC(NULL, DeviceContext);
+	*ScaleFactor = (DEVICE_SCALE_FACTOR) (LogPixelsX * 100 / 96);
 	return S_OK;
 }
 
@@ -251,12 +291,12 @@ KXUSERAPI UINT WINAPI GetDpiForSystem(
 	ULONG LogPixelsX;
 
 	if (!IsProcessDPIAware()) {
-		return 96;
+		return USER_DEFAULT_SCREEN_DPI;
 	}
 
 	DeviceContext = GetDC(NULL);
 	if (!DeviceContext) {
-		return 96;
+		return USER_DEFAULT_SCREEN_DPI;
 	}
 
 	LogPixelsX = GetDeviceCaps(DeviceContext, LOGPIXELSX);
@@ -268,11 +308,7 @@ KXUSERAPI UINT WINAPI GetDpiForSystem(
 KXUSERAPI UINT WINAPI GetDpiForWindow(
 	IN	HWND	Window)
 {
-	if (!IsWindow(Window)) {
-		return 0;
-	}
-
-	return GetDpiForSystem();
+	return IsWindow(Window) ? GetDpiForSystem() : 0;
 }
 
 KXUSERAPI BOOL WINAPI AdjustWindowRectExForDpi(
@@ -282,10 +318,14 @@ KXUSERAPI BOOL WINAPI AdjustWindowRectExForDpi(
 	IN		ULONG	WindowExStyle,
 	IN		ULONG	Dpi)
 {
-	// I'm not sure how to implement this function properly.
-	// If it turns out to be important, I'll have to do some testing
-	// on a Win10 VM.
-
+	Rect->left *= Dpi;
+	Rect->left /= 96;
+	Rect->top *= Dpi;
+	Rect->top /= 96;
+	Rect->right *= Dpi;
+	Rect->right /= 96;
+	Rect->bottom *= Dpi;
+	Rect->bottom /= 96;
 	return AdjustWindowRectEx(
 		Rect,
 		WindowStyle,

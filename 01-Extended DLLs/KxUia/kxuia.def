@@ -1,0 +1,4 @@
+LIBRARY KxUia
+EXPORTS
+	;; uiautomation.c
+	UiaRaiseNotificationEvent

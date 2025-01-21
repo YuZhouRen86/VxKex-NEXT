@@ -126,8 +126,8 @@ BailOut:
 
 	return Status;
 } PROTECTED_FUNCTION_END
-
-VOID KexMessageBox(
+	
+ULONG KexMessageBox(
 	IN	ULONG	Flags,
 	IN	PCWSTR	Caption OPTIONAL,
 	IN	PCWSTR	Message OPTIONAL)
@@ -152,7 +152,7 @@ VOID KexMessageBox(
 	Parameters[1] = (ULONG_PTR) &CaptionUS;
 	Parameters[2] = Flags;						// MB_* from kexdllp.h
 	Parameters[3] = INFINITE;					// Timeout in milliseconds
-
+	
 	KexNtRaiseHardError(
 		STATUS_SERVICE_NOTIFICATION | HARDERROR_OVERRIDE_ERRORMODE,
 		ARRAYSIZE(Parameters),
@@ -160,6 +160,7 @@ VOID KexMessageBox(
 		Parameters,
 		0,
 		&Response);
+	return Response;
 }
 
 VOID KexMessageBoxF(

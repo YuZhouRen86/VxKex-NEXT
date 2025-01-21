@@ -3774,6 +3774,10 @@ NTSYSCALLAPI NTSTATUS NTAPI NtAssignProcessToJobObject(
 	IN		HANDLE		JobHandle,
 	IN		HANDLE		ProcessHandle);
 
+NTSYSCALLAPI NTSTATUS NTAPI NtQueryDefaultLocale(
+	IN		BOOLEAN		UserProfile,
+    OUT		PLCID		DefaultUILanguageId);
+
 #pragma endregion
 
 #pragma region Nt* function declarations (not in Windows 7)
@@ -4428,6 +4432,9 @@ NTSYSAPI BOOLEAN NTAPI RtlAddFunctionTable(
 	IN		PRUNTIME_FUNCTION		FunctionTable,
 	IN		ULONG					EntryCount,
 	IN		ULONGLONG				BaseAddress);
+
+NTSYSAPI BOOLEAN NTAPI RtlDeleteFunctionTable(
+	IN		PRUNTIME_FUNCTION		FunctionTable);
 #endif
 
 #pragma endregion

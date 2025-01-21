@@ -11,7 +11,7 @@
 // If you change any of the column stuff, also make sure to change
 // the LOGENTRYCOLUMNS enumeration in VxlView.h!
 //
-STATIC PWSTR ColumnNames[] = {
+STATIC PWSTR ColumnNames_ENG[] = {
 	L"Severity",
 	L"Date/Time",
 	L"Component",
@@ -19,6 +19,16 @@ STATIC PWSTR ColumnNames[] = {
 	L"Line",
 	L"Function",
 	L"Message"
+};
+
+STATIC PWSTR ColumnNames_CHS[] = {
+	L"严重程度",
+	L"日期/时间",
+	L"组件",
+	L"文件",
+	L"行",
+	L"函数",
+	L"消息"
 };
 
 STATIC CONST USHORT ColumnDefaultWidths[] = {
@@ -43,6 +53,7 @@ VOID InitializeListView(
 	HMODULE ImageRes;
 	ULONG SmallIconWidth;
 	ULONG SmallIconHeight;
+	PPWSTR ColumnNames;
 
 	UNCONST (HWND) ListViewWindow = GetDlgItem(MainWindow, IDC_LISTVIEW);
 
@@ -61,6 +72,8 @@ VOID InitializeListView(
 	// Insert each column into the list-view.
 	//
 	ColumnInformation.mask = LVCF_FMT | LVCF_ORDER | LVCF_TEXT | LVCF_WIDTH | LVCF_MINWIDTH;
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ColumnNames = ColumnNames_CHS;
+	else ColumnNames = ColumnNames_ENG;
 	for (Index = 0; Index <= ColumnMaxValue - 1; Index++) {
 		ColumnInformation.fmt = (Index == ColumnSourceLine) ? LVCFMT_RIGHT : LVCFMT_LEFT;
 		ColumnInformation.iOrder = Index;
@@ -250,7 +263,8 @@ VOID HandleListViewContextMenu(
 		EmptyClipboard();
 		SetClipboardData(CF_UNICODETEXT, CopiedText);
 		CloseClipboard();
-		SetWindowText(StatusBarWindow, L"Text copied to clipboard.");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"文本已复制到剪贴板。");
+		else SetWindowText(StatusBarWindow, L"Text copied to clipboard.");
 	}
 }
 

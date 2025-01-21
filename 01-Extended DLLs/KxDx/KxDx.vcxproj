@@ -223,6 +223,7 @@
   <ItemGroup>
     <ClCompile Include="dcmpstub.c" />
     <ClCompile Include="dllmain.c" />
+    <ClCompile Include="dx11.c" />
     <ClCompile Include="dx12stub.c" />
     <ClCompile Include="factory.c" />
     <ClCompile Include="forwards.c" />

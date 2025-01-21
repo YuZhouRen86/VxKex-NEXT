@@ -9,7 +9,7 @@ HRESULT GetTargetFromLnkfile(
 	IN OUT	PWSTR	FileName)
 {
 	HRESULT Result;
-	WCHAR LnkTarget[MAX_PATH];
+	WCHAR LnkTarget[MAX_PATH] = {0};
 	IShellLink *ShellLink;
 	IPersistFile *PersistFile;
 

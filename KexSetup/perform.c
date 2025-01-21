@@ -1,11 +1,63 @@
-#define NEED_VERSION_DEFS
+﻿#define NEED_VERSION_DEFS
 #include "kexsetup.h"
 #include <KseGuid.h>
 #include <taskschd.h>
+#include <ShlObj.h>
 
 HANDLE KexSetupTransactionHandle = NULL;
 BOOLEAN KexSetupOkToCommitTransaction = FALSE;
 ULONG InstalledSize;
+
+VOID CreateLinkToStartMenuForAllUsers(LPCWSTR LinkName, LPCWSTR PersistFilePath, LPCWSTR Description)  
+{
+	IShellLink *pLink;
+	HRESULT Result;
+	Result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if (FAILED(Result)) return;
+	Result = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLink, (PPVOID) &pLink);
+	if (SUCCEEDED(Result)) {
+		IPersistFile *pPersistFile;
+		pLink->lpVtbl->SetPath(pLink, PersistFilePath);
+		pLink->lpVtbl->SetDescription(pLink, Description);
+		Result = pLink->lpVtbl->QueryInterface(pLink, &IID_IPersistFile, (PPVOID) &pPersistFile);
+		if (SUCCEEDED(Result)) {
+			WCHAR LinkPath[MAX_PATH];
+			SHGetSpecialFolderPath(NULL, LinkPath, CSIDL_COMMON_PROGRAMS, 0);
+			StringCchCat(LinkPath, MAX_PATH, L"\\");
+			StringCchCat(LinkPath, MAX_PATH, LinkName);
+			StringCchCat(LinkPath, MAX_PATH, L".LNK");
+			pPersistFile->lpVtbl->Save(pPersistFile, LinkPath, FALSE);
+			pPersistFile->lpVtbl->Release(pPersistFile);
+		}
+		pLink->lpVtbl->Release(pLink);
+	}
+	CoUninitialize();
+}
+
+VOID DeleteLinkFromStartMenuForAllUsers(LPCWSTR LinkName)
+{
+	WCHAR LinkPath[MAX_PATH];
+	SHGetSpecialFolderPath(NULL, LinkPath, CSIDL_COMMON_PROGRAMS, 0);
+	StringCchCat(LinkPath, MAX_PATH, L"\\");
+	StringCchCat(LinkPath, MAX_PATH, LinkName);
+	StringCchCat(LinkPath, MAX_PATH, L".LNK");
+	DeleteFile(LinkPath);
+}
+
+VOID KexSetupCreateLinkToStartMenu(
+	VOID)
+{
+	WCHAR KexCfgExePath[MAX_PATH] = {0};
+	StringCchCat(KexCfgExePath, MAX_PATH, KexDir);
+	StringCchCat(KexCfgExePath, MAX_PATH, L"\\KexCfg.exe");
+	CreateLinkToStartMenuForAllUsers(L"VxKex NEXT Global Settings", KexCfgExePath, NULL);
+}
+
+VOID KexSetupDeleteLinkFromStartMenu(
+	VOID)
+{
+	DeleteLinkFromStartMenuForAllUsers(L"VxKex NEXT Global Settings");
+}
 
 VOID KexSetupWriteUninstallEntry(
 	VOID)
@@ -27,9 +79,9 @@ VOID KexSetupWriteUninstallEntry(
 		GetDateFormat(LOCALE_INVARIANT, 0, NULL, L"yyyyMMdd", FormattedDate, ARRAYSIZE(FormattedDate));
 		StringCchPrintf(UninstallString, ARRAYSIZE(UninstallString), L"%s\\KexSetup.exe /UNINSTALL", KexDir);
 
-		KexSetupRegWriteString(KeyHandle, L"DisplayName",		L"VxKex API Extensions for Windows� 7");
+		KexSetupRegWriteString(KeyHandle, L"DisplayName",		L"VxKex NEXT API Extensions for Windows® 7");
 		KexSetupRegWriteString(KeyHandle, L"DisplayVersion",	_L(KEX_VERSION_STR));
-		KexSetupRegWriteString(KeyHandle, L"Publisher",			L"vxiiduu");
+		KexSetupRegWriteString(KeyHandle, L"Publisher",			L"YuZhouRen");
 		KexSetupRegWriteString(KeyHandle, L"InstallDate",		FormattedDate);
 		KexSetupRegWriteString(KeyHandle, L"InstallLocation",	KexDir);
 		KexSetupRegWriteString(KeyHandle, L"UninstallString",	UninstallString);
@@ -125,15 +177,15 @@ VOID KexSetupAddKexCfgScheduledTask(
 			L"<?xml version='1.0' encoding='UTF-16'?>\r\n"
 			L"<Task version='1.3' xmlns='http://schemas.microsoft.com/windows/2004/02/mit/task'>\r\n"
 			L"  <RegistrationInfo>\r\n"
-			L"    <Author>vxiiduu</Author>\r\n"
-			L"    <Source>VxKex</Source>\r\n"
+			L"    <Author>YuZhouRen</Author>\r\n"
+			L"    <Source>VxKex NEXT</Source>\r\n"
 			L"    <Description>\r\n"
-			L"This scheduled task is run on-demand by VxKex components and utilities (for example, "
-			L"the shell extension). It allows VxKex to be enabled, disabled, or configured for a program "
+			L"This scheduled task is run on-demand by VxKex NEXT components and utilities (for example, "
+			L"the shell extension). It allows VxKex NEXT to be enabled, disabled, or configured for a program "
 			L"without requiring you to interact with a User Account Control prompt. "
 			L"You may safely disable or remove this scheduled task if you want. However, keep in mind that "
 			L"if you do this, and you have User Account Control enabled, you may get a consent prompt every "
-			L"time you configure VxKex for a program."
+			L"time you configure VxKex NEXT for a program."
 			L"    </Description>\r\n"
 			L"  </RegistrationInfo>\r\n"
 			L"  <Triggers />\r\n"
@@ -348,7 +400,7 @@ VOID KexSetupInstallFiles(
 	// This includes everything in Core\, as well as the current program
 	// (kexsetup.exe).
 	//
-
+	
 	KexSetupMoveFileSpecToDirectory(L".\\KexSetup.*", KexDir);
 	KexSetupMoveFileSpecToDirectory(L".\\Core\\*", KexDir);
 
@@ -371,7 +423,7 @@ VOID KexSetupInstallFiles(
 			KexSetupDeleteFile(TargetPath);
 		}
 	}
-
+	
 	GetWindowsDirectory(TargetPath, ARRAYSIZE(TargetPath));
 	PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), L"system32"); // On 64-bit OS, this actually goes to syswow64
 	KexSetupMoveFileSpecToDirectory(L".\\Core32\\KexDll.*", TargetPath);
@@ -440,10 +492,6 @@ VOID KexSetupInstallFiles(
 	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\dnsw8.dll", KexDir);
 	KexSetupDeleteFile(TargetPath);
 
-	// remove dcow8, which is no longer included
-	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\dcow8.dll", KexDir);
-	KexSetupDeleteFile(TargetPath);
-
 	// remove msvw10, which is no longer included
 	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\msvw10.dll", KexDir);
 	KexSetupDeleteFile(TargetPath);
@@ -461,10 +509,6 @@ VOID KexSetupInstallFiles(
 
 		// remove dnsw8
 		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\dnsw8.dll", KexDir);
-		KexSetupDeleteFile(TargetPath);
-
-		// remove dcow8
-		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\dcow8.dll", KexDir);
 		KexSetupDeleteFile(TargetPath);
 
 		// remove msvw10
@@ -504,7 +548,7 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 
 		return TRUE;
 	}
-
+	
 	ASSERT (!PathIsRelative(ExeFullPathOrBaseName));
 
 	if (PreserveConfig) {
@@ -607,11 +651,10 @@ VOID KexSetupUninstall(
 		
 		RtlSetCurrentTransaction(KexSetupTransactionHandle);
 	}
-
+	
 	//
 	// Delete the rest of KexDir and remove KexDll from system32 and syswow64.
 	//
-
 	KexSetupRemoveDirectoryRecursive(KexDir);
 
 	GetWindowsDirectory(PathBuffer, ARRAYSIZE(PathBuffer));
@@ -704,7 +747,7 @@ VOID KexSetupUninstall(
 	// If PreserveConfig is TRUE, disable VxKex for all programs.
 	// Otherwise, delete all VxKex program configuration.
 	//
-
+	
 	KxCfgEnumerateConfiguration(
 		KexSetupConfigurationEnumerationCallback,
 		NULL);
@@ -733,7 +776,7 @@ VOID KexSetupUninstall(
 	//
 	// Remove .vxl disk cleanup handler.
 	//
-
+	
 	Success = KxCfgRemoveDiskCleanupHandler(KexSetupTransactionHandle);
 	ASSERT (Success);
 
@@ -760,7 +803,7 @@ VOID KexSetupUninstall(
 	//
 	// Remove VxKex context menu entry
 	//
-
+	
 	Success = KxCfgConfigureShellContextMenuEntries(
 		FALSE,
 		FALSE,
@@ -780,6 +823,8 @@ VOID KexSetupUninstall(
 	//
 
 	KexSetupRemoveKexCfgScheduledTask();
+
+	KexSetupDeleteLinkFromStartMenu();
 }
 
 VOID KexSetupInstall(
@@ -790,6 +835,7 @@ VOID KexSetupInstall(
 	HKEY KeyHandle;
 	WCHAR TargetPath[MAX_PATH];
 	WCHAR UserLogDir[MAX_PATH];
+	WCHAR LogDir[MAX_PATH];
 
 	//
 	// Get the installed size (required when adding the uninstall entry)
@@ -829,7 +875,9 @@ VOID KexSetupInstall(
 	try {
 		KexSetupRegWriteI32(KeyHandle, L"InstalledVersion", InstallerVxKexVersion);
 		KexSetupRegWriteString(KeyHandle, L"KexDir", KexDir);
-		KexSetupRegWriteString(KeyHandle, L"LogDir", L"C:\\ProgramData\\VxKex\\Logs");
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, 0, (LPWSTR)LogDir);
+		wcscat_s(LogDir, MAX_PATH, L"\\VxKex\\Logs");
+		KexSetupRegWriteString(KeyHandle, L"LogDir", LogDir);
 	} finally {
 		RegCloseKey(KeyHandle);
 	}
@@ -1172,6 +1220,8 @@ VOID KexSetupInstall(
 	//
 
 	KexSetupAddKexCfgScheduledTask();
+
+	KexSetupCreateLinkToStartMenu();
 }
 
 VOID KexSetupUpgrade(
@@ -1236,6 +1286,8 @@ VOID KexSetupUpgrade(
 	//
 
 	KexSetupWriteUninstallEntry();
+	
+	KexSetupCreateLinkToStartMenu();
 }
 
 //

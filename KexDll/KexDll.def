@@ -43,6 +43,7 @@ EXPORTS
 	KexRtlPublishWnfStateData
 	KexRtlSubscribeWnfStateChangeNotification
 	KexRtlAddGrowableFunctionTable
+	KexRtlDeleteGrowableFunctionTable
 
 	KexRtlWaitOnAddress
 	KexRtlWakeAddressSingle

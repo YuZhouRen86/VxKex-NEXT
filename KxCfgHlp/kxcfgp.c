@@ -131,10 +131,14 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 	// Note: Since we are opening the base key handle, we do not need to,
 	// and in fact should not close it after we are done using it.
 	// See ntdll!RtlOpenImageFileOptionsKey for more information.
-	Status = LdrOpenImageFileOptionsKey(
-		NULL,
-		FALSE,
-		(PHANDLE) &IfeoBaseKey);
+	
+	Status = RegOpenKeyExW (
+		HKEY_LOCAL_MACHINE,
+		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+		L"Image File Execution Options",
+		0,
+		KEY_READ | KEY_WRITE,
+		&IfeoBaseKey);
 
 	ASSERT (NT_SUCCESS(Status));
 

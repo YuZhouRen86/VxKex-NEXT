@@ -132,7 +132,8 @@ NTSTATUS NTAPI ExportLogThreadProc(
 		//
 
 		if (CompletedPercentage != PreviousCompletedPercentage) {
-			SetWindowTextF(StatusBarWindow, L"Exporting log entries. Please wait... (%ld%%)", CompletedPercentage);
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowTextF(StatusBarWindow, L"正在导出日志条目。请稍候...（%ld%%）", CompletedPercentage);
+			else SetWindowTextF(StatusBarWindow, L"Exporting log entries. Please wait... (%ld%%)", CompletedPercentage);
 			PreviousCompletedPercentage = CompletedPercentage;
 		}
 	}
@@ -142,14 +143,16 @@ NTSTATUS NTAPI ExportLogThreadProc(
 Finished:
 	EnableWindow(MainWindow, TRUE);
 	SetClassLongPtr(MainWindow, GCLP_HCURSOR, (LONG_PTR) LoadCursor(NULL, IDC_ARROW));
-	SetWindowText(StatusBarWindow, L"Finished.");
 
-	if (NT_SUCCESS(Status)) {
-		InfoBoxF(L"Export complete.");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+		SetWindowText(StatusBarWindow, L"完成。");
+		if (NT_SUCCESS(Status)) InfoBoxF(L"导出完成。");
+		else ErrorBoxF(L"导出日志失败（%s）", KexRtlNtStatusToString(Status));
 	} else {
-		ErrorBoxF(L"Failed to export the log (%s)", KexRtlNtStatusToString(Status));
+		SetWindowText(StatusBarWindow, L"Finished.");
+		if (NT_SUCCESS(Status)) InfoBoxF(L"Export complete.");
+		else ErrorBoxF(L"Failed to export the log (%s)", KexRtlNtStatusToString(Status));
 	}
-
 	return Status;
 }
 

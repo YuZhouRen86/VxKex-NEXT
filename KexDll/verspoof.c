@@ -133,13 +133,13 @@ STATIC NTSTATUS NTAPI Ext_RtlGetVersion(
 		case WinVerSpoofWin10:
 			Version->dwMajorVersion		= 10;
 			Version->dwMinorVersion		= 0;
-			Version->dwBuildNumber		= 19044;
+			Version->dwBuildNumber		= 19045;
 			break;
 		case WinVerSpoofWin11:
 		default:
 			Version->dwMajorVersion		= 10;
 			Version->dwMinorVersion		= 0;
-			Version->dwBuildNumber		= 22000;
+			Version->dwBuildNumber		= 26100;
 			break;
 		}
 	}
@@ -264,13 +264,13 @@ VOID KexApplyVersionSpoof(
 	case WinVerSpoofWin10:
 		MajorVersion = 10;
 		MinorVersion = 0;
-		BuildNumber = 19044; // Win10 21H2
+		BuildNumber = 19045; // Win10 22H2
 		break;
 	case WinVerSpoofWin11:
 	default: // default case should always be at the highest win version
 		MajorVersion = 10;
 		MinorVersion = 0;
-		BuildNumber = 22000; // Win11 21H2
+		BuildNumber = 26100; // Win11 24H2
 		break;
 	}
 

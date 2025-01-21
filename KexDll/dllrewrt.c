@@ -23,6 +23,7 @@
 //     vxiiduu              11-Feb-2024  Refactor DLL rewrite lookup code.
 //     vxiiduu              13-Mar-2024  Move DLL redirects into a static table
 //                                       instead of reading them from registry.
+//     YuZhouRen            12-Jan-2025  Fix IE crash bug.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -68,6 +69,14 @@ NTSTATUS KexInitializeDllRewrite(
 {
 	NTSTATUS Status;
 	ULONG Index;
+	WCHAR IEPath[MAX_PATH] = L"X:\\Program Files\\Internet Explorer\\iexplore.exe";
+	WCHAR IEPath_x86[MAX_PATH] = L"X:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
+	BOOL IsIE;
+
+	IEPath[0] = KexData->WinDir.Buffer[0];
+	IEPath_x86[0] = KexData->WinDir.Buffer[0];
+	IsIE = StringEqualI(NtCurrentPeb()->ProcessParameters->ImagePathName.Buffer, IEPath) || StringEqualI(NtCurrentPeb()->ProcessParameters->ImagePathName.Buffer, IEPath_x86);
+	if (IsIE) KexLogInformationEvent(L"This is an IE process, kernel32 will not be redirected, or this process might crash.");
 
 	ASSERT (DllRewriteStringMapper == NULL);
 
@@ -95,14 +104,14 @@ NTSTATUS KexInitializeDllRewrite(
 		ASSERT (VALID_UNICODE_STRING(&DllRedirects[Index][0]));
 		ASSERT (VALID_UNICODE_STRING(&DllRedirects[Index][1]));
 
-		Status = KexAddDllRewriteEntry(
-			&DllRedirects[Index][0],
-			&DllRedirects[Index][1]);
+		unless (IsIE && DllRedirects[Index][0].Buffer == L"kernel32") {
+			Status = KexAddDllRewriteEntry(
+				&DllRedirects[Index][0],
+				&DllRedirects[Index][1]);
 
-		ASSERT (NT_SUCCESS(Status));
+			ASSERT (NT_SUCCESS(Status));
 
-		if (!NT_SUCCESS(Status)) {
-			return Status;
+			if (!NT_SUCCESS(Status)) return Status;
 		}
 	}
 

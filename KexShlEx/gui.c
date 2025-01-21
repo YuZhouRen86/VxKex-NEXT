@@ -117,24 +117,43 @@ INT_PTR CALLBACK DialogProc(
 		// Add tooltips to all the settings.
 		//
 
-		ToolTip(Window, IDUSEVXKEX,
-			L"Enable or disable the main VxKex compatibility layer.");
-		ToolTip(Window, IDSPOOFVERSIONCHECK,
-			L"Some applications check the Windows version and refuse to run if it is too low. "
-			L"This option can help these applications to run correctly.\r\n\r\n"
-			L"Generally, you should not use a higher Windows version than required to run the "
-			L"application, because this can degrade application compatibility.");
-		ToolTip(Window, IDSTRONGSPOOF,
-			L"Some applications check the Windows version using uncommon methods. This option "
-			L"can help trick them into working. Do not enable this setting unless you are having "
-			L"a problem with version detection.");
-		ToolTip(Window, IDDISABLEFORCHILD,
-			L"By default, all other programs that are started by this program run with VxKex "
-			L"enabled. This option disables that behavior.");
-		ToolTip(Window, IDDISABLEAPPSPECIFIC,
-			L"For some applications, VxKex may use application-specific workarounds or patches. "
-			L"This option disables that behavior. Using this option may degrade application "
-			L"compatibility.");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ToolTip(Window, IDUSEVXKEX,
+				L"启用或禁用主 VxKex NEXT 兼容层。");
+			ToolTip(Window, IDSPOOFVERSIONCHECK,
+				L"一些应用程序会检查 Windows 版本，如果版本过低，则拒绝运行。"
+				L"此选项可以帮助这些应用程序正常运行。\r\n\r\n"
+				L"通常，不应使用高于运行应用程序所需的 Windows 版本，因为这会降低应用程序的兼容性。");
+			ToolTip(Window, IDSTRONGSPOOF,
+				L"一些应用程序使用不常用的方法检查 Windows 版本。"
+				L"这个选项可以帮助诱使它们工作。"
+				L"除非您遇到版本检测方面的问题，否则请勿启用此设置。");
+			ToolTip(Window, IDDISABLEFORCHILD,
+				L"默认情况下，由此程序启动的所有其他程序都会启用 VxKex NEXT 运行。此选项禁用这一行为。");
+			ToolTip(Window, IDDISABLEAPPSPECIFIC,
+				L"对于某些应用程序，VxKex NEXT 可能会使用特定于应用程序的变通方法或修补程序。"
+				L"此选项禁用这一行为。使用此选项可能会降低应用程序的兼容性。");
+		} else {
+			ToolTip(Window, IDUSEVXKEX,
+				L"Enable or disable the main VxKex NEXT compatibility layer.");
+			ToolTip(Window, IDSPOOFVERSIONCHECK,
+				L"Some applications check the Windows version and refuse to run if it is too low. "
+				L"This option can help these applications to run correctly.\r\n\r\n"
+				L"Generally, you should not use a higher Windows version than required to run the "
+				L"application, because this can degrade application compatibility.");
+			ToolTip(Window, IDSTRONGSPOOF,
+				L"Some applications check the Windows version using uncommon methods. This option "
+				L"can help trick them into working. Do not enable this setting unless you are having "
+				L"a problem with version detection.");
+			ToolTip(Window, IDDISABLEFORCHILD,
+				L"By default, all other programs that are started by this program run with VxKex NEXT "
+				L"enabled. This option disables that behavior.");
+			ToolTip(Window, IDDISABLEAPPSPECIFIC,
+				L"For some applications, VxKex NEXT may use application-specific workarounds or patches. "
+				L"This option disables that behavior. Using this option may degrade application "
+				L"compatibility.");
+			
+		}
 		ToolTip(Window, IDREPORTBUG, _L(KEX_BUGREPORT_STR));
 
 		SetFocus(GetDlgItem(Window, IDUSEVXKEX));

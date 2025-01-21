@@ -6,6 +6,9 @@
 
 #include <ShObjIdl.h>
 
+EXTERN LANGID CURRENTLANG;
+EXTERN PWSTR FRIENDLYAPPNAME;
+
 typedef struct {
 	IShellExtInitVtbl		*ShellExtInitVtbl;
 	IShellPropSheetExtVtbl	*ShellPropSheetExtVtbl;

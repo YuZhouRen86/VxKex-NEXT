@@ -174,6 +174,22 @@ KXBASEAPI BOOL WINAPI GetProcessMitigationPolicy(
 
 		DepPolicy->Permanent = Permanent;
 		return Success;
+	} else if (MitigationPolicy == ProcessSystemCallDisablePolicy) {
+		PPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY SystemCallDisablePolicy;
+
+		if (BufferCb != sizeof(PROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY)) {
+			BaseSetLastNTError(STATUS_INVALID_BUFFER_SIZE);
+			return FALSE;
+		}
+
+		SystemCallDisablePolicy = (PPROCESS_MITIGATION_SYSTEM_CALL_DISABLE_POLICY) Buffer;
+
+		SystemCallDisablePolicy->DisallowWin32kSystemCalls = 0;
+		SystemCallDisablePolicy->AuditDisallowWin32kSystemCalls = 0;
+		SystemCallDisablePolicy->DisallowFsctlSystemCalls = 0;
+		SystemCallDisablePolicy->AuditDisallowFsctlSystemCalls = 0;
+
+		return TRUE;
 	} else {
 		KexLogWarningEvent(
 			L"GetProcessMitigationPolicy called with unsupported MitigationPolicy value %d",

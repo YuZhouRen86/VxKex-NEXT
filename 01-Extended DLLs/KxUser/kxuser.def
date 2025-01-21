@@ -62,24 +62,26 @@ EXPORTS
 	;;
 	;; scaling.c
 	;;
-
+	
 	GetDpiForSystem
 	GetDpiForWindow
 	GetDpiForMonitor
+	GetScaleFactorForDevice
 	GetScaleFactorForMonitor
 	GetProcessDpiAwareness
-	GetProcessDpiAwarenessInternal
 	SetProcessDpiAwareness
 	GetThreadDpiAwarenessContext
 	SetThreadDpiAwarenessContext
 	SetProcessDpiAwarenessContext
-	SetProcessDpiAwarenessInternal
 	AdjustWindowRectExForDpi
+	GetDpiForShellUIComponent
 	GetAwarenessFromDpiAwarenessContext
 	GetWindowDpiAwarenessContext
 	EnableNonClientDpiScaling
 	AreDpiAwarenessContextsEqual
 	IsValidDpiAwarenessContext
+	LogicalToPhysicalPointForPerMonitorDPI
+	PhysicalToLogicalPointForPerMonitorDPI
 
 	;;
 	;; sysmetrc.c

@@ -24,6 +24,7 @@
 
 #include "kexsetup.h"
 #include <AclAPI.h>
+#include <ShlObj.h>
 
 BOOLEAN IsWow64(
 	VOID)
@@ -48,10 +49,11 @@ BOOLEAN IsWow64(
 VOID GetDefaultInstallationLocation(
 	IN	PWSTR	InstallationPath)
 {
-	PCWSTR FailsafeDefault = L"C:\\Program Files\\VxKex";
+	WCHAR WindowsDirectory[MAX_PATH];
 	DWORD EnvironmentStringLength;
 
 	EnvironmentStringLength = ExpandEnvironmentStrings(L"%ProgramW6432%", InstallationPath, MAX_PATH);
+	
 	if (EnvironmentStringLength == 0) {
 		EnvironmentStringLength = ExpandEnvironmentStrings(L"%ProgramFiles%", InstallationPath, MAX_PATH);
 
@@ -68,7 +70,9 @@ VOID GetDefaultInstallationLocation(
 	return;
 
 FailSafe:
-	StringCchCopy(InstallationPath, MAX_PATH, FailsafeDefault);
+	StringCchCopy(InstallationPath, MAX_PATH, L"X:\\Program Files\\VxKex");
+	GetWindowsDirectory(WindowsDirectory, ARRAYSIZE(WindowsDirectory));
+	InstallationPath[0] = WindowsDirectory[0];
 	return;
 }
 

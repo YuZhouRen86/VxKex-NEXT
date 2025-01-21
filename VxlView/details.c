@@ -39,7 +39,8 @@ VOID ResetDetailsWindow(
 	SetDlgItemText(DetailsWindow, IDC_DETAILSSEVERITYTEXT, L"");
 	SetDlgItemText(DetailsWindow, IDC_DETAILSDATETIMETEXT, L"");
 	SetDlgItemText(DetailsWindow, IDC_DETAILSSOURCETEXT, L"");
-	SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"(No log entry selected.)");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"（未选择日志条目。）");
+	else SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"(No log entry selected.)");
 }
 
 VOID ResizeDetailsWindow(
@@ -71,6 +72,10 @@ VOID PopulateDetailsWindow(
 	WCHAR TimeFormat[32];
 	PLOGENTRYCACHEENTRY CacheEntry;
 	HWND DetailsMessageTextWindow;
+	PCWSTR SourceFormattingText;
+
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SourceFormattingText = L"【%04lx：%04lx】，%s（%s，第 %lu 行，在函数 %s 中）";
+	else SourceFormattingText = L"[%04lx:%04lx], %s (%s, line %lu, in function %s)";
 
 	CacheEntry = GetLogEntry(EntryIndex);
 	if (!CacheEntry) {
@@ -94,13 +99,13 @@ VOID PopulateDetailsWindow(
 		TimeFormat,
 		ARRAYSIZE(TimeFormat));
 
-	SetDlgItemTextF(DetailsWindow, IDC_DETAILSSEVERITYTEXT, L"%s (%s.)",
+	SetDlgItemTextF(DetailsWindow, IDC_DETAILSSEVERITYTEXT, L"%s (%s)",
 					VxlSeverityToText(CacheEntry->LogEntry.Severity, FALSE),
 					VxlSeverityToText(CacheEntry->LogEntry.Severity, TRUE));
 
-	SetDlgItemTextF(DetailsWindow, IDC_DETAILSDATETIMETEXT, L"%s at %s", DateFormat, TimeFormat);
+	SetDlgItemTextF(DetailsWindow, IDC_DETAILSDATETIMETEXT, L"%s    %s", DateFormat, TimeFormat);
 	
-	SetDlgItemTextF(DetailsWindow, IDC_DETAILSSOURCETEXT, L"[%04lx:%04lx], %s (%s, line %lu, in function %s)",
+	SetDlgItemTextF(DetailsWindow, IDC_DETAILSSOURCETEXT, SourceFormattingText,
 					(ULONG) CacheEntry->LogEntry.ClientId.UniqueProcess,
 					(ULONG) CacheEntry->LogEntry.ClientId.UniqueThread,
 					State->LogHandle->Header->SourceComponents[CacheEntry->LogEntry.SourceComponentIndex],
@@ -162,8 +167,8 @@ INT_PTR CALLBACK DetailsWndProc(
 		SetWindowPos(
 			GetDlgItem(DetailsWindow, IDC_DETAILSMESSAGETEXT),
 			HWND_TOP,
-			DpiScaleX(80), DpiScaleY(75),
-			NewWidth - DpiScaleX(90), NewHeight - DpiScaleY(85),
+			DpiScaleX(80), DpiScaleY(80),
+			NewWidth - DpiScaleX(90), NewHeight - DpiScaleY(90),
 			0);
 
 		// resize the severity, date/time and source text boxes

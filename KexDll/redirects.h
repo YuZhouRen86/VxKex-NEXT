@@ -26,6 +26,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 
 	DLL_REDIRECT("msvcrt",										"kxcrt"				)
 	
+	DLL_REDIRECT("d3d11",										"kxdx"				)
 	DLL_REDIRECT("d3d12",										"kxdx"				)
 	DLL_REDIRECT("dcomp",										"kxdx"				)
 	DLL_REDIRECT("dxgi",										"kxdx"				)
@@ -42,6 +43,8 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("ws2_32",										"kxnet"				)
 
 	DLL_REDIRECT("advapi32",									"kxadvapi"			)
+
+	DLL_REDIRECT("UIAutomationCore",							"kxuia"				)
 
 	//
 	// The DLL rewriting routine strips the -lX-Y-Z suffix from the API set name to
@@ -116,6 +119,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-core-version",						"version"			)
 	DLL_REDIRECT("api-ms-win-core-versionansi",					"version"			)
 	DLL_REDIRECT("api-ms-win-core-windowserrorreporting",		"kxbase"			)
+	DLL_REDIRECT("Windows.System.Launcher",						"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt",						"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt-error",					"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt-errorprivate",			"kxcom"				)

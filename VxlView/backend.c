@@ -2,6 +2,26 @@
 #include "resource.h"
 #include "backendp.h"
 
+STATIC PWSTR FailureFormattingText_ENG[] = {
+	L"Failed to convert \"%s\" to a NT filename (%s)",
+	L"Failed to open %s (%s)",
+	L"Failed to query information about %s. %s.",
+	L"There are no entries in the log file you selected.\r\n"
+	L"Please select a log file which is not empty.",
+	L"Failed to allocate memory to store the log entry cache. "
+	L"Try closing other applications or browser tabs before trying again.",
+};
+
+STATIC PWSTR FailureFormattingText_CHS[] = {
+	L"无法将“%s”转换为 NT 文件名（%s）",
+	L"无法打开 %s（%s）",
+	L"查询有关 %s 的信息失败。%s。",
+	L"您选择的日志文件中没有条目。\r\n"
+	L"请选择一个非空的日志文件。",
+	L"未能分配内存存储日志条目缓存。"
+	L"请尝试关闭其他应用程序或浏览器标签页，然后重试。",
+};
+
 //
 // This file contains functions to interact with VXLL, maintain a cache
 // of log entries, and filter/sort the log entries.
@@ -66,10 +86,16 @@ BOOLEAN OpenLogFile(
 	ULONG SizeOfNewNumberOfLogEntries;
 	ULONG Index;
 
+	PPWSTR FailureFormattingText;
+
 	NewLogHandle = NULL;
 	NewLogEntryCache = NULL;
 
-	SetWindowText(StatusBarWindow, L"Opening file, please wait...");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) FailureFormattingText = FailureFormattingText_CHS;
+	else FailureFormattingText = FailureFormattingText_ENG;
+
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"正在打开文件，请稍候...");
+	else SetWindowText(StatusBarWindow, L"Opening file, please wait...");
 
 	//
 	// Convert Win32 file name to NT
@@ -82,8 +108,7 @@ BOOLEAN OpenLogFile(
 		NULL);
 
 	if (!NT_SUCCESS(Status)) {
-		ErrorBoxF(L"%s failed to convert \"%s\" to a NT filename (%s)",
-				  FRIENDLYAPPNAME, LogFileNameWin32, KexRtlNtStatusToString(Status));
+		ErrorBoxF(FailureFormattingText[0], LogFileNameWin32, KexRtlNtStatusToString(Status));
 		goto OpenFailure;
 	}
 
@@ -108,8 +133,7 @@ BOOLEAN OpenLogFile(
 	RtlFreeUnicodeString(&LogFileNameNt);
 
 	if (!NT_SUCCESS(Status)) {
-		ErrorBoxF(L"%s failed to open %s (%s)",
-				  FRIENDLYAPPNAME, LogFileNameWin32, KexRtlNtStatusToString(Status));
+		ErrorBoxF(FailureFormattingText[1], LogFileNameWin32, KexRtlNtStatusToString(Status));
 		goto OpenFailure;
 	}
 
@@ -125,23 +149,19 @@ BOOLEAN OpenLogFile(
 		&SizeOfNewNumberOfLogEntries);
 
 	if (!NT_SUCCESS(Status)) {
-		ErrorBoxF(L"%s failed to query information about %s. %s.",
-				  FRIENDLYAPPNAME, LogFileNameWin32, KexRtlNtStatusToString(Status));
+		ErrorBoxF(FailureFormattingText[2], LogFileNameWin32, KexRtlNtStatusToString(Status));
 		goto OpenFailure;
 	}
 
 	if (NewNumberOfLogEntries == 0) {
 		MessageBoxF(0, TD_INFORMATION_ICON, NULL, NULL,
-					L"There are no entries in the log file you selected.\r\n"
-					L"Please select a log file which is not empty.");
+					FailureFormattingText[3]);
 		goto OpenFailure;
 	}
 
 	NewLogEntryCache = SafeAlloc(PLOGENTRYCACHEENTRY, NewNumberOfLogEntries);
 	if (!NewLogEntryCache) {
-		ErrorBoxF(L"%s failed to allocate memory to store the log entry cache. "
-				  L"Try closing other applications or browser tabs before trying again.",
-				  FRIENDLYAPPNAME);
+		ErrorBoxF(FailureFormattingText[4]);
 		goto OpenFailure;
 	}
 
@@ -173,12 +193,18 @@ BOOLEAN OpenLogFile(
 	//
 
 	UpdateMainMenu();
-	SetWindowText(StatusBarWindow, L"Finished.");
-	StatusBar_SetTextF(StatusBarWindow, 1, L"%lu entr%s in file",
-					   State->NumberOfLogEntries,
-					   State->NumberOfLogEntries == 1 ? L"y" : L"ies");
-	SetWindowTextF(MainWindow, L"%s - %s", FRIENDLYAPPNAME, LogFileNameWin32);
 
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+		SetWindowText(StatusBarWindow, L"完成。");
+		StatusBar_SetTextF(StatusBarWindow, 1, L"文件中有 %lu 个条目",
+						   State->NumberOfLogEntries);
+	} else {
+		SetWindowText(StatusBarWindow, L"Finished.");
+		StatusBar_SetTextF(StatusBarWindow, 1, L"%lu entry(ies) in file",
+						   State->NumberOfLogEntries);
+	}
+	
+	SetWindowTextF(MainWindow, L"%s - %s", FRIENDLYAPPNAME, LogFileNameWin32);
 	PopulateSourceComponents(State->LogHandle);
 	ResetFilterControls();
 
@@ -189,7 +215,8 @@ OpenFailure:
 		VxlCloseLog(&NewLogHandle);
 	}
 
-	SetWindowText(StatusBarWindow, L"Couldn't open the log file.");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"无法打开日志文件。");
+	else SetWindowText(StatusBarWindow, L"Couldn't open the log file.");
 	return FALSE;
 }
 
@@ -207,10 +234,15 @@ BOOLEAN OpenLogFileWithPrompt(
 	OpenFileName[0] = '\0';
 	OpenDialogInfo.lStructSize				= sizeof(OpenDialogInfo);
 	OpenDialogInfo.hwndOwner				= MainWindow;
-	OpenDialogInfo.lpstrFilter				= L"VXLog Files (*.vxl)\0*.vxl\0All Files (*.*)\0*.*\0";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+		OpenDialogInfo.lpstrFilter				= L"VXLog 文件（*.vxl）\0*.vxl\0所有文件（*.*）\0*.*\0";
+		OpenDialogInfo.lpstrTitle				= L"选择日志文件...";
+	} else {
+		OpenDialogInfo.lpstrFilter				= L"VXLog Files (*.vxl)\0*.vxl\0All Files (*.*)\0*.*\0";
+		OpenDialogInfo.lpstrTitle				= L"Select a log file...";
+	}
 	OpenDialogInfo.nMaxFile					= ARRAYSIZE(OpenFileName);
 	OpenDialogInfo.lpstrFile				= OpenFileName;
-	OpenDialogInfo.lpstrTitle				= L"Select a log file...";
 	OpenDialogInfo.Flags					= OFN_PATHMUSTEXIST;
 	OpenDialogInfo.lpstrDefExt				= L"vxl";
 
@@ -345,7 +377,8 @@ BOOLEAN ExportLogWithPrompt(
 
 	SaveDialogInfo.lStructSize				= sizeof(SaveDialogInfo);
 	SaveDialogInfo.hwndOwner				= MainWindow;
-	SaveDialogInfo.lpstrFilter				= L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SaveDialogInfo.lpstrFilter				= L"文本文件（*.txt）\0*.txt\0所有文件（*.*）\0*.*\0";
+	else SaveDialogInfo.lpstrFilter				= L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
 	SaveDialogInfo.nMaxFile					= ARRAYSIZE(SaveFileName);
 	SaveDialogInfo.lpstrFile				= SaveFileName;
 	SaveDialogInfo.Flags					= OFN_OVERWRITEPROMPT;

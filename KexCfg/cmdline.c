@@ -321,7 +321,7 @@ VOID KexCfgHandleCommandLine(
 	// Apply the new configuration to the program.
 	//
 
-	TransactionHandle = CreateSimpleTransaction(L"VxKex Configuration Tool Transaction");
+	TransactionHandle = CreateSimpleTransaction(L"VxKex NEXT Configuration Tool Transaction");
 
 	Success = KxCfgSetConfiguration(
 		ExeFullPath,
@@ -362,7 +362,7 @@ VOID KexCfgHandleCommandLine(
 		StringCchPrintf(
 			ErrorMessage,
 			ARRAYSIZE(ErrorMessage),
-			L"The VxKex configuration for \"%s\" could not be applied due to the following error: %s",
+			L"The VxKex NEXT configuration for \"%s\" could not be applied due to the following error: %s",
 			ExeFullPath,
 			GetLastErrorAsString());
 

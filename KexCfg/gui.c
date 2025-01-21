@@ -91,12 +91,18 @@ STATIC VOID KexCfgGuiApplyGlobalConfiguration(
 	// Create transaction for the operation
 	//
 
-	TransactionHandle = CreateSimpleTransaction(L"VxKex Configuration Tool (GUI) Transaction");
+	TransactionHandle = CreateSimpleTransaction(L"VxKex NEXT Configuration Tool (GUI) Transaction");
 
 	if (!TransactionHandle) {
-		ErrorBoxF(
-			L"A transaction for this operation could not be created. %s",
-			GetLastErrorAsString());
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ErrorBoxF(
+				L"无法为此操作创建事务。%s",
+				GetLastErrorAsString());
+		} else {
+			ErrorBoxF(
+				L"A transaction for this operation could not be created. %s",
+				GetLastErrorAsString());
+		}
 
 		return;
 	}
@@ -139,7 +145,8 @@ Fail:
 	NtRollbackTransaction(TransactionHandle, TRUE);
 	SafeClose(TransactionHandle);
 
-	ErrorBoxF(L"The settings could not be applied. %s", GetLastErrorAsString());
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法应用设置。%s", GetLastErrorAsString());
+	else ErrorBoxF(L"The settings could not be applied. %s", GetLastErrorAsString());
 }
 
 BOOLEAN CALLBACK ConfigurationCallback(
@@ -244,12 +251,18 @@ STATIC VOID RemoveSelectedPrograms(
 	ULONG ItemIndex;
 	HANDLE TransactionHandle;
 
-	TransactionHandle = CreateSimpleTransaction(L"VxKex Configuration Tool (GUI) Transaction");
+	TransactionHandle = CreateSimpleTransaction(L"VxKex NEXT Configuration Tool (GUI) Transaction");
 
 	if (!TransactionHandle) {
-		ErrorBoxF(
-			L"A transaction for this operation could not be created. %s",
-			GetLastErrorAsString());
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ErrorBoxF(
+				L"无法为此操作创建事务。%s",
+				GetLastErrorAsString());
+		} else {
+			ErrorBoxF(
+				L"A transaction for this operation could not be created. %s",
+				GetLastErrorAsString());
+		}
 
 		return;
 	}
@@ -264,9 +277,15 @@ STATIC VOID RemoveSelectedPrograms(
 
 		Success = KxCfgDeleteConfiguration(ExeFullPath, TransactionHandle);
 		if (!Success) {
-			ErrorBoxF(
-				L"There was an error applying settings for \"%s\". %s",
-				ExeFullPath, GetLastErrorAsString());
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)){
+				ErrorBoxF(
+					L"为“%s”应用设置时出现错误。%s",
+					ExeFullPath, GetLastErrorAsString());
+			} else {
+				ErrorBoxF(
+					L"There was an error applying settings for \"%s\". %s",
+					ExeFullPath, GetLastErrorAsString());
+			}
 
 			NtRollbackTransaction(TransactionHandle, TRUE);
 			SafeClose(TransactionHandle);
@@ -305,10 +324,12 @@ STATIC VOID AddProgram(
 	RtlZeroMemory(&OpenFileInfo, sizeof(OpenFileInfo));
 	OpenFileInfo.lStructSize		= sizeof(OpenFileInfo);
 	OpenFileInfo.hwndOwner			= MainWindow;
-	OpenFileInfo.lpstrFilter		= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrFilter			= L"程序（*.exe、*.msi）\0*.exe;*.msi\0";
+	else OpenFileInfo.lpstrFilter		= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0";
 	OpenFileInfo.lpstrFile			= FileNames;
 	OpenFileInfo.nMaxFile			= ARRAYSIZE(FileNames);
-	OpenFileInfo.lpstrTitle			= L"Select Program(s)";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrTitle			= L"选择程序";
+	else OpenFileInfo.lpstrTitle			= L"Select Program(s)";
 	OpenFileInfo.Flags				= OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 									  OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 	OpenFileInfo.lpstrDefExt		= L"exe";
@@ -327,14 +348,16 @@ STATIC VOID AddProgram(
 
 	if (StringBeginsWithI(DirectoryName, SharedUserData->NtSystemRoot)) {
 		// program(s) are in the Windows directory - do not allow
-		ErrorBoxF(L"You cannot enable VxKex for programs in the Windows directory.");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法为 Windows 目录中的程序启用 VxKex NEXT。");
+		else ErrorBoxF(L"You cannot enable VxKex NEXT for programs in the Windows directory.");
 		return;
 	}
 
 	KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir));
 
 	if (StringBeginsWithI(DirectoryName, KexDir)) {
-		ErrorBoxF(L"You cannot enable VxKex for programs in the VxKex installation directory.");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法为 VxKex NEXT 安装目录中的程序启用 VxKex NEXT。");
+		else ErrorBoxF(L"You cannot enable VxKex NEXT for programs in the VxKex NEXT installation directory.");
 		return;
 	}
 
@@ -362,12 +385,18 @@ STATIC VOID AddProgram(
 	// Create transaction for the operation.
 	//
 
-	TransactionHandle = CreateSimpleTransaction(L"VxKex Configuration Tool (GUI) Transaction");
+	TransactionHandle = CreateSimpleTransaction(L"VxKex NEXT Configuration Tool (GUI) Transaction");
 
 	if (!TransactionHandle) {
-		ErrorBoxF(
-			L"A transaction for this operation could not be created. %s",
-			GetLastErrorAsString());
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ErrorBoxF(
+				L"无法为此操作创建事务。%s",
+				GetLastErrorAsString());
+		} else {
+			ErrorBoxF(
+				L"A transaction for this operation could not be created. %s",
+				GetLastErrorAsString());
+		}
 
 		return;
 	}
@@ -390,9 +419,15 @@ STATIC VOID AddProgram(
 			TransactionHandle);
 
 		if (!Success) {
-			ErrorBoxF(
-				L"There was an error applying settings for \"%s\". %s",
-				FileFullPath, GetLastErrorAsString());
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)){
+				ErrorBoxF(
+					L"为“%s”应用设置时出现错误。%s",
+					FileFullPath, GetLastErrorAsString());
+			} else {
+				ErrorBoxF(
+					L"There was an error applying settings for \"%s\". %s",
+					FileFullPath, GetLastErrorAsString());
+			}
 
 			NtRollbackTransaction(TransactionHandle, TRUE);
 			SafeClose(TransactionHandle);
@@ -412,15 +447,25 @@ STATIC VOID ProgramNotFoundUserPrompt(
 	IN	PCWSTR	ProgramFullPath)
 {
 	INT UserResponse;
-
-	UserResponse = MessageBoxF(
-		TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
-		NULL,
-		FRIENDLYAPPNAME,
-		L"The selected program cannot be found",
-		L"The program \"%s\" was moved or deleted. "
-		L"Would you like to remove this entry from the list of VxKex-enabled applications?",
-		ProgramFullPath);
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+		UserResponse = MessageBoxF(
+			TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
+			NULL,
+			FRIENDLYAPPNAME,
+			L"无法找到所选程序",
+			L"程序“%s”已被移动或删除。"
+			L"您想从启用 VxKex NEXT 的应用程序列表中删除此条目吗？",
+			ProgramFullPath);
+	} else {
+		UserResponse = MessageBoxF(
+			TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
+			NULL,
+			FRIENDLYAPPNAME,
+			L"The selected program cannot be found",
+			L"The program \"%s\" was moved or deleted. "
+			L"Would you like to remove this entry from the list of VxKex-NEXT-enabled applications?",
+			ProgramFullPath);
+	}
 
 	if (UserResponse == IDYES) {
 		RemoveSelectedPrograms();
@@ -452,7 +497,8 @@ STATIC VOID OpenSelectedItemLocation(
 			ProgramNotFoundUserPrompt(ProgramFullPath);
 		} else {
 			// display generic error box
-			ErrorBoxF(L"Couldn't open file location. %s", Win32ErrorAsString(Result));
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法打开文件位置。%s", Win32ErrorAsString(Result));
+			else ErrorBoxF(L"Couldn't open file location. %s", Win32ErrorAsString(Result));
 		}
 	}
 }
@@ -478,7 +524,8 @@ STATIC VOID OpenSelectedItemProperties(
 		if (ErrorCode == ERROR_FILE_NOT_FOUND) {
 			ProgramNotFoundUserPrompt(ProgramFullPath);
 		} else {
-			ErrorBoxF(L"Couldn't open file properties. %s", Win32ErrorAsString(ErrorCode));
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法打开文件属性。%s", Win32ErrorAsString(ErrorCode));
+			else ErrorBoxF(L"Couldn't open file properties. %s", Win32ErrorAsString(ErrorCode));
 		}
 	}
 }
@@ -517,41 +564,80 @@ STATIC VOID RunSelectedProgram(
 	ErrorMessage = NULL;
 
 	if (ErrorCode <= 32) {
-		switch (ErrorCode) {
-		case SE_ERR_FNF:
-		case SE_ERR_PNF:
-			ProgramNotFoundUserPrompt(ProgramFullPath);
-			break;
-		case SE_ERR_ACCESSDENIED:
-			ErrorMessage = L"Access was denied or the executable file format is invalid.";
-			break;
-		case SE_ERR_OOM:
-			ErrorMessage = L"There was not enough memory to complete the operation.";
-			break;
-		case SE_ERR_SHARE:
-			ErrorMessage = L"A sharing violation occurred.";
-			break;
-		case SE_ERR_ASSOCINCOMPLETE:
-			ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE";
-			break;
-		case SE_ERR_DDETIMEOUT:
-			ErrorMessage = L"SE_ERR_DDETIMEOUT";
-			break;
-		case SE_ERR_DDEFAIL:
-			ErrorMessage = L"SE_ERR_DDEFAIL";
-			break;
-		case SE_ERR_DDEBUSY:
-			ErrorMessage = L"SE_ERR_DDEBUSY";
-			break;
-		case SE_ERR_NOASSOC:
-			ErrorMessage = L"SE_ERR_NOASSOC";
-			break;
-		case SE_ERR_DLLNOTFOUND:
-			ErrorMessage = L"The specified DLL was not found.";
-			break;
-		default:
-			ErrorMessage = L"An unknown error has occurred.";
-			break;
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			switch (ErrorCode) {
+				case SE_ERR_FNF:
+				case SE_ERR_PNF:
+					ProgramNotFoundUserPrompt(ProgramFullPath);
+					break;
+				case SE_ERR_ACCESSDENIED:
+					ErrorMessage = L"访问被拒绝或可执行文件格式无效。";
+					break;
+				case SE_ERR_OOM:
+					ErrorMessage = L"内存不足，无法完成操作。";
+					break;
+				case SE_ERR_SHARE:
+					ErrorMessage = L"发生违规共享。";
+					break;
+				case SE_ERR_ASSOCINCOMPLETE:
+					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE";
+					break;
+				case SE_ERR_DDETIMEOUT:
+					ErrorMessage = L"SE_ERR_DDETIMEOUT";
+					break;
+				case SE_ERR_DDEFAIL:
+					ErrorMessage = L"SE_ERR_DDEFAIL";
+					break;
+				case SE_ERR_DDEBUSY:
+					ErrorMessage = L"SE_ERR_DDEBUSY";
+					break;
+				case SE_ERR_NOASSOC:
+					ErrorMessage = L"SE_ERR_NOASSOC";
+					break;
+				case SE_ERR_DLLNOTFOUND:
+					ErrorMessage = L"未找到指定的 DLL。";
+					break;
+				default:
+					ErrorMessage = L"发生未知错误。";
+					break;
+			}
+		} else {
+			switch (ErrorCode) {
+				case SE_ERR_FNF:
+				case SE_ERR_PNF:
+					ProgramNotFoundUserPrompt(ProgramFullPath);
+					break;
+				case SE_ERR_ACCESSDENIED:
+					ErrorMessage = L"Access was denied or the executable file format is invalid.";
+					break;
+				case SE_ERR_OOM:
+					ErrorMessage = L"There was not enough memory to complete the operation.";
+					break;
+				case SE_ERR_SHARE:
+					ErrorMessage = L"A sharing violation occurred.";
+					break;
+				case SE_ERR_ASSOCINCOMPLETE:
+					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE";
+					break;
+				case SE_ERR_DDETIMEOUT:
+					ErrorMessage = L"SE_ERR_DDETIMEOUT";
+					break;
+				case SE_ERR_DDEFAIL:
+					ErrorMessage = L"SE_ERR_DDEFAIL";
+					break;
+				case SE_ERR_DDEBUSY:
+					ErrorMessage = L"SE_ERR_DDEBUSY";
+					break;
+				case SE_ERR_NOASSOC:
+					ErrorMessage = L"SE_ERR_NOASSOC";
+					break;
+				case SE_ERR_DLLNOTFOUND:
+					ErrorMessage = L"The specified DLL was not found.";
+					break;
+				default:
+					ErrorMessage = L"An unknown error has occurred.";
+					break;
+			}
 		}
 	}
 
@@ -692,8 +778,13 @@ STATIC INT_PTR CALLBACK DialogProc(
 		//
 
 		ComboBoxWindow = GetDlgItem(Window, IDC_WHICHCONTEXTMENU);
-		ComboBox_AddString(ComboBoxWindow, L"extended context menu");
-		ComboBox_AddString(ComboBoxWindow, L"normal context menu");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ComboBox_AddString(ComboBoxWindow, L"扩展上下文菜单");
+			ComboBox_AddString(ComboBoxWindow, L"常规上下文菜单");
+		} else {
+			ComboBox_AddString(ComboBoxWindow, L"extended context menu");
+			ComboBox_AddString(ComboBoxWindow, L"normal context menu");
+		}
 		ComboBox_SetCurSel(ComboBoxWindow, 0);
 
 		//
@@ -720,34 +811,51 @@ STATIC INT_PTR CALLBACK DialogProc(
 		RtlZeroMemory(&Column, sizeof(Column));
 		Column.mask = LVCF_TEXT | LVCF_WIDTH;
 		
-		Column.pszText = L"Application";
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) Column.pszText = L"应用程序";
+		else Column.pszText = L"Application";
 		Column.cx = DpiScaleX(100);
 		ListView_InsertColumn(ListViewWindow, 0, &Column);
-
-		Column.pszText = L"Containing folder";
+		
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) Column.pszText = L"包含文件夹";
+		else Column.pszText = L"Containing folder";
 		ListView_InsertColumn(ListViewWindow, 1, &Column);
 		ListView_SetColumnWidth(ListViewWindow, 1, LVSCW_AUTOSIZE_USEHEADER);
 
 		//
 		// Add tool tips.
 		//
-
-		ToolTip(Window, IDC_ENABLELOGGING,
-			L"If you enable logging, VxKex will create log files in the specified "
-			L"folder every time you run an application which has VxKex enabled.");
-		ToolTip(Window, IDC_ENABLEFORMSI,
-			L"This option allows VxKex to work with MSI installers.\r\n"
-			L"If you encounter unexpected problems with MSI installers, try disabling this option.");
-		ToolTip(Window, IDC_CPIWBYPA,
-			L"This option causes a DLL to be loaded into Windows Explorer at startup in order "
-			L"to remove the version check for certain programs.\r\n"
-			L"If you encounter unexpected problems with Windows Explorer, try disabling this "
-			L"option.");
-		ToolTip(Window, IDC_ADDTOMENU,
-			L"Add \"Run with VxKex\" options to the context menu for .exe and .msi files.");
-		ToolTip(Window, IDC_WHICHCONTEXTMENU,
-			L"Shift+Right Click on a .exe or .msi file opens the extended context menu.\r\n"
-			L"Right clicking without holding the Shift key opens the normal context menu.");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			ToolTip(Window, IDC_ENABLELOGGING,
+				L"如果启用了日志记录功能，每当您运行启用了 VxKex NEXT 的应用程序时，VxKex NEXT 都会在指定文件夹中创建日志文件。");
+			ToolTip(Window, IDC_ENABLEFORMSI,
+				L"此选项允许 VxKex NEXT 与 MSI 安装程序一起工作。\r\n"
+				L"如果在使用 MSI 安装程序时遇到意外问题，请尝试禁用此选项。");
+			ToolTip(Window, IDC_CPIWBYPA,
+				L"此选项会在启动时将一个 DLL 加载到 Windows 资源管理器中，以移除某些程序的版本检查。\r\n"
+				L"如果在使用 Windows 资源管理器时遇到意外问题，请尝试禁用此选项。");
+			ToolTip(Window, IDC_ADDTOMENU,
+				L"在 .exe 和 .msi 文件的上下文菜单中添加“使用 VxKex NEXT 运行”选项。");
+			ToolTip(Window, IDC_WHICHCONTEXTMENU,
+				L"按住 Shift 键并右键单击 .exe 或 .msi 文件可打开扩展上下文菜单。\r\n"
+				L"在不按住 Shift 键的情况下右键单击可打开常规上下文菜单。");
+		} else {
+			ToolTip(Window, IDC_ENABLELOGGING,
+				L"If you enable logging, VxKex NEXT will create log files in the specified "
+				L"folder every time you run an application which has VxKex NEXT enabled.");
+			ToolTip(Window, IDC_ENABLEFORMSI,
+				L"This option allows VxKex NEXT to work with MSI installers.\r\n"
+				L"If you encounter unexpected problems with MSI installers, try disabling this option.");
+			ToolTip(Window, IDC_CPIWBYPA,
+				L"This option causes a DLL to be loaded into Windows Explorer at startup in order "
+				L"to remove the version check for certain programs.\r\n"
+				L"If you encounter unexpected problems with Windows Explorer, try disabling this "
+				L"option.");
+			ToolTip(Window, IDC_ADDTOMENU,
+				L"Add \"Run with VxKex NEXT\" options to the context menu for .exe and .msi files.");
+			ToolTip(Window, IDC_WHICHCONTEXTMENU,
+				L"Shift + Right Click on a .exe or .msi file opens the extended context menu.\r\n"
+				L"Right clicking without holding the Shift key opens the normal context menu.");
+		}
 
 		//
 		// Populate the top section (global configuration) and the apps list.
@@ -791,12 +899,21 @@ STATIC INT_PTR CALLBACK DialogProc(
 			if (UnsavedChanges) {
 				INT UserResponse;
 
-				UserResponse = MessageBoxF(
-					TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
-					0,
-					FRIENDLYAPPNAME,
-					L"Are you sure you want to exit?",
-					L"Changes that are not applied will be discarded.");
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+					UserResponse = MessageBoxF(
+						TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
+						0,
+						FRIENDLYAPPNAME,
+						L"您确定要退出吗？",
+						L"未应用的更改将被丢弃。");
+				} else {
+					UserResponse = MessageBoxF(
+						TDCBF_YES_BUTTON | TDCBF_NO_BUTTON,
+						0,
+						FRIENDLYAPPNAME,
+						L"Are you sure you want to exit?",
+						L"Changes that are not applied will be discarded.");
+				}
 
 				if (UserResponse == IDYES) {
 					EndDialog(Window, 0);

@@ -187,7 +187,8 @@ NoExtendedStartupInfo:
 				// Fall through to the ShellExecute code.
 				NOTHING;
 			} else {
-				ErrorBoxF(L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"CreateProcess 失败：%s", Win32ErrorAsString(ErrorCode));
+				else ErrorBoxF(L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
 				return FALSE;
 			}
 		}
@@ -211,48 +212,90 @@ NoExtendedStartupInfo:
 
 	if ((ULONG) ShellExecuteError <= 32) {
 		PCWSTR ErrorMessage;
-
-		switch ((ULONG) ShellExecuteError) {
-		case 0:
-		case SE_ERR_OOM:
-			ErrorMessage = L"Insufficient resources.";
-			break;
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-		case ERROR_BAD_FORMAT:
-			ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
-			break;
-		case SE_ERR_ACCESSDENIED:
-			ErrorMessage = L"Access was denied.";
-			break;
-		case SE_ERR_DLLNOTFOUND:
-			ErrorMessage = L"A DLL was not found.";
-			break;
-		case SE_ERR_SHARE:
-			ErrorMessage = L"A sharing violation occurred.";
-			break;
-		case SE_ERR_ASSOCINCOMPLETE:
-			ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
-			break;
-		case SE_ERR_DDEBUSY:
-			ErrorMessage = L"SE_ERR_DDEBUSY.";
-			break;
-		case SE_ERR_DDEFAIL:
-			ErrorMessage = L"SE_ERR_DDEFAIL.";
-			break;
-		case SE_ERR_DDETIMEOUT:
-			ErrorMessage = L"SE_ERR_DDETIMEOUT.";
-			break;
-		case SE_ERR_NOASSOC:
-			ErrorMessage = L"SE_ERR_NOASSOC.";
-			break;
-		default:
-			ASSERT (FALSE);
-			ErrorMessage = L"Unknown error.";
-			break;
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			switch ((ULONG) ShellExecuteError) {
+				case 0:
+				case SE_ERR_OOM:
+					ErrorMessage = L"资源不足。";
+					break;
+				case ERROR_FILE_NOT_FOUND:
+				case ERROR_PATH_NOT_FOUND:
+				case ERROR_BAD_FORMAT:
+					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
+					break;
+				case SE_ERR_ACCESSDENIED:
+					ErrorMessage = L"访问被拒绝。";
+					break;
+				case SE_ERR_DLLNOTFOUND:
+					ErrorMessage = L"未找到 DLL。";
+					break;
+				case SE_ERR_SHARE:
+					ErrorMessage = L"发生违规共享。";
+					break;
+				case SE_ERR_ASSOCINCOMPLETE:
+					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
+					break;
+				case SE_ERR_DDEBUSY:
+					ErrorMessage = L"SE_ERR_DDEBUSY.";
+					break;
+				case SE_ERR_DDEFAIL:
+					ErrorMessage = L"SE_ERR_DDEFAIL.";
+					break;
+				case SE_ERR_DDETIMEOUT:
+					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
+					break;
+				case SE_ERR_NOASSOC:
+					ErrorMessage = L"SE_ERR_NOASSOC.";
+					break;
+				default:
+					ASSERT (FALSE);
+					ErrorMessage = L"未知错误。";
+					break;
+			}
+			ErrorBoxF(L"ShellExecute 失败：%s", ErrorMessage);
+		} else {
+			switch ((ULONG) ShellExecuteError) {
+				case 0:
+				case SE_ERR_OOM:
+					ErrorMessage = L"Insufficient resources.";
+					break;
+				case ERROR_FILE_NOT_FOUND:
+				case ERROR_PATH_NOT_FOUND:
+				case ERROR_BAD_FORMAT:
+					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
+					break;
+				case SE_ERR_ACCESSDENIED:
+					ErrorMessage = L"Access was denied.";
+					break;
+				case SE_ERR_DLLNOTFOUND:
+					ErrorMessage = L"A DLL was not found.";
+					break;
+				case SE_ERR_SHARE:
+					ErrorMessage = L"A sharing violation occurred.";
+					break;
+				case SE_ERR_ASSOCINCOMPLETE:
+					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
+					break;
+				case SE_ERR_DDEBUSY:
+					ErrorMessage = L"SE_ERR_DDEBUSY.";
+					break;
+				case SE_ERR_DDEFAIL:
+					ErrorMessage = L"SE_ERR_DDEFAIL.";
+					break;
+				case SE_ERR_DDETIMEOUT:
+					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
+					break;
+				case SE_ERR_NOASSOC:
+					ErrorMessage = L"SE_ERR_NOASSOC.";
+					break;
+				default:
+					ASSERT (FALSE);
+					ErrorMessage = L"Unknown error.";
+					break;
+			}
+			ErrorBoxF(L"ShellExecute failed: %s", ErrorMessage);
 		}
 
-		ErrorBoxF(L"ShellExecute failed: %s", ErrorMessage);
 		return FALSE;
 	}
 

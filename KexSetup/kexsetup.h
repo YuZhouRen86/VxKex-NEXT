@@ -28,6 +28,9 @@
 #include "resource.h"
 #include <KexComm.h>
 
+EXTERN LANGID CURRENTLANG;
+EXTERN PWSTR FRIENDLYAPPNAME;
+
 typedef enum {
 	OperationModeInstall,
 	OperationModeUninstall,

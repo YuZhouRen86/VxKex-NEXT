@@ -60,7 +60,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgGetConfiguration(
 	//
 
 	RtlInitUnicodeString(&ExeFullPathUS, ExeFullPath);
-
+	
 	Status = LdrOpenImageFileOptionsKey(
 		&ExeFullPathUS,
 		FALSE,
@@ -135,11 +135,14 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnumerateConfiguration(
 	// Open the IFEO base key.
 	// Note that we should not close this key.
 	//
-
-	Status = LdrOpenImageFileOptionsKey(
-		NULL,
-		FALSE,
-		(PHANDLE) &IfeoBaseKey);
+	
+	Status = RegOpenKeyExW (
+		HKEY_LOCAL_MACHINE,
+		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+		L"Image File Execution Options",
+		0,
+		KEY_READ | KEY_WRITE,
+		&IfeoBaseKey);
 
 	if (!NT_SUCCESS(Status)) {
 		SetLastError(RtlNtStatusToDosError(Status));

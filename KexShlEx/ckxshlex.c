@@ -143,6 +143,8 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 	Format.lindex			= -1;
 	Format.tymed			= TYMED_HGLOBAL;
 
+	*This->ExeFullPath = L'\0';
+
 	Result = DataObject->lpVtbl->GetData(
 		DataObject,
 		&Format,
@@ -152,8 +154,8 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 		return Result;
 	}
 
-	Drop = (HDROP) StorageMedium.hGlobal;
-	NumberOfFilesSelected = DragQueryFile(Drop, -1, NULL, 0);
+	Drop = (HDROP) GlobalLock(StorageMedium.hGlobal);
+	NumberOfFilesSelected = DragQueryFile(Drop, 0xFFFFFFFF, NULL, 0);
 
 	if (NumberOfFilesSelected != 1) {
 		// If the user selects multiple files before opening properties,
@@ -163,6 +165,7 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 	}
 
 	DragQueryFile(Drop, 0, This->ExeFullPath, ARRAYSIZE(This->ExeFullPath));
+	GlobalUnlock(StorageMedium.hGlobal);
 	ReleaseStgMedium(&StorageMedium);
 
 	//
@@ -183,6 +186,8 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 		// Get the path to the file that the .LNK points to.
 		//
 
+		/*
+
 		Result = GetTargetFromLnkfile(This->ExeFullPath);
 		if (FAILED(Result)) {
 			return Result;
@@ -200,6 +205,8 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 		if (FAILED(Result)) {
 			return Result;
 		}
+
+		*/
 
 		//
 		// If it's not .EXE or .MSI, we won't display a property page.

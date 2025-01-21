@@ -52,6 +52,40 @@ VOID NTAPI KexDllNotificationCallback(
 		L"unmapped",
 		L"(unknown)"
 	};
+	
+	if ((!wcsncmp(NotificationData->BaseDllName->Buffer, L"MacType.dll", MAX_PATH) || !wcsncmp(NotificationData->BaseDllName->Buffer, L"MacType64.dll", MAX_PATH)) && Reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
+		ULONG Response;
+		PWCHAR ImageBaseName;
+		LCID DefaultUILanguageId;
+		ImageBaseName = KexData->ImageBaseName.Buffer;
+		NtQueryDefaultLocale(TRUE, &DefaultUILanguageId);
+		switch (DefaultUILanguageId) {
+			case MAKELANGID(LANG_CHINESE, SUBLANG_NEUTRAL):
+			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED):
+			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE):
+				DefaultUILanguageId = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
+				break;
+			default:
+				DefaultUILanguageId = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+				break;
+		}
+		if (DefaultUILanguageId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			WCHAR Message[3000];
+			StringCchPrintf(Message, 3000, L"检测到 MacType 正在运行。此程序已启用 VxKex 兼容层，VxKex 与 MacType 同时启用可能导致程序崩溃。"
+				L"\n\n"
+				L"要为此进程禁用 MacType ，请打开 MacType Wizard ，单击“进程管理”，取消勾选“隐藏高权限进程”，在“进程名”一栏中找到“%s”（一般位于列表底部）并右击，勾选“排除此进程”。设置将在重新启动 MacType 后生效。"
+				L"\n\n"
+				L"建议结束此进程，以防止程序进一步的错误。是否想要立即结束此进程？", ImageBaseName);
+			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex 应用程序警告", Message);
+		} else {
+			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex Application Warning", L"VxKex could not start because MacType is running. Please quit MacType before running this program."
+				L"\n"
+				L"It is recommanded to terminate this process now.");
+		}
+		if (Response == 8) {
+			NtTerminateProcess(NtCurrentProcess(), STATUS_KEXDLL_INITIALIZATION_FAILURE);
+		}
+	}
 
 	KexLogDetailEvent(
 		L"The DLL %wZ was %s\r\n\r\n"

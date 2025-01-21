@@ -1,12 +1,29 @@
 #include "vxlview.h"
 #include "resource.h"
 
+LANGID CURRENTLANG = 0;
+PWSTR FRIENDLYAPPNAME;
+
 NTSTATUS NTAPI EntryPoint(
 	IN	PVOID	Parameter)
 {
 	HACCEL Accelerators;
 	MSG Message;
 	INITCOMMONCONTROLSEX InitComctl;
+
+	switch (GetUserDefaultUILanguage()) {
+		case MAKELANGID(LANG_CHINESE, SUBLANG_NEUTRAL):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE):
+			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHS;
+			break;
+		default:
+			CURRENTLANG = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_ENG;
+			break;
+	}
+	SetThreadUILanguage(CURRENTLANG);
 
 	InitComctl.dwSize = sizeof(InitComctl);
 	InitComctl.dwICC = ICC_BAR_CLASSES | ICC_LISTVIEW_CLASSES;
@@ -163,8 +180,13 @@ INT_PTR CALLBACK MainWndProc(
 
 				ChangedItemInfo = (LPNMLISTVIEW) LParam;
 				if (ChangedItemInfo->uNewState & LVIS_FOCUSED) {
-					SetWindowTextF(StatusBarWindow, L"Entry #%d selected.", 
-								   GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
+					if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+						SetWindowTextF(StatusBarWindow, L"已选择条目 #%d。", 
+							GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
+					} else {
+						SetWindowTextF(StatusBarWindow, L"Entry #%d selected.", 
+							GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
+					}
 					PopulateDetailsWindow(ChangedItemInfo->iItem);
 				}
 			} else {

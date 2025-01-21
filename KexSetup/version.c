@@ -30,12 +30,14 @@ ULONG KexSetupGetInstalledVersion(
 	VOID)
 {
 	HKEY KeyHandle;
+	HKEY UninstallKeyHandle;
 	ULONG InstalledVersion;
 
 	KeyHandle = KxCfgOpenVxKexRegistryKey(FALSE, KEY_READ, NULL);
-	if (!KeyHandle) {
+	UninstallKeyHandle = KxCfgpOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\VxKex", KEY_READ, NULL);
+	if (!(KeyHandle && UninstallKeyHandle)) {
 		KeyHandle = KxCfgOpenLegacyVxKexRegistryKey(FALSE, KEY_READ, NULL);
-		if (!KeyHandle) {
+		if (!(KeyHandle && UninstallKeyHandle)) {
 			return 0;
 		}
 	}

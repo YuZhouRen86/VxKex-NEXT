@@ -1,4 +1,4 @@
-#include "buildcfg.h"
+﻿#include "buildcfg.h"
 #include "kexsetup.h"
 #include <InitGuid.h>
 
@@ -142,41 +142,60 @@ VOID KexSetupCheckForPrerequisites(
 	unless (ServicePack1Present && DllDirectoriesUpdatePresent && PlatformUpdatePresent) {
 		HRESULT Result;
 		WCHAR MainText[1024];
+		PWSTR Updates[3];
 		TASKDIALOGCONFIG TaskDialogConfig;
 		TASKDIALOG_BUTTON Buttons[] = {
-			{IDCANCEL, L"Cancel installation"},
-			{IDOK, L"Continue installation anyway\n"
-				   L"Without the prerequisites listed above, be aware that some "
-				   L"applications will not work, even with VxKex."},
+			{IDCANCEL, L""},
+			{IDOK, L""},
 		};
 
 		INT UserSelection;
 
-		StringCchCopy(
-			MainText,
-			ARRAYSIZE(MainText),
-			L"Setup has detected that the following prerequisites were not installed on "
-			L"your computer:\r\n");
-
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			Buttons[0].pszButtonText = L"取消安装";
+			Buttons[1].pszButtonText = L"仍然继续安装\n"
+				L"如果没有上面列出的先决条件，请注意某些应用程序将无法运行，即使使用 VxKex 也是如此。";
+			StringCchCopy(
+				MainText,
+				ARRAYSIZE(MainText),
+				L"安装程序检测到您的计算机上未安装以下先决条件：\r\n");
+			Updates[0] = L"\r\n    • 适用于 Windows® 7 的 Service Pack 1（SP1）";
+			Updates[1] = L"\r\n    • 更新 KB2533623（DllDirectories 更新）";
+			Updates[2] = L"\r\n    • 更新 KB2670838（平台更新）";
+		} else {
+			Buttons[0].pszButtonText = L"Cancel installation";
+			Buttons[1].pszButtonText = L"Continue installation anyway\n"
+				L"Without the prerequisites listed above, be aware that some "
+				L"applications will not work, even with VxKex.";
+			StringCchCopy(
+				MainText,
+				ARRAYSIZE(MainText),
+				L"Setup has detected that the following prerequisites were not installed on "
+				L"your computer:\r\n");
+			Updates[0] = L"\r\n    • Service Pack 1 (SP1) for Windows® 7";
+			Updates[1] = L"\r\n    • Update KB2533623 (DllDirectories update)";
+			Updates[2] = L"\r\n    • Update KB2670838 (Platform Update)";
+		}
+		
 		if (!ServicePack1Present) {
 			StringCchCat(
 				MainText,
 				ARRAYSIZE(MainText),
-				L"\r\n    � Service Pack 1 (SP1) for Windows� 7");
+				Updates[0]);
 		}
 
 		if (!DllDirectoriesUpdatePresent) {
 			StringCchCat(
 				MainText,
 				ARRAYSIZE(MainText),
-				L"\r\n    � Update KB2533623 (DllDirectories update)");
+				Updates[1]);
 		}
 
 		if (!PlatformUpdatePresent) {
 			StringCchCat(
 				MainText,
 				ARRAYSIZE(MainText),
-				L"\r\n    � Update KB2670838 (Platform Update)");
+				Updates[2]);
 		}
 
 		RtlZeroMemory(&TaskDialogConfig, sizeof(TaskDialogConfig));
@@ -186,12 +205,17 @@ VOID KexSetupCheckForPrerequisites(
 											  TDF_POSITION_RELATIVE_TO_WINDOW;
 		TaskDialogConfig.pszWindowTitle		= FRIENDLYAPPNAME;
 		TaskDialogConfig.pszMainIcon		= TD_WARNING_ICON;
-		TaskDialogConfig.pszMainInstruction	= L"System requirements not met";
 		TaskDialogConfig.pszContent			= MainText;
 		TaskDialogConfig.cButtons			= ARRAYSIZE(Buttons);
 		TaskDialogConfig.pButtons			= Buttons;
 		TaskDialogConfig.nDefaultButton		= IDOK;
-		TaskDialogConfig.pszVerificationText= L"Don't show this warning again";
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)){
+			TaskDialogConfig.pszMainInstruction	= L"不符合系统要求";
+			TaskDialogConfig.pszVerificationText= L"不再显示此警告";
+		} else {
+			TaskDialogConfig.pszMainInstruction	= L"System requirements not met";
+			TaskDialogConfig.pszVerificationText= L"Don't show this warning again";
+		}
 
 		Result = TaskDialogIndirect(
 			&TaskDialogConfig,

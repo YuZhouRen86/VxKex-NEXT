@@ -3,6 +3,9 @@ EXPORTS
 	;; factory.c
 	CreateDXGIFactory2
 	
+	;; dx11.c
+	D3D11On12CreateDevice
+
 	;; dx12stub.c
 	;; These must be exported with ordinal. A lot of programs import by ordinal
 	;; from d3d12 for some reason.

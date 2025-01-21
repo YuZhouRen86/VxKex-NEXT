@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+﻿///////////////////////////////////////////////////////////////////////////////
 //
 // Module Name:
 //
@@ -111,7 +111,7 @@ VOID ProcessCommandLineOptions(
 	if (StringSearchI(CommandLine, L"/UNINSTALL")) {
 		if (ExistingVxKexVersion > InstallerVxKexVersion) {
 			InfoBoxF(
-				L"A version of VxKex is installed on your computer that is "
+				L"A version of VxKex NEXT is installed on your computer that is "
 				L"newer than the version inside this installer. If you would like "
 				L"to uninstall, use a newer version of the setup application.");
 			ExitProcess(STATUS_VERSION_MISMATCH);
@@ -129,13 +129,21 @@ VOID ProcessCommandLineOptions(
 		} else if (InstallerVxKexVersion > ExistingVxKexVersion) {
 			OperationMode = OperationModeUpgrade;
 		} else if (InstallerVxKexVersion == ExistingVxKexVersion) {
-			InfoBoxF(L"VxKex is already installed. To uninstall, use the Add/Remove Programs control panel.");
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+				InfoBoxF(L"VxKex NEXT 已安装。如需卸载，请使用控制面板中的“卸载程序”选项。");
+			} else {
+				InfoBoxF(L"VxKex NEXT is already installed. To uninstall, use \"Remove Programs\" option in Control Panel.");
+			}
 			ExitProcess(STATUS_ALREADY_REGISTERED);
 		} else if (ExistingVxKexVersion > InstallerVxKexVersion) {
-			InfoBoxF(
-				L"A version of VxKex is installed on your computer that is "
-				L"newer than the version inside this installer. If you would "
-				L"like to downgrade, please uninstall the existing version first.");
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+				InfoBoxF(L"您的计算机上安装的 VxKex NEXT 版本比此安装程序中的版本更新。如需降级，请先卸载现有版本。");
+			} else {
+				InfoBoxF(
+					L"A version of VxKex NEXT is installed on your computer that is "
+					L"newer than the version inside this installer. If you would "
+					L"like to downgrade, please uninstall the existing version first.");
+			}
 			ExitProcess(STATUS_VERSION_MISMATCH);
 		} else {
 			NOT_REACHED;

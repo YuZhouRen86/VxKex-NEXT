@@ -37,10 +37,15 @@ INT_PTR CALLBACK GotoRawDlgProc(
 				EDITBALLOONTIP BalloonTip;
 
 				BalloonTip.cbStruct	= sizeof(BalloonTip);
-				BalloonTip.pszTitle	= L"Invalid Item Number";
-				BalloonTip.pszText	= L"The item number you entered was either out of range "
-									  L"or not displayed by the current set of filters you have "
-									  L"selected.";
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+					BalloonTip.pszTitle	= L"项目编号无效";
+					BalloonTip.pszText	= L"您输入的项目编号超出了范围，或者您选择的当前筛选器集没有显示。";
+				} else {
+					BalloonTip.pszTitle	= L"Invalid Item Number";
+					BalloonTip.pszText	= L"The item number you entered was either out of range "
+										  L"or not displayed by the current set of filters you have "
+										  L"selected.";
+				}
 				BalloonTip.ttiIcon	= TTI_NONE;
 
 				Edit_ShowBalloonTip(GetDlgItem(Window, edt1), &BalloonTip);

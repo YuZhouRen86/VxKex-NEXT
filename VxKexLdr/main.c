@@ -33,11 +33,28 @@
 #include "buildcfg.h"
 #include "vxkexldr.h"
 
+LANGID CURRENTLANG = 0;
+PWSTR FRIENDLYAPPNAME;
+
 VOID EntryPoint(
 	VOID)
 {
 	NTSTATUS Status;
 	PWSTR CommandLine;
+
+	switch (GetUserDefaultUILanguage()) {
+		case MAKELANGID(LANG_CHINESE, SUBLANG_NEUTRAL):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE):
+			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHS;
+			break;
+		default:
+			CURRENTLANG = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_ENG;
+			break;
+	}
+	SetThreadUILanguage(CURRENTLANG);
 
 	KexgApplicationFriendlyName = FRIENDLYAPPNAME;
 
@@ -51,10 +68,17 @@ VOID EntryPoint(
 	ASSERT (NT_SUCCESS(Status));
 
 	if (!NT_SUCCESS(Status)) {
-		CriticalErrorBoxF(
-			L"Propagation could not be initialized.\r\n"
-			L"NTSTATUS error code: %s",
-			KexRtlNtStatusToString(Status));
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
+			CriticalErrorBoxF(
+				L"无法初始化传播。\r\n"
+				L"NTSTATUS 错误代码：%s",
+				KexRtlNtStatusToString(Status));
+		} else {
+			CriticalErrorBoxF(
+				L"Propagation could not be initialized.\r\n"
+				L"NTSTATUS error code: %s",
+				KexRtlNtStatusToString(Status));
+		}
 
 		NOT_REACHED;
 	}
@@ -111,7 +135,8 @@ VOID EntryPoint(
 			if (*CommandLine != '"') {
 				// Expected matching quote, but reached end of string.
 				// Malformed command line without an end quote.
-				CriticalErrorBoxF(L"Malformed command line. A closing quote must be supplied.");
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) CriticalErrorBoxF(L"命令行格式错误。必须加关引号。");
+				else CriticalErrorBoxF(L"Malformed command line. A closing quote must be supplied.");
 				NOT_REACHED;
 			}
 		}

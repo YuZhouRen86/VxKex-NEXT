@@ -27,6 +27,8 @@
 #include <KexComm.h>
 #include <WtsApi32.h>
 
+EXTERN PWSTR FRIENDLYAPPNAME;
+
 BOOLEAN Interactive;
 ULONG SessionId;
 
