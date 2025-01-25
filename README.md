@@ -102,7 +102,7 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **A**: Currently, VxKex NEXT is designed for use only with Windows 7. If you use Windows 8 or 8.1, VxKex NEXT will do nothing useful.  
 **答**：目前，VxKex NEXT 只适用于 Windows 7。如果您使用的是 Windows 8 或 8.1，VxKex NEXT 将毫无用处。
 
-**Q: Can I remove VxKex or VxKex NEXT after upgrating to Windows 8/8.1/10/11?**  
+**Q: Can I remove VxKex or VxKex NEXT after updating to Windows 8/8.1/10/11?**  
 **问：升级到 Windows 8/8.1/10/11 后可以删除 VxKex 或 VxKex NEXT 吗？**
 
 **A**: Yes. If VxKex is installed, update it to VxKex NEXT, then uninstall it from control panel.  
