@@ -55,11 +55,12 @@ FAQ  常见问题
 - Discord Canary
 - ElectronMail
 - Firefox
-- GIMP (3.0.0-RC2)
+- GIMP
 - GitHub Desktop
 - HandBrake
 - Kodi
 - Life is Strange: True Colors 4.25
+- Listary
 - MKVToolNix
 - MongoDB
 - MPC-Qt
