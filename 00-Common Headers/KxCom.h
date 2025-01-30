@@ -25,6 +25,23 @@
 #define WRHF_EMBEDDED_NULLS_COMPUTED					0x10
 #define WRHF_RESERVED_FOR_PREALLOCATED_STRING_BUFFER	0x80000000
 
+typedef enum _DISPATCHERQUEUE_THREAD_TYPE {
+	DQTYPE_THREAD_DEDICATED = 1,
+	DQTYPE_THREAD_CURRENT = 2
+} TYPEDEF_TYPE_NAME(DISPATCHERQUEUE_THREAD_TYPE);
+
+typedef enum _DISPATCHERQUEUE_THREAD_APARTMENTTYPE {
+	DQTAT_COM_NONE = 0,
+	DQTAT_COM_ASTA = 1,
+	DQTAT_COM_STA = 2
+} TYPEDEF_TYPE_NAME(DISPATCHERQUEUE_THREAD_APARTMENTTYPE);
+
+typedef struct _DispatcherQueueOptions {
+	DWORD									dwSize;
+	DISPATCHERQUEUE_THREAD_TYPE				threadType;
+	DISPATCHERQUEUE_THREAD_APARTMENTTYPE	apartmentType;
+} TYPEDEF_TYPE_NAME(DispatcherQueueOptions);
+
 typedef struct _HSTRING_HEADER {
 	ULONG	Flags;		// WRHF_*
 	ULONG	Length;		// Does not include null terminator
@@ -621,3 +638,14 @@ KXCOMAPI HRESULT WINAPI WindowsDeleteStringBuffer(
 KXCOMAPI HRESULT WINAPI WindowsPromoteStringBuffer(
 	IN	HSTRING_BUFFER	BufferHandle,
 	OUT	HSTRING			*NewString);
+
+//
+// firefoxpatch.c
+//
+
+HRESULT WINAPI Ext_CoCreateInstance(
+	IN	REFCLSID	rclsid,
+	IN	LPUNKNOWN	pUnkOuter,
+	IN	DWORD		dwClsContext,
+	IN	REFIID		riid,
+	OUT	LPVOID		*ppv);

@@ -51,6 +51,7 @@ EXPORTS
 	SkipPointerFrameMessages
 	GetPointerDeviceRects
 	EnableMouseInPointer
+	RegisterPointerDeviceNotifications
 
 	;;
 	;; pwrnotfy.c

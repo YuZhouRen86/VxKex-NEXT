@@ -232,6 +232,7 @@
     <ClCompile Include="actfact.c" />
     <ClCompile Include="glprstat.c" />
     <ClCompile Include="dllmain.c" />
+    <ClCompile Include="firefoxpatch.c" />
     <ClCompile Include="forwards.c" />
     <ClCompile Include="launcher.c" />
     <ClCompile Include="mta.c" />

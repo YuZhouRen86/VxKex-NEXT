@@ -530,3 +530,10 @@ KXCOMAPI HRESULT WINAPI WindowsPromoteStringBuffer(
 
 	return S_OK;
 }
+
+KXCOMAPI HRESULT WINAPI CreateDispatcherQueueController(
+	IN	DispatcherQueueOptions	options,
+	OUT	PVOID					*dispatcherQueueController)
+{
+	return E_NOTIMPL;
+};

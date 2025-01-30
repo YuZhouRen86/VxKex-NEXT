@@ -44,6 +44,9 @@
     <ClCompile Include="dcmpstub.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mfplat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxdx.def">

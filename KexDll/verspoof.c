@@ -224,7 +224,9 @@ VOID KexApplyVersionSpoof(
 			AshExeBaseNameIs(L"HandBrake.Worker.exe") ||
 			AshExeBaseNameIs(L"osu!.exe") ||
 			AshExeBaseNameIs(L"paintdotnet.exe") ||
-			AshExeBaseNameIs(L"ChocolateyGui.exe")) {
+			AshExeBaseNameIs(L"ChocolateyGui.exe") ||
+			AshExeBaseNameIs(L"Listary.exe") ||
+			AshExeBaseNameIs(L"Listary.Service.exe")) {
 			
 			return;
 		}

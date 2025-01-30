@@ -16,6 +16,8 @@ EXPORTS
 	SetThreadSelectedCpuSetMasks
 	GetThreadSelectedCpuSets
 	GetThreadSelectedCpuSetMasks
+	SetThreadpoolTimerEx
+	GetSystemCpuSetInformation
 
 	;; process.c
 	GetProcessInformation

@@ -19,7 +19,7 @@
 #pragma comment(linker, "/EXPORT:CoCopyProxy=ole32.CoCopyProxy")
 #pragma comment(linker, "/EXPORT:CoCreateFreeThreadedMarshaler=ole32.CoCreateFreeThreadedMarshaler")
 #pragma comment(linker, "/EXPORT:CoCreateGuid=ole32.CoCreateGuid")
-#pragma comment(linker, "/EXPORT:CoCreateInstance=ole32.CoCreateInstance")
+// #pragma comment(linker, "/EXPORT:CoCreateInstance=ole32.CoCreateInstance")
 #pragma comment(linker, "/EXPORT:CoCreateInstanceEx=ole32.CoCreateInstanceEx")
 #pragma comment(linker, "/EXPORT:CoCreateObjectInContext=ole32.CoCreateObjectInContext")
 #pragma comment(linker, "/EXPORT:CoDeactivateObject=ole32.CoDeactivateObject")

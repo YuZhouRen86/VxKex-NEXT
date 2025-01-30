@@ -348,3 +348,25 @@ KXBASEAPI BOOL WINAPI GetThreadSelectedCpuSetMasks(
 
 	return TRUE;
 }
+
+KXBASEAPI BOOL WINAPI SetThreadpoolTimerEx(
+	IN	OUT	PTP_TIMER	pti,
+	IN		PFILETIME	pftDueTime	OPTIONAL,
+	IN		DWORD		msPeriod,
+	IN		DWORD		msWindowLength	OPTIONAL)
+{
+	BOOL isThreadpoolTimerSet = IsThreadpoolTimerSet(pti);
+	SetThreadpoolTimer(pti, pftDueTime, msPeriod, msWindowLength);
+	return isThreadpoolTimerSet;
+}
+
+KXBASEAPI BOOL WINAPI GetSystemCpuSetInformation(
+	PVOID		Information,
+	ULONG		BufferLength,
+	PULONG		ReturnedLength,
+	HANDLE		Process,
+	ULONG		Flags)
+{
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
+}

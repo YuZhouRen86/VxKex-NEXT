@@ -120,6 +120,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-core-versionansi",					"version"			)
 	DLL_REDIRECT("api-ms-win-core-windowserrorreporting",		"kxbase"			)
 	DLL_REDIRECT("Windows.System.Launcher",						"kxcom"				)
+	DLL_REDIRECT("CoreMessaging",								"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt",						"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt-error",					"kxcom"				)
 	DLL_REDIRECT("api-ms-win-core-winrt-errorprivate",			"kxcom"				)
@@ -192,7 +193,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("ext-ms-win-rtcore-gdi-object",				"gdi32"				)
 	DLL_REDIRECT("ext-ms-win-rtcore-gdi-rgn",					"gdi32"				)
 	DLL_REDIRECT("ext-ms-win-rtcore-ntuser-sysparams",			"kxuser"			)
-	DLL_REDIRECT("ext-ms-win-uiacore",							"uiautomationcore"	)
+	DLL_REDIRECT("ext-ms-win-uiacore",							"kxuia"	)
 };
 
 #undef DLL_REDIRECT

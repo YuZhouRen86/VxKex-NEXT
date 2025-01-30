@@ -636,6 +636,19 @@ KXBASEAPI BOOL WINAPI GetThreadSelectedCpuSetMasks(
 	IN	ULONG			CpuSetMaskArraySize,
 	OUT	PULONG			ReturnCount);
 
+KXBASEAPI BOOL WINAPI SetThreadpoolTimerEx(
+	IN	OUT	PTP_TIMER	pti,
+	IN		PFILETIME	pftDueTime		OPTIONAL,
+	IN		DWORD		msPeriod,
+	IN		DWORD		msWindowLength	OPTIONAL);
+
+KXBASEAPI BOOL WINAPI GetSystemCpuSetInformation(
+	PVOID		Information,
+	ULONG		BufferLength,
+	PULONG		ReturnedLength,
+	HANDLE		Process,
+	ULONG		Flags);
+
 //
 // process.c
 //

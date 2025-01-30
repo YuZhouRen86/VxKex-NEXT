@@ -44,3 +44,10 @@ EXPORTS
 	WindowsPreallocateStringBuffer
 	WindowsDeleteStringBuffer
 	WindowsPromoteStringBuffer
+	CreateDispatcherQueueController
+
+	;;
+	;; firefoxpatch.c
+	;;
+
+	CoCreateInstance							= Ext_CoCreateInstance

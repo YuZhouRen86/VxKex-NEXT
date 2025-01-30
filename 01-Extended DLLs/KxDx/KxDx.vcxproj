@@ -228,6 +228,7 @@
     <ClCompile Include="factory.c" />
     <ClCompile Include="forwards.c" />
     <ClCompile Include="iid.c" />
+    <ClCompile Include="mfplat.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kxdx.def" />

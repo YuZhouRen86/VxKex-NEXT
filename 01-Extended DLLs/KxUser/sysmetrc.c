@@ -42,7 +42,7 @@ INT WINAPI GetSystemMetricsForDpi(
 	case SM_CYMENUCHECK:
 		// These are pixel values that have to be scaled according to DPI.
 		Value *= Dpi;
-		Value /= USER_DEFAULT_SCREEN_DPI;
+		Value /= GetDpiForSystem();
 		break;
 	}
 

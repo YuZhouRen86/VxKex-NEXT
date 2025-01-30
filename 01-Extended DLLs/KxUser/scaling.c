@@ -221,7 +221,8 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 	}
 
 	unless (KexData->IfeoParameters.DisableAppSpecific){
-		if (AshExeBaseNameIs(L"ABDownloadManager.exe")
+		if (AshExeBaseNameIs(L"java.exe")
+			|| AshExeBaseNameIs(L"ABDownloadManager.exe")
 			|| AshExeBaseNameIs(L"jetbrains_client64.exe")
 			|| AshExeBaseNameIs(L"jetbrains-toolbox.exe")
 			|| AshExeBaseNameIs(L"Fleet.exe")
