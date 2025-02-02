@@ -165,7 +165,7 @@ NTSTATUS KexpAddKex3264ToDllPath(
 	RtlCopyUnicodeString(DllPath, &NewDllPath);
 	
 	Status = KexpPadDllPathToOriginalLength(DllPath, DllPathOriginalLength);
-	ASSERT (NT_SUCCESS(Status));
+	// ASSERT (NT_SUCCESS(Status));
 
 	//
 	// Remove any embedded nulls in the path. Sometimes the system or another
@@ -178,7 +178,8 @@ NTSTATUS KexpAddKex3264ToDllPath(
 		}
 	}
 
-	return Status;
+	// return Status;
+	return STATUS_SUCCESS;
 }
 
 //

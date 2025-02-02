@@ -79,16 +79,16 @@ STATIC NTSTATUS KexpInitializeGlobalConfig(
 	HANDLE KeyHandle;
 	UNICODE_STRING KeyName;
 	OBJECT_ATTRIBUTES ObjectAttributes;
-	ULONG DisableLogging;
+	ULONG EnableLogging;
 
 	ULONG QueryTableNumberOfElements;
 	KEX_RTL_QUERY_KEY_MULTIPLE_VARIABLE_TABLE_ENTRY QueryTable[] = {
-		{RTL_CONSTANT_STRING(L"DisableLogging"), 0, 8, &DisableLogging, REG_RESTRICT_DWORD, 0},
+		{RTL_CONSTANT_STRING(L"EnableLogging"), 0, 8, &EnableLogging, REG_RESTRICT_DWORD, 0},
 		GENERATE_QKMV_TABLE_ENTRY_UNICODE_STRING	(KexDir),
 		GENERATE_QKMV_TABLE_ENTRY_UNICODE_STRING	(LogDir)
 	};
 
-	DisableLogging = 0;
+	EnableLogging = 0;
 
 	//
 	// Open the vxkex HKLM key.
@@ -117,7 +117,7 @@ STATIC NTSTATUS KexpInitializeGlobalConfig(
 		&QueryTableNumberOfElements,
 		0);
 
-	if (DisableLogging) {
+	if (!EnableLogging) {
 		_KexData.Flags |= KEXDATA_FLAG_DISABLE_LOGGING;
 	}
 
@@ -144,15 +144,15 @@ STATIC NTSTATUS KexpInitializeLocalConfig(
 	HANDLE KeyHandle;
 	UNICODE_STRING KeyName;
 	OBJECT_ATTRIBUTES ObjectAttributes;
-	ULONG DisableLogging;
+	ULONG EnableLogging;
 
 	ULONG QueryTableNumberOfElements;
 	KEX_RTL_QUERY_KEY_MULTIPLE_VARIABLE_TABLE_ENTRY QueryTable[] = {
-		{RTL_CONSTANT_STRING(L"DisableLogging"), 0, 8, &DisableLogging, REG_RESTRICT_DWORD, 0},
+		{RTL_CONSTANT_STRING(L"EnableLogging"), 0, 8, &EnableLogging, REG_RESTRICT_DWORD, 0},
 		GENERATE_QKMV_TABLE_ENTRY_UNICODE_STRING	(LogDir)
 	};
 
-	DisableLogging = _KexData.Flags & KEXDATA_FLAG_DISABLE_LOGGING;
+	EnableLogging = !(_KexData.Flags & KEXDATA_FLAG_DISABLE_LOGGING);
 
 	Status = RtlOpenCurrentUser(KEY_ENUMERATE_SUB_KEYS, &CurrentUserKeyHandle);
 	if (!NT_SUCCESS(Status)) {
@@ -186,7 +186,7 @@ STATIC NTSTATUS KexpInitializeLocalConfig(
 		&QueryTableNumberOfElements,
 		0);
 
-	if (DisableLogging) {
+	if (!EnableLogging) {
 		_KexData.Flags |= KEXDATA_FLAG_DISABLE_LOGGING;
 	} else {
 		_KexData.Flags &= ~KEXDATA_FLAG_DISABLE_LOGGING;

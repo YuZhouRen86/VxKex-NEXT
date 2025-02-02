@@ -32,12 +32,12 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgQueryLoggingSettings(
 	}
 
 	if (IsEnabled != NULL) {
-		ULONG DisableLogging;
+		ULONG EnableLogging;
 
-		ErrorCode = RegReadI32(VxKexUserKeyHandle, NULL, L"DisableLogging", &DisableLogging);
+		ErrorCode = RegReadI32(VxKexUserKeyHandle, NULL, L"EnableLogging", &EnableLogging);
 		ASSERT (ErrorCode == ERROR_SUCCESS || ErrorCode == ERROR_FILE_NOT_FOUND);
 
-		*IsEnabled = !DisableLogging;
+		*IsEnabled = !!EnableLogging;
 	}
 
 	if (LogDir != NULL) {
@@ -90,7 +90,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgConfigureLoggingSettings(
 	}
 
 	try {
-		ErrorCode = RegWriteI32(VxKexUserKeyHandle, NULL, L"DisableLogging", !Enabled);
+		ErrorCode = RegWriteI32(VxKexUserKeyHandle, NULL, L"EnableLogging", Enabled);
 		ASSERT (ErrorCode == ERROR_SUCCESS);
 
 		if (ErrorCode != ERROR_SUCCESS) {

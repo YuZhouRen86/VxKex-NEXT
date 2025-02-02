@@ -42,7 +42,7 @@ INT WINAPI GetSystemMetricsForDpi(
 	case SM_CYMENUCHECK:
 		// These are pixel values that have to be scaled according to DPI.
 		Value *= Dpi;
-		Value /= GetDpiForSystem();
+		Value /= (INT) GetDpiForSystem();
 		break;
 	}
 
@@ -56,9 +56,27 @@ BOOL WINAPI SystemParametersInfoForDpi(
 	IN		UINT	WinIni,
 	IN		UINT	Dpi)
 {
+	INT SystemDpi = GetDpiForSystem();
+
 	switch (Action) {
 	case SPI_GETICONTITLELOGFONT:
-		return SystemParametersInfo(Action, Parameter, Data, 0);
+		{
+			BOOL Success;
+			PLOGFONT LogFont;
+
+			Success = SystemParametersInfo(Action, Parameter, Data, 0);
+
+			if (Success) {
+				LogFont = (PLOGFONT) Data;
+
+				LogFont->lfWidth *= Dpi;
+				LogFont->lfHeight *= Dpi;
+				LogFont->lfWidth /= SystemDpi;
+				LogFont->lfHeight /= SystemDpi;
+			}
+
+			return Success;
+		}
 	case SPI_GETICONMETRICS:
 		{
 			BOOL Success;
@@ -71,8 +89,8 @@ BOOL WINAPI SystemParametersInfoForDpi(
 
 				IconMetrics->iHorzSpacing *= Dpi;
 				IconMetrics->iVertSpacing *= Dpi;
-				IconMetrics->iHorzSpacing /= USER_DEFAULT_SCREEN_DPI;
-				IconMetrics->iVertSpacing /= USER_DEFAULT_SCREEN_DPI;
+				IconMetrics->iHorzSpacing /= SystemDpi;
+				IconMetrics->iVertSpacing /= SystemDpi;
 			}
 
 			return Success;
@@ -98,16 +116,38 @@ BOOL WINAPI SystemParametersInfoForDpi(
 				NonClientMetrics->iMenuHeight			*= Dpi;
 				NonClientMetrics->iPaddedBorderWidth	*= Dpi;
 
-				NonClientMetrics->iBorderWidth			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iScrollWidth			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iScrollHeight			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iCaptionWidth			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iCaptionHeight		/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iSmCaptionWidth		/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iSmCaptionHeight		/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iMenuWidth			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iMenuHeight			/= USER_DEFAULT_SCREEN_DPI;
-				NonClientMetrics->iPaddedBorderWidth	/= USER_DEFAULT_SCREEN_DPI;
+				NonClientMetrics->lfCaptionFont.lfWidth		*= Dpi;
+				NonClientMetrics->lfCaptionFont.lfHeight	*= Dpi;
+				NonClientMetrics->lfMenuFont.lfWidth		*= Dpi;
+				NonClientMetrics->lfMenuFont.lfHeight		*= Dpi;
+				NonClientMetrics->lfMessageFont.lfWidth		*= Dpi;
+				NonClientMetrics->lfMessageFont.lfHeight	*= Dpi;
+				NonClientMetrics->lfSmCaptionFont.lfWidth	*= Dpi;
+				NonClientMetrics->lfSmCaptionFont.lfHeight	*= Dpi;
+				NonClientMetrics->lfStatusFont.lfWidth		*= Dpi;
+				NonClientMetrics->lfStatusFont.lfHeight		*= Dpi;
+
+				NonClientMetrics->iBorderWidth			/= SystemDpi;
+				NonClientMetrics->iScrollWidth			/= SystemDpi;
+				NonClientMetrics->iScrollHeight			/= SystemDpi;
+				NonClientMetrics->iCaptionWidth			/= SystemDpi;
+				NonClientMetrics->iCaptionHeight		/= SystemDpi;
+				NonClientMetrics->iSmCaptionWidth		/= SystemDpi;
+				NonClientMetrics->iSmCaptionHeight		/= SystemDpi;
+				NonClientMetrics->iMenuWidth			/= SystemDpi;
+				NonClientMetrics->iMenuHeight			/= SystemDpi;
+				NonClientMetrics->iPaddedBorderWidth	/= SystemDpi;
+				
+				NonClientMetrics->lfCaptionFont.lfWidth		/= SystemDpi;
+				NonClientMetrics->lfCaptionFont.lfHeight	/= SystemDpi;
+				NonClientMetrics->lfMenuFont.lfWidth		/= SystemDpi;
+				NonClientMetrics->lfMenuFont.lfHeight		/= SystemDpi;
+				NonClientMetrics->lfMessageFont.lfWidth		/= SystemDpi;
+				NonClientMetrics->lfMessageFont.lfHeight	/= SystemDpi;
+				NonClientMetrics->lfSmCaptionFont.lfWidth	/= SystemDpi;
+				NonClientMetrics->lfSmCaptionFont.lfHeight	/= SystemDpi;
+				NonClientMetrics->lfStatusFont.lfWidth		/= SystemDpi;
+				NonClientMetrics->lfStatusFont.lfHeight		/= SystemDpi;
 			}
 
 			return Success;

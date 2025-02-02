@@ -6,13 +6,15 @@
 
 KEXGDECLSPEC BOOLEAN KEXGAPI ShowPropertiesDialog(
 	IN	PCWSTR	FilePath,
-	IN	INT		ShowControl)
+	IN	INT		ShowControl,
+	IN	BOOL	NoErrorBox)
 {
 	SHELLEXECUTEINFO ShellExecuteInfo;
 
 	RtlZeroMemory(&ShellExecuteInfo, sizeof(ShellExecuteInfo));
 	ShellExecuteInfo.cbSize	= sizeof(ShellExecuteInfo);
 	ShellExecuteInfo.fMask	= SEE_MASK_INVOKEIDLIST | SEE_MASK_NOASYNC | SEE_MASK_UNICODE;
+	if (NoErrorBox) ShellExecuteInfo.fMask |= SEE_MASK_FLAG_NO_UI;
 	ShellExecuteInfo.hwnd	= KexgApplicationMainWindow;
 	ShellExecuteInfo.lpVerb	= L"properties";
 	ShellExecuteInfo.lpFile	= FilePath;

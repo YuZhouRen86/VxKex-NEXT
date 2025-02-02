@@ -208,7 +208,8 @@ KEXGDECLSPEC EXTERN_C HWND KEXGAPI ToolTip(
 
 KEXGDECLSPEC BOOLEAN KEXGAPI ShowPropertiesDialog(
 	IN	PCWSTR	FilePath,
-	IN	INT		ShowControl);
+	IN	INT		ShowControl,
+	IN	BOOL	NoErrorBox);
 
 KEXGDECLSPEC HRESULT KEXGAPI OpenFileLocation(
 	IN	PCWSTR	FilePath,

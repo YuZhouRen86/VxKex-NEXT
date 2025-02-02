@@ -515,7 +515,7 @@ STATIC VOID OpenSelectedItemProperties(
 	ItemIndex = ListView_GetNextItem(ListViewWindow, -1, LVIS_SELECTED);
 	ProgramFullPath = GetProgramFullPathFromListViewIndex(ItemIndex);
 
-	Success = ShowPropertiesDialog(ProgramFullPath, SW_SHOW);
+	Success = ShowPropertiesDialog(ProgramFullPath, SW_SHOW, FALSE);
 	if (!Success) {
 		ULONG ErrorCode;
 
@@ -969,7 +969,8 @@ STATIC INT_PTR CALLBACK DialogProc(
 
 			ShowPropertiesDialog(
 				GetProgramFullPathFromListViewIndex(ItemIndex),
-				SW_SHOWDEFAULT);
+				SW_SHOWDEFAULT,
+				FALSE);
 		} else {
 			return FALSE;
 		}
