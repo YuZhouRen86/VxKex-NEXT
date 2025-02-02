@@ -99,8 +99,8 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **Q: Do I need to have specific updates installed?**  
 **问：我需要安装特定的更新吗？**
 
-**A**: Users of Windows 7 without any updates can still use it, but many programs require Services Pack 1, KB2533623 (DllDirectories update) and KB2670838 (Platform Update) in order to run. It is a good idea to install those updates.  
-**答**：没有任何更新的 Windows 7 用户仍可使用它，但许多程序需要安装 Services Pack 1、KB2533623（DllDirectories 更新）和 KB2670838（平台更新）才能运行。最好安装这些更新。
+**A**: Users of Windows 7 without any updates can still use it, but many programs require Service Pack 1, KB2533623 (DllDirectories update) and KB2670838 (Platform Update) in order to run. It is a good idea to install those updates.  
+**答**：没有任何更新的 Windows 7 用户仍可使用它，但许多程序需要安装 Service Pack 1、KB2533623（DllDirectories 更新）和 KB2670838（平台更新）才能运行。最好安装这些更新。
 
 **Q: If I have ESUs (Extended Security Updates) installed, can I use VxKex NEXT?**  
 **问：如果我安装了 ESU（扩展安全更新），我可以使用 VxKex NEXT 吗？**
