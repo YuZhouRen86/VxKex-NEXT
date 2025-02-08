@@ -137,5 +137,6 @@ Donations  捐赠
 
 If you would like to support development, consider making a donation.  
 如果您想支持开发，请考虑捐款。
+- USDT address: TLZWKpYaH3XK5KYBVWVKQkXbSHUt2XnWJr
 - Alipay 支付宝 / WeChat Pay 微信支付
 ![Scan the QR codes and donate](/donation.png)
