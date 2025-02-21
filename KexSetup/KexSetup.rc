@@ -25,7 +25,7 @@ BEGIN
                 BLOCK "041904E4"
 		BEGIN
 			VALUE "LegalCopyright",				KEX_WEB_STR
-			VALUE "FileDescription",			"Инструмент настройки и обслуживания VxKex NEXT"
+			VALUE "FileDescription",			"Программа установки и обслуживания VxKex NEXT"
 			VALUE "FileVersion",				KEX_VERSION_STR
 			VALUE "InternalName",				"KexSetup"
 			VALUE "OriginalFilename",			"KEXSETUP.EXE"
@@ -197,7 +197,7 @@ BEGIN
 #endif
 
 	// Scene 2. Installation in progress screen
-	LTEXT	"Программа установки сейчас устанавливается VxKex NEXT. Подождите, пока завершится процесс установки.", IDS2GUIDETEXT, 15, 45, MAIN_WINDOW_WIDTH - 30, 10
+	LTEXT	"Программа установки сейчас устанавливает VxKex NEXT. Подождите, пока завершится процесс установки.", IDS2GUIDETEXT, 15, 45, MAIN_WINDOW_WIDTH - 30, 10
 
 	// Scene 3. Installation complete screen
 	LTEXT	"Установка завершена. Чтобы применить VxKex NEXT к программе, нажмите правой кнопкой мыши на EXE и MSI-файл, откройте окно свойств файла и переключитесь на вкладку VxKex.",
