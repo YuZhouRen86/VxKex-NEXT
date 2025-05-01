@@ -1,7 +1,6 @@
 #include "buildcfg.h"
 #include "kxdxp.h"
 #include <KexW32ML.h>
-#include <dxgi.h>
 
 //
 // Function introduced in Windows 8.1.

@@ -1,8 +1,11 @@
 LIBRARY KxDx
 EXPORTS
+	;; debug.c
+	DXGIGetDebugInterface1
+
 	;; factory.c
 	CreateDXGIFactory2
-	
+
 	;; dx11.c
 	D3D11On12CreateDevice
 

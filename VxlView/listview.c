@@ -1,4 +1,4 @@
-#include "vxlview.h"
+ï»¿#include "vxlview.h"
 #include "resource.h"
 #include "backendp.h"
 
@@ -22,13 +22,13 @@ STATIC PWSTR ColumnNames_ENG[] = {
 };
 
 STATIC PWSTR ColumnNames_CHS[] = {
-	L"ÑÏÖØ³Ì¶È",
-	L"ÈÕÆÚ/Ê±¼ä",
-	L"×é¼ş",
-	L"ÎÄ¼ş",
-	L"ĞĞ",
-	L"º¯Êı",
-	L"ÏûÏ¢"
+	L"ä¸¥é‡ç¨‹åº¦",
+	L"æ—¥æœŸ/æ—¶é—´",
+	L"ç»„ä»¶",
+	L"æ–‡ä»¶",
+	L"è¡Œ",
+	L"å‡½æ•°",
+	L"æ¶ˆæ¯"
 };
 
 STATIC CONST USHORT ColumnDefaultWidths[] = {
@@ -263,7 +263,7 @@ VOID HandleListViewContextMenu(
 		EmptyClipboard();
 		SetClipboardData(CF_UNICODETEXT, CopiedText);
 		CloseClipboard();
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"ÎÄ±¾ÒÑ¸´ÖÆµ½¼ôÌù°å¡£");
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"æ–‡æœ¬å·²å¤åˆ¶åˆ°å‰ªè´´æ¿ã€‚");
 		else SetWindowText(StatusBarWindow, L"Text copied to clipboard.");
 	}
 }

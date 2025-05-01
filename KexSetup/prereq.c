@@ -154,7 +154,7 @@ VOID KexSetupCheckForPrerequisites(
 		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 			Buttons[0].pszButtonText = L"取消安装";
 			Buttons[1].pszButtonText = L"仍然继续安装\n"
-				L"如果没有上面列出的先决条件，请注意某些应用程序将无法运行，即使使用 VxKex 也是如此。";
+				L"如果没有上面列出的先决条件，请注意某些应用程序将无法运行，即使使用 VxKex NEXT 也是如此。";
 			StringCchCopy(
 				MainText,
 				ARRAYSIZE(MainText),
@@ -166,7 +166,7 @@ VOID KexSetupCheckForPrerequisites(
 			Buttons[0].pszButtonText = L"Cancel installation";
 			Buttons[1].pszButtonText = L"Continue installation anyway\n"
 				L"Without the prerequisites listed above, be aware that some "
-				L"applications will not work, even with VxKex.";
+				L"applications will not work, even with VxKex NEXT.";
 			StringCchCopy(
 				MainText,
 				ARRAYSIZE(MainText),

@@ -228,7 +228,9 @@
   <ItemGroup>
     <ClCompile Include="autorot.c" />
     <ClCompile Include="blutooth.c" />
+    <ClCompile Include="chromiumpatch.c" />
     <ClCompile Include="dllmain.c" />
+    <ClCompile Include="featurestaging.c" />
     <ClCompile Include="misc.c" />
     <ClCompile Include="pointer.c" />
     <ClCompile Include="pwrnotfy.c" />

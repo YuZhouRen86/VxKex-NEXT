@@ -29,6 +29,9 @@
     <ClCompile Include="forwards.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="debug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="factory.c">
       <Filter>Source Files</Filter>
     </ClCompile>

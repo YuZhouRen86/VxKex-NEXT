@@ -179,11 +179,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buildcfg.h" />
+    <ClInclude Include="C:\Users\lenovo\Pictures\resource.h" />
     <ClInclude Include="kexsetup.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KexSetup.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="KexSetup.ico" />
+    <None Include="VxKexNEXT.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

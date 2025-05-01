@@ -1,7 +1,11 @@
 #define MAIN_WINDOW_WIDTH 333
 #define MAIN_WINDOW_HEIGHT 222
 
-#define IDSTATIC					-1
+#define IDSTATIC1					-1
+#define IDSTATIC2					-2
+#define IDSTATIC3					-3
+#define IDSTATIC4					-4
+#define IDSTATIC5					-5
 
 #define IDI_APPICON					100
 
@@ -13,6 +17,8 @@
 #define IDHDRTEXT					105
 #define IDHDRSUBTEXT				106
 #define IDPROGRESS					107
+
+#define IDI_VXKEXNEXTICON			108
 
 #define IDS1GUIDETEXT				110
 #define IDS1DIRPATH					111

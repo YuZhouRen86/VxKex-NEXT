@@ -25,6 +25,19 @@ EXPORTS
 	BluetoothGATTSetCharacteristicValue
 	BluetoothGATTSetDescriptorValue
 	BluetoothGATTUnregisterEvent
+	
+	;;
+	;; chromiumpatch.c
+	;;
+
+	CommandLineToArgvW					= Ext_CommandLineToArgvW
+	
+	;;
+	;; featurestaging.c
+	;;
+
+	SubscribeFeatureStateChangeNotification
+	UnsubscribeFeatureStateChangeNotification
 
 	;;
 	;; misc.c

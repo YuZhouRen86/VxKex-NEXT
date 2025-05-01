@@ -655,7 +655,7 @@
 #pragma comment(linker, "/EXPORT:GetThreadIdealProcessorEx=kernel32.GetThreadIdealProcessorEx")
 #pragma comment(linker, "/EXPORT:GetThreadLocale=kernel32.GetThreadLocale")
 #pragma comment(linker, "/EXPORT:GetThreadPreferredUILanguages=kernel32.GetThreadPreferredUILanguages")
-#pragma comment(linker, "/EXPORT:GetThreadPriority=kernel32.GetThreadPriority")
+//#pragma comment(linker, "/EXPORT:GetThreadPriority=kernel32.GetThreadPriority")
 #pragma comment(linker, "/EXPORT:GetThreadPriorityBoost=kernel32.GetThreadPriorityBoost")
 #pragma comment(linker, "/EXPORT:GetThreadSelectorEntry=kernel32.GetThreadSelectorEntry")
 #pragma comment(linker, "/EXPORT:GetThreadTimes=kernel32.GetThreadTimes")

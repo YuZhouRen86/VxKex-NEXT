@@ -1,4 +1,4 @@
-#include "buildcfg.h"
+ï»¿#include "buildcfg.h"
 #include "vxlview.h"
 
 INT_PTR CALLBACK GotoRawDlgProc(
@@ -38,8 +38,8 @@ INT_PTR CALLBACK GotoRawDlgProc(
 
 				BalloonTip.cbStruct	= sizeof(BalloonTip);
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-					BalloonTip.pszTitle	= L"ÏîÄ¿±àºÅÎŞĞ§";
-					BalloonTip.pszText	= L"ÄúÊäÈëµÄÏîÄ¿±àºÅ³¬³öÁË·¶Î§£¬»òÕßÄúÑ¡ÔñµÄµ±Ç°É¸Ñ¡Æ÷¼¯Ã»ÓĞÏÔÊ¾¡£";
+					BalloonTip.pszTitle	= L"é¡¹ç›®ç¼–å·æ— æ•ˆ";
+					BalloonTip.pszText	= L"æ‚¨è¾“å…¥çš„é¡¹ç›®ç¼–å·è¶…å‡ºäº†èŒƒå›´ï¼Œæˆ–è€…æ‚¨é€‰æ‹©çš„å½“å‰ç­›é€‰å™¨é›†æ²¡æœ‰æ˜¾ç¤ºã€‚";
 				} else {
 					BalloonTip.pszTitle	= L"Invalid Item Number";
 					BalloonTip.pszText	= L"The item number you entered was either out of range "

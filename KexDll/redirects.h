@@ -33,6 +33,8 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("MFPlat",										"kxdx"				)
 	DLL_REDIRECT("xinput1_4",									"xinput1_3"			)
 
+	DLL_REDIRECT("DWrite",										"dwrw10"			)
+
 	DLL_REDIRECT("powrprof",									"kxmi"				)
 	DLL_REDIRECT("userenv",										"kxmi"				)
 	DLL_REDIRECT("version",										"kxmi"				)
@@ -150,6 +152,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-devices-swdevice",					"kxbase"			)
 	DLL_REDIRECT("api-ms-win-downlevel-kernel32",				"kxbase"			)
 	DLL_REDIRECT("api-ms-win-downlevel-ole32",					"kxcom"				)
+	DLL_REDIRECT("api-ms-win-downlevel-shell32",				"kxuser"			)
 	DLL_REDIRECT("api-ms-win-eventing-classicprovider",			"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-eventing-provider",				"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-kernel32-package-current",			"kxbase"			)

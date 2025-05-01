@@ -2,6 +2,8 @@ LIBRARY KxNet
 EXPORTS
 	;; dns.c
 	DnsQueryEx
+	DnsServiceBrowse
+	DnsServiceBrowseCancel
 
 	;; winhttp.c
 	WinHttpCreateProxyResolver
@@ -12,3 +14,4 @@ EXPORTS
 	;; winsock.c
 	GetHostNameW
 	getaddrinfo = Ext_getaddrinfo
+	GetAddrInfoExCancel

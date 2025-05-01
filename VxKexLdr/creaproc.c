@@ -1,4 +1,4 @@
-#include "buildcfg.h"
+ï»¿#include "buildcfg.h"
 #include "vxkexldr.h"
 
 BOOLEAN VklCreateProcess(
@@ -187,7 +187,7 @@ NoExtendedStartupInfo:
 				// Fall through to the ShellExecute code.
 				NOTHING;
 			} else {
-				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"CreateProcess Ê§°Ü£º%s", Win32ErrorAsString(ErrorCode));
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"CreateProcess å¤±è´¥ï¼š%s", Win32ErrorAsString(ErrorCode));
 				else ErrorBoxF(L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
 				return FALSE;
 			}
@@ -216,7 +216,7 @@ NoExtendedStartupInfo:
 			switch ((ULONG) ShellExecuteError) {
 				case 0:
 				case SE_ERR_OOM:
-					ErrorMessage = L"×ÊÔ´²»×ã¡£";
+					ErrorMessage = L"èµ„æºä¸è¶³ã€‚";
 					break;
 				case ERROR_FILE_NOT_FOUND:
 				case ERROR_PATH_NOT_FOUND:
@@ -224,13 +224,13 @@ NoExtendedStartupInfo:
 					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
 					break;
 				case SE_ERR_ACCESSDENIED:
-					ErrorMessage = L"·ÃÎÊ±»¾Ü¾ø¡£";
+					ErrorMessage = L"è®¿é—®è¢«æ‹’ç»ã€‚";
 					break;
 				case SE_ERR_DLLNOTFOUND:
-					ErrorMessage = L"Î´ÕÒµ½ DLL¡£";
+					ErrorMessage = L"æœªæ‰¾åˆ° DLLã€‚";
 					break;
 				case SE_ERR_SHARE:
-					ErrorMessage = L"·¢ÉúÎ¥¹æ¹²Ïí¡£";
+					ErrorMessage = L"å‘ç”Ÿè¿è§„å…±äº«ã€‚";
 					break;
 				case SE_ERR_ASSOCINCOMPLETE:
 					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
@@ -249,10 +249,10 @@ NoExtendedStartupInfo:
 					break;
 				default:
 					ASSERT (FALSE);
-					ErrorMessage = L"Î´Öª´íÎó¡£";
+					ErrorMessage = L"æœªçŸ¥é”™è¯¯ã€‚";
 					break;
 			}
-			ErrorBoxF(L"ShellExecute Ê§°Ü£º%s", ErrorMessage);
+			ErrorBoxF(L"ShellExecute å¤±è´¥ï¼š%s", ErrorMessage);
 		} else {
 			switch ((ULONG) ShellExecuteError) {
 				case 0:

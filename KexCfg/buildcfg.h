@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 
 #pragma comment(lib, "wtsapi32.lib")
 #pragma comment(lib, "uxtheme.lib")
@@ -11,4 +11,4 @@
 #define KEX_ENV_WIN32
 #define KEX_COMPONENT L"KexCfg"
 #define FRIENDLYAPPNAME_ENG L"VxKex NEXT Configuration Tool"
-#define FRIENDLYAPPNAME_CHS L"VxKex NEXT ≈‰÷√π§æﬂ"
+#define FRIENDLYAPPNAME_CHS L"VxKex NEXT ÈÖçÁΩÆÂ∑•ÂÖ∑"

@@ -1,7 +1,7 @@
-#pragma once
+Ôªø#pragma once
 
 #define FRIENDLYAPPNAME_ENG L"VxKex NEXT Installer"
-#define FRIENDLYAPPNAME_CHS L"VxKex NEXT ∞≤◊∞≥Ã–Ú"
+#define FRIENDLYAPPNAME_CHS L"VxKex NEXT ÂÆâË£ÖÁ®ãÂ∫è"
 #define KEX_COMPONENT L"KexSetup"
 #define KEX_ENV_WIN32
 #define KEX_TARGET_TYPE_EXE

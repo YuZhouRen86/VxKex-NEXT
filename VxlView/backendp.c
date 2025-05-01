@@ -1,4 +1,4 @@
-#include "vxlview.h"
+ï»¿#include "vxlview.h"
 #include <DbgHelp.h>
 #include "resource.h"
 #include "backendp.h"
@@ -132,7 +132,7 @@ NTSTATUS NTAPI ExportLogThreadProc(
 		//
 
 		if (CompletedPercentage != PreviousCompletedPercentage) {
-			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowTextF(StatusBarWindow, L"ÕıÔÚµ¼³öÈÕÖ¾ÌõÄ¿¡£ÇëÉÔºò...£¨%ld%%£©", CompletedPercentage);
+			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowTextF(StatusBarWindow, L"æ­£åœ¨å¯¼å‡ºæ—¥å¿—æ¡ç›®ã€‚è¯·ç¨å€™...ï¼ˆ%ld%%ï¼‰", CompletedPercentage);
 			else SetWindowTextF(StatusBarWindow, L"Exporting log entries. Please wait... (%ld%%)", CompletedPercentage);
 			PreviousCompletedPercentage = CompletedPercentage;
 		}
@@ -145,9 +145,9 @@ Finished:
 	SetClassLongPtr(MainWindow, GCLP_HCURSOR, (LONG_PTR) LoadCursor(NULL, IDC_ARROW));
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-		SetWindowText(StatusBarWindow, L"Íê³É¡£");
-		if (NT_SUCCESS(Status)) InfoBoxF(L"µ¼³öÍê³É¡£");
-		else ErrorBoxF(L"µ¼³öÈÕÖ¾Ê§°Ü£¨%s£©", KexRtlNtStatusToString(Status));
+		SetWindowText(StatusBarWindow, L"å®Œæˆã€‚");
+		if (NT_SUCCESS(Status)) InfoBoxF(L"å¯¼å‡ºå®Œæˆã€‚");
+		else ErrorBoxF(L"å¯¼å‡ºæ—¥å¿—å¤±è´¥ï¼ˆ%sï¼‰", KexRtlNtStatusToString(Status));
 	} else {
 		SetWindowText(StatusBarWindow, L"Finished.");
 		if (NT_SUCCESS(Status)) InfoBoxF(L"Export complete.");

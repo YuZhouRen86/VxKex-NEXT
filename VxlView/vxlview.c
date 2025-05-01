@@ -1,4 +1,4 @@
-#include "vxlview.h"
+ï»¿#include "vxlview.h"
 #include "resource.h"
 
 LANGID CURRENTLANG = 0;
@@ -181,7 +181,7 @@ INT_PTR CALLBACK MainWndProc(
 				ChangedItemInfo = (LPNMLISTVIEW) LParam;
 				if (ChangedItemInfo->uNewState & LVIS_FOCUSED) {
 					if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-						SetWindowTextF(StatusBarWindow, L"ÒÑÑ¡ÔñÌõÄ¿ #%d¡£", 
+						SetWindowTextF(StatusBarWindow, L"å·²é€‰æ‹©æ¡ç›® #%dã€‚", 
 							GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
 					} else {
 						SetWindowTextF(StatusBarWindow, L"Entry #%d selected.", 

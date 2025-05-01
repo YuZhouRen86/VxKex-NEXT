@@ -1,4 +1,4 @@
-#include "vxlview.h"
+ï»¿#include "vxlview.h"
 #include "resource.h"
 #include "backendp.h"
 
@@ -13,13 +13,13 @@ STATIC PWSTR FailureFormattingText_ENG[] = {
 };
 
 STATIC PWSTR FailureFormattingText_CHS[] = {
-	L"ÎÞ·¨½«¡°%s¡±×ª»»Îª NT ÎÄ¼þÃû£¨%s£©",
-	L"ÎÞ·¨´ò¿ª %s£¨%s£©",
-	L"²éÑ¯ÓÐ¹Ø %s µÄÐÅÏ¢Ê§°Ü¡£%s¡£",
-	L"ÄúÑ¡ÔñµÄÈÕÖ¾ÎÄ¼þÖÐÃ»ÓÐÌõÄ¿¡£\r\n"
-	L"ÇëÑ¡ÔñÒ»¸ö·Ç¿ÕµÄÈÕÖ¾ÎÄ¼þ¡£",
-	L"Î´ÄÜ·ÖÅäÄÚ´æ´æ´¢ÈÕÖ¾ÌõÄ¿»º´æ¡£"
-	L"Çë³¢ÊÔ¹Ø±ÕÆäËûÓ¦ÓÃ³ÌÐò»òä¯ÀÀÆ÷±êÇ©Ò³£¬È»ºóÖØÊÔ¡£",
+	L"æ— æ³•å°†â€œ%sâ€è½¬æ¢ä¸º NT æ–‡ä»¶åï¼ˆ%sï¼‰",
+	L"æ— æ³•æ‰“å¼€ %sï¼ˆ%sï¼‰",
+	L"æŸ¥è¯¢æœ‰å…³ %s çš„ä¿¡æ¯å¤±è´¥ã€‚%sã€‚",
+	L"æ‚¨é€‰æ‹©çš„æ—¥å¿—æ–‡ä»¶ä¸­æ²¡æœ‰æ¡ç›®ã€‚\r\n"
+	L"è¯·é€‰æ‹©ä¸€ä¸ªéžç©ºçš„æ—¥å¿—æ–‡ä»¶ã€‚",
+	L"æœªèƒ½åˆ†é…å†…å­˜å­˜å‚¨æ—¥å¿—æ¡ç›®ç¼“å­˜ã€‚"
+	L"è¯·å°è¯•å…³é—­å…¶ä»–åº”ç”¨ç¨‹åºæˆ–æµè§ˆå™¨æ ‡ç­¾é¡µï¼Œç„¶åŽé‡è¯•ã€‚",
 };
 
 //
@@ -94,7 +94,7 @@ BOOLEAN OpenLogFile(
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) FailureFormattingText = FailureFormattingText_CHS;
 	else FailureFormattingText = FailureFormattingText_ENG;
 
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"ÕýÔÚ´ò¿ªÎÄ¼þ£¬ÇëÉÔºò...");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"æ­£åœ¨æ‰“å¼€æ–‡ä»¶ï¼Œè¯·ç¨å€™...");
 	else SetWindowText(StatusBarWindow, L"Opening file, please wait...");
 
 	//
@@ -195,8 +195,8 @@ BOOLEAN OpenLogFile(
 	UpdateMainMenu();
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-		SetWindowText(StatusBarWindow, L"Íê³É¡£");
-		StatusBar_SetTextF(StatusBarWindow, 1, L"ÎÄ¼þÖÐÓÐ %lu ¸öÌõÄ¿",
+		SetWindowText(StatusBarWindow, L"å®Œæˆã€‚");
+		StatusBar_SetTextF(StatusBarWindow, 1, L"æ–‡ä»¶ä¸­æœ‰ %lu ä¸ªæ¡ç›®",
 						   State->NumberOfLogEntries);
 	} else {
 		SetWindowText(StatusBarWindow, L"Finished.");
@@ -215,7 +215,7 @@ OpenFailure:
 		VxlCloseLog(&NewLogHandle);
 	}
 
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"ÎÞ·¨´ò¿ªÈÕÖ¾ÎÄ¼þ¡£");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"æ— æ³•æ‰“å¼€æ—¥å¿—æ–‡ä»¶ã€‚");
 	else SetWindowText(StatusBarWindow, L"Couldn't open the log file.");
 	return FALSE;
 }
@@ -235,8 +235,8 @@ BOOLEAN OpenLogFileWithPrompt(
 	OpenDialogInfo.lStructSize				= sizeof(OpenDialogInfo);
 	OpenDialogInfo.hwndOwner				= MainWindow;
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-		OpenDialogInfo.lpstrFilter				= L"VXLog ÎÄ¼þ£¨*.vxl£©\0*.vxl\0ËùÓÐÎÄ¼þ£¨*.*£©\0*.*\0";
-		OpenDialogInfo.lpstrTitle				= L"Ñ¡ÔñÈÕÖ¾ÎÄ¼þ...";
+		OpenDialogInfo.lpstrFilter				= L"VXLog æ–‡ä»¶ï¼ˆ*.vxlï¼‰\0*.vxl\0æ‰€æœ‰æ–‡ä»¶ï¼ˆ*.*ï¼‰\0*.*\0";
+		OpenDialogInfo.lpstrTitle				= L"é€‰æ‹©æ—¥å¿—æ–‡ä»¶...";
 	} else {
 		OpenDialogInfo.lpstrFilter				= L"VXLog Files (*.vxl)\0*.vxl\0All Files (*.*)\0*.*\0";
 		OpenDialogInfo.lpstrTitle				= L"Select a log file...";
@@ -377,7 +377,7 @@ BOOLEAN ExportLogWithPrompt(
 
 	SaveDialogInfo.lStructSize				= sizeof(SaveDialogInfo);
 	SaveDialogInfo.hwndOwner				= MainWindow;
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SaveDialogInfo.lpstrFilter				= L"ÎÄ±¾ÎÄ¼þ£¨*.txt£©\0*.txt\0ËùÓÐÎÄ¼þ£¨*.*£©\0*.*\0";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SaveDialogInfo.lpstrFilter				= L"æ–‡æœ¬æ–‡ä»¶ï¼ˆ*.txtï¼‰\0*.txt\0æ‰€æœ‰æ–‡ä»¶ï¼ˆ*.*ï¼‰\0*.*\0";
 	else SaveDialogInfo.lpstrFilter				= L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
 	SaveDialogInfo.nMaxFile					= ARRAYSIZE(SaveFileName);
 	SaveDialogInfo.lpstrFile				= SaveFileName;

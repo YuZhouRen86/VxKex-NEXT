@@ -225,6 +225,7 @@
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="dx11.c" />
     <ClCompile Include="dx12stub.c" />
+    <ClCompile Include="debug.c" />
     <ClCompile Include="factory.c" />
     <ClCompile Include="forwards.c" />
     <ClCompile Include="iid.c" />

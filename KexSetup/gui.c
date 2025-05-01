@@ -42,6 +42,8 @@ HANDLE ElevatedProcess = NULL;
 #define SCENE_UPDATING					8
 #define SCENE_UPDATE_COMPLETE			9
 
+typedef HRESULT (WINAPI *PFNENABLETHEMEDIALOGTEXTURE)(HWND, DWORD);
+
 BOOLEAN HideAndDisableControl(
 	IN	USHORT	ControlId)
 {
@@ -450,6 +452,7 @@ HGDIOBJ SetStaticControlBackground(
 	case IDHDRTEXT:
 		SelectObject(DeviceContext, BoldFont);
 		// fall through
+	case IDSTATIC2:
 	case IDHDRSUBTEXT:
 		// Note: don't use hollow brush, that causes glitches when you change the text
 		// in a text control.
@@ -466,6 +469,8 @@ HGDIOBJ SetStaticControlBackground(
 		SetTextColor(DeviceContext, GetSysColor(COLOR_WINDOWTEXT));
 		SetBkColor(DeviceContext, GetSysColor(COLOR_WINDOW));
 		return GetSysColorBrush(COLOR_WINDOW);
+	case IDNEXT:
+		return CreateSolidBrush(RGB(13, 0, 0));
 	}
 
 	return FALSE;
@@ -523,8 +528,18 @@ INT_PTR CALLBACK DialogProc(
 	IN	LPARAM	LParam)
 {
 	if (Message == WM_INITDIALOG) {
+		HMODULE hUxTheme;
+		PFNENABLETHEMEDIALOGTEXTURE pfnEnableThemeDialogTexture;
+		BOOL pbEnabled = FALSE;
+
 		MainWindow = Window;
 		KexgApplicationMainWindow = MainWindow;
+
+		hUxTheme = LoadLibrary(L"uxtheme.dll");
+		pfnEnableThemeDialogTexture = (PFNENABLETHEMEDIALOGTEXTURE) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
+		if (pfnEnableThemeDialogTexture) pfnEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+		FreeLibrary(hUxTheme);
+
 		CurrentScene = 0;
 
 		SetScene((OperationMode * 3) + 1);
@@ -544,6 +559,16 @@ INT_PTR CALLBACK DialogProc(
 					L"for applications. VxKex NEXT will still be disabled for these applications and you will "
 					L"need to re-enable VxKex NEXT if you decide to reinstall.");
 			}
+		}
+	} else if (Message == WM_DRAWITEM) {
+		LPDRAWITEMSTRUCT lpDrawItemStruct = (LPDRAWITEMSTRUCT) LParam;
+		if (lpDrawItemStruct->CtlID == IDSTATIC4) {
+			RECT Rect;
+			HDC hdc = lpDrawItemStruct->hDC;
+			HBRUSH hBrush = CreateSolidBrush(RGB(225, 235, 249));
+			GetClientRect(lpDrawItemStruct->hwndItem, &Rect);
+			FillRect(hdc, &Rect, hBrush);
+			DeleteObject(hBrush);
 		}
 	} else if (Message == WM_CLOSE) {
 		DialogProc(Window, WM_COMMAND, IDCANCEL2, 0);

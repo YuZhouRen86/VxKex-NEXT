@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #define NOGDICAPMASKS
 #define NOVIRTUALKEYCODES
@@ -37,4 +37,4 @@
 #define KEX_TARGET_TYPE_EXE
 #define KEX_ENV_WIN32
 #define FRIENDLYAPPNAME_ENG L"VxKex NEXT Log Viewer"
-#define FRIENDLYAPPNAME_CHS L"VxKex NEXT ÈÕÖ¾²é¿´Æ÷"
+#define FRIENDLYAPPNAME_CHS L"VxKex NEXT æ—¥å¿—æŸ¥çœ‹å™¨"

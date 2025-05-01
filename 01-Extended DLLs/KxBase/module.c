@@ -63,6 +63,50 @@ STATIC INLINE VOID InterceptedKernelBaseLoaderCallReturn(
 	}
 }
 
+STATIC NTSTATUS BasepGetDllDirectoryProcedure(
+	IN		PCSTR	ProcedureName,
+	IN OUT	PPVOID	ProcedureAddress)
+{
+	NTSTATUS Status;
+
+	Status = STATUS_SUCCESS;
+
+	ASSERT (ProcedureName != NULL);
+	ASSERT (ProcedureAddress != NULL);
+
+	if (!*ProcedureAddress) {
+		ANSI_STRING ProcedureNameAS;
+
+		Status = RtlInitAnsiStringEx(&ProcedureNameAS, ProcedureName);
+		if (!NT_SUCCESS(Status)) {
+			return Status;
+		}
+
+		ASSUME (KexData->BaseDllBase != NULL);
+
+		Status = LdrGetProcedureAddress(
+			KexData->BaseDllBase,
+			&ProcedureNameAS,
+			0,
+			ProcedureAddress);
+
+		if (!NT_SUCCESS(Status)) {
+			KexLogErrorEvent(
+				L"%hs is not available on this computer\r\n\r\n"
+				L"This function is only available on Windows 7 with the KB2533623 "
+				L"security update.", ProcedureName);
+
+			BaseSetLastNTError(Status);
+		}
+	}
+
+	if (NT_SUCCESS(Status)) {
+		ASSUME (*ProcedureAddress != NULL);
+	}
+
+	return Status;
+}
+
 KXBASEAPI HMODULE WINAPI Ext_GetModuleHandleA(
 	IN	PCSTR	ModuleName)
 {
@@ -167,9 +211,23 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExA(
 {
 	HMODULE ModuleHandle;
 	BOOLEAN ReEntrant;
+	STATIC BOOL (WINAPI *SetDefaultDllDirectories) (ULONG) = NULL;
 
 	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
+	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
+	if (SetDefaultDllDirectories) {
+		ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
+	} else {
+		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
+
+		ModuleHandle = NULL;
+		if (((0xFFFFE000 | 0x00000004) & Flags) || ((LOAD_WITH_ALTERED_SEARCH_PATH & Flags) && (LoadLibrarySearchMarks & Flags)) || FileName == NULL || FileHandle) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+		} else {
+			Flags &= ~LoadLibrarySearchMarks;
+			ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
+		}
+	}
 	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
 
 	return ModuleHandle;
@@ -182,9 +240,23 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 {
 	HMODULE ModuleHandle;
 	BOOLEAN ReEntrant;
+	STATIC BOOL (WINAPI *SetDefaultDllDirectories) (ULONG) = NULL;
 
 	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
+	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
+	if (SetDefaultDllDirectories) {
+		ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
+	} else {
+		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
+
+		ModuleHandle = NULL;
+		if (((0xFFFFE000 | 0x00000004) & Flags) || ((LOAD_WITH_ALTERED_SEARCH_PATH & Flags) && (LoadLibrarySearchMarks & Flags)) || FileName == NULL || FileHandle) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+		} else {
+			Flags &= ~LoadLibrarySearchMarks;
+			ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
+		}
+	}
 	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
 
 	return ModuleHandle;
@@ -232,50 +304,6 @@ KXBASEAPI HMODULE WINAPI LoadPackagedLibrary(
 	return NULL;
 }
 
-STATIC NTSTATUS BasepGetDllDirectoryProcedure(
-	IN		PCSTR	ProcedureName,
-	IN OUT	PPVOID	ProcedureAddress)
-{
-	NTSTATUS Status;
-
-	Status = STATUS_SUCCESS;
-
-	ASSERT (ProcedureName != NULL);
-	ASSERT (ProcedureAddress != NULL);
-
-	if (!*ProcedureAddress) {
-		ANSI_STRING ProcedureNameAS;
-
-		Status = RtlInitAnsiStringEx(&ProcedureNameAS, ProcedureName);
-		if (!NT_SUCCESS(Status)) {
-			return Status;
-		}
-
-		ASSUME (KexData->BaseDllBase != NULL);
-
-		Status = LdrGetProcedureAddress(
-			KexData->BaseDllBase,
-			&ProcedureNameAS,
-			0,
-			ProcedureAddress);
-
-		if (!NT_SUCCESS(Status)) {
-			KexLogErrorEvent(
-				L"%hs is not available on this computer\r\n\r\n"
-				L"This function is only available on Windows 7 with the KB2533623 "
-				L"security update.", ProcedureName);
-
-			BaseSetLastNTError(Status);
-		}
-	}
-
-	if (NT_SUCCESS(Status)) {
-		ASSUME (*ProcedureAddress != NULL);
-	}
-
-	return Status;
-}
-
 KXBASEAPI DLL_DIRECTORY_COOKIE WINAPI Ext_AddDllDirectory(
 	IN	PCWSTR	NewDirectory)
 {
@@ -286,7 +314,7 @@ KXBASEAPI DLL_DIRECTORY_COOKIE WINAPI Ext_AddDllDirectory(
 	if (AddDllDirectory) {
 		return AddDllDirectory(NewDirectory);
 	} else {
-		return NULL;
+		return (DLL_DIRECTORY_COOKIE) 1;
 	}
 }
 
@@ -300,7 +328,7 @@ KXBASEAPI BOOL WINAPI Ext_RemoveDllDirectory(
 	if (RemoveDllDirectory) {
 		return RemoveDllDirectory(Cookie);
 	} else {
-		return FALSE;
+		return TRUE;
 	}
 }
 
@@ -311,10 +339,14 @@ KXBASEAPI BOOL WINAPI Ext_SetDefaultDllDirectories(
 
 	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
 
+	DirectoryFlags |= LOAD_LIBRARY_SEARCH_USER_DIRS;
 	if (SetDefaultDllDirectories) {
-		DirectoryFlags |= LOAD_LIBRARY_SEARCH_USER_DIRS;
 		return SetDefaultDllDirectories(DirectoryFlags);
 	} else {
-		return FALSE;
+		if (DirectoryFlags & ~(LOAD_LIBRARY_SEARCH_APPLICATION_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+		return TRUE;
 	}
 }

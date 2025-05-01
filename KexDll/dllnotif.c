@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+ï»¿///////////////////////////////////////////////////////////////////////////////
 //
 // Module Name:
 //
@@ -71,16 +71,20 @@ VOID NTAPI KexDllNotificationCallback(
 		}
 		if (DefaultUILanguageId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 			WCHAR Message[3000];
-			StringCchPrintf(Message, 3000, L"¼ì²âµ½ MacType ÕıÔÚÔËĞĞ¡£´Ë³ÌĞòÒÑÆôÓÃ VxKex ¼æÈİ²ã£¬VxKex Óë MacType Í¬Ê±ÆôÓÃ¿ÉÄÜµ¼ÖÂ³ÌĞò±ÀÀ£¡£"
+			StringCchPrintf(Message, 3000, L"æ£€æµ‹åˆ° MacType æ­£åœ¨è¿è¡Œã€‚æ­¤ç¨‹åºå·²å¯ç”¨ VxKex NEXT å…¼å®¹å±‚ï¼ŒVxKex NEXT ä¸ MacType åŒæ—¶å¯ç”¨å¯èƒ½å¯¼è‡´ç¨‹åºå´©æºƒã€‚"
 				L"\n\n"
-				L"ÒªÎª´Ë½ø³Ì½ûÓÃ MacType £¬Çë´ò¿ª MacType Wizard £¬µ¥»÷¡°½ø³Ì¹ÜÀí¡±£¬È¡Ïû¹´Ñ¡¡°Òş²Ø¸ßÈ¨ÏŞ½ø³Ì¡±£¬ÔÚ¡°½ø³ÌÃû¡±Ò»À¸ÖĞÕÒµ½¡°%s¡±£¨Ò»°ãÎ»ÓÚÁĞ±íµ×²¿£©²¢ÓÒ»÷£¬¹´Ñ¡¡°ÅÅ³ı´Ë½ø³Ì¡±¡£ÉèÖÃ½«ÔÚÖØĞÂÆô¶¯ MacType ºóÉúĞ§¡£"
+				L"è¦ä¸ºæ­¤è¿›ç¨‹ç¦ç”¨ MacType ï¼Œè¯·æ‰“å¼€ MacType Wizard ï¼Œå•å‡»â€œè¿›ç¨‹ç®¡ç†â€ï¼Œå–æ¶ˆå‹¾é€‰â€œéšè—é«˜æƒé™è¿›ç¨‹â€ï¼Œåœ¨â€œè¿›ç¨‹åâ€ä¸€æ ä¸­æ‰¾åˆ°â€œ%sâ€ï¼ˆä¸€èˆ¬ä½äºåˆ—è¡¨åº•éƒ¨ï¼‰å¹¶å³å‡»ï¼Œå‹¾é€‰â€œæ’é™¤æ­¤è¿›ç¨‹â€ã€‚è®¾ç½®å°†åœ¨é‡æ–°å¯åŠ¨ MacType åç”Ÿæ•ˆã€‚"
 				L"\n\n"
-				L"½¨Òé½áÊø´Ë½ø³Ì£¬ÒÔ·ÀÖ¹³ÌĞò½øÒ»²½µÄ´íÎó¡£ÊÇ·ñÏëÒªÁ¢¼´½áÊø´Ë½ø³Ì£¿", ImageBaseName);
-			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex Ó¦ÓÃ³ÌĞò¾¯¸æ", Message);
+				L"å»ºè®®ç»“æŸæ­¤è¿›ç¨‹ï¼Œä»¥é˜²æ­¢ç¨‹åºè¿›ä¸€æ­¥çš„é”™è¯¯ã€‚æ˜¯å¦æƒ³è¦ç«‹å³ç»“æŸæ­¤è¿›ç¨‹ï¼Ÿ", ImageBaseName);
+			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex NEXT åº”ç”¨ç¨‹åºè­¦å‘Š", Message);
 		} else {
-			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex Application Warning", L"VxKex could not start because MacType is running. Please quit MacType before running this program."
-				L"\n"
-				L"It is recommanded to terminate this process now.");
+			WCHAR Message[3000];
+			StringCchPrintf(Message, 3000, L"Detected MacType is running. VxKex NEXT compatibility layer is enabled for this program, enabling VxKex NEXT and MacType at the same time may cause the program to crash."
+				L"\n\n"
+				L"To disable MacType for this process, please open MacType Wizard, click \"Process Manager\", uncheck \"Hide inaccessable system processes\", locate \"%s\" (usually located at the bottom of the list) in the \"Process name\" column, right-click it, and select \"Exclude this process\". The settings will take effect after restarting MacType."
+				L"\n\n"
+				L"It is recommended to terminate this process to prevent further program errors. Do you want to terminate this process immediately?", ImageBaseName);
+			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex NEXT Application Warning", Message);
 		}
 		if (Response == 8) {
 			NtTerminateProcess(NtCurrentProcess(), STATUS_KEXDLL_INITIALIZATION_FAILURE);

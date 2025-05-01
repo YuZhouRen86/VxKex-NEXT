@@ -1,4 +1,4 @@
-#include "vxlview.h"
+Ôªø#include "vxlview.h"
 #include "resource.h"
 #include "backendp.h"
 
@@ -39,7 +39,7 @@ VOID ResetDetailsWindow(
 	SetDlgItemText(DetailsWindow, IDC_DETAILSSEVERITYTEXT, L"");
 	SetDlgItemText(DetailsWindow, IDC_DETAILSDATETIMETEXT, L"");
 	SetDlgItemText(DetailsWindow, IDC_DETAILSSOURCETEXT, L"");
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"£®Œ¥—°‘Ò»’÷æÃıƒø°££©");
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"ÔºàÊú™ÈÄâÊã©Êó•ÂøóÊù°ÁõÆ„ÄÇÔºâ");
 	else SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"(No log entry selected.)");
 }
 
@@ -74,7 +74,7 @@ VOID PopulateDetailsWindow(
 	HWND DetailsMessageTextWindow;
 	PCWSTR SourceFormattingText;
 
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SourceFormattingText = L"°æ%04lx£∫%04lx°ø£¨%s£®%s£¨µ⁄ %lu ––£¨‘⁄∫Ø ˝ %s ÷–£©";
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SourceFormattingText = L"„Äê%04lxÔºö%04lx„ÄëÔºå%sÔºà%sÔºåÁ¨¨ %lu Ë°åÔºåÂú®ÂáΩÊï∞ %s ‰∏≠Ôºâ";
 	else SourceFormattingText = L"[%04lx:%04lx], %s (%s, line %lu, in function %s)";
 
 	CacheEntry = GetLogEntry(EntryIndex);

@@ -47,12 +47,12 @@ STATIC NTSTATUS AshpSetIsChromiumProcess(
 	// Will AV if we don't use the win10 dwrite.
 	//
 
-	Status = AshSelectDWriteImplementation(DWriteWindows10Implementation);
+	/*Status = AshSelectDWriteImplementation(DWriteWindows10Implementation);
 	ASSERT (NT_SUCCESS(Status));
 
 	if (!NT_SUCCESS(Status)) {
 		return Status;
-	}
+	}*/
 
 	//
 	// Ensure the random number generator is initialized as soon as possible.

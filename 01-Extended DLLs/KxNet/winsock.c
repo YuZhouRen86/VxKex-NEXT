@@ -74,3 +74,9 @@ KXNETAPI INT WINAPI Ext_getaddrinfo(
 
 	return getaddrinfo(NodeName, ServerName, Hints, Results);
 }
+
+KXNETAPI INT WINAPI GetAddrInfoExCancel(
+	IN	LPHANDLE	lpHandle)
+{
+	return WSA_INVALID_HANDLE;
+}

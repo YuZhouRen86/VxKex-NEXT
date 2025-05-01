@@ -1,6 +1,27 @@
 #include "buildcfg.h"
 #include "kxnetp.h"
 
+typedef struct _DNS_SERVICE_CANCEL {
+	PVOID	reserved;
+} TYPEDEF_TYPE_NAME(DNS_SERVICE_CANCEL);
+
+typedef void WINAPI DNS_SERVICE_BROWSE_CALLBACK(DWORD, PVOID, PDNS_RECORD);
+typedef DNS_SERVICE_BROWSE_CALLBACK *PDNS_SERVICE_BROWSE_CALLBACK;
+
+typedef void WINAPI DNS_QUERY_COMPLETION_ROUTINE(PVOID, PDNS_QUERY_RESULT);
+typedef DNS_QUERY_COMPLETION_ROUTINE *PDNS_QUERY_COMPLETION_ROUTINE;
+
+typedef struct _DNS_SERVICE_BROWSE_REQUEST {
+	ULONG	Version;
+	ULONG	InterfaceIndex;
+	PCWSTR	QueryName;
+	union {
+		PDNS_SERVICE_BROWSE_CALLBACK pBrowseCallback;
+		DNS_QUERY_COMPLETION_ROUTINE *pBrowseCallbackV2;
+	};
+	PVOID	pQueryContext;
+} TYPEDEF_TYPE_NAME(DNS_SERVICE_BROWSE_REQUEST);
+
 //
 // This DnsQueryEx implementation mainly exists to support Qt6Network.
 // It does not support asynchronous queries. If we need to support any
@@ -88,4 +109,21 @@ KXNETAPI DNS_STATUS WINAPI DnsQueryEx(
 	Result->Reserved = NULL;
 
 	return DnsStatus;
+}
+
+KXNETAPI DNS_STATUS WINAPI DnsServiceBrowse(
+	PDNS_SERVICE_BROWSE_REQUEST	pRequest,
+	PDNS_SERVICE_CANCEL			pCancelHandle)
+{
+	KexLogWarningEvent(L"Unimplemented DNSAPI function called");
+	KexDebugCheckpoint();
+	return ERROR_SUCCESS;
+}
+
+KXNETAPI DNS_STATUS WINAPI DnsServiceBrowseCancel(
+	PDNS_SERVICE_CANCEL	pCancelHandle)
+{
+	KexLogWarningEvent(L"Unimplemented DNSAPI function called");
+	KexDebugCheckpoint();
+	return ERROR_SUCCESS;
 }

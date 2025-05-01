@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+ï»¿///////////////////////////////////////////////////////////////////////////////
 //
 // Module Name:
 //
@@ -70,8 +70,8 @@ VOID EntryPoint(
 	if (!NT_SUCCESS(Status)) {
 		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 			CriticalErrorBoxF(
-				L"ÎŞ·¨³õÊ¼»¯´«²¥¡£\r\n"
-				L"NTSTATUS ´íÎó´úÂë£º%s",
+				L"æ— æ³•åˆå§‹åŒ–ä¼ æ’­ã€‚\r\n"
+				L"NTSTATUS é”™è¯¯ä»£ç ï¼š%s",
 				KexRtlNtStatusToString(Status));
 		} else {
 			CriticalErrorBoxF(
@@ -135,7 +135,7 @@ VOID EntryPoint(
 			if (*CommandLine != '"') {
 				// Expected matching quote, but reached end of string.
 				// Malformed command line without an end quote.
-				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) CriticalErrorBoxF(L"ÃüÁîĞĞ¸ñÊ½´íÎó¡£±ØĞë¼Ó¹ØÒıºÅ¡£");
+				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) CriticalErrorBoxF(L"å‘½ä»¤è¡Œæ ¼å¼é”™è¯¯ã€‚å¿…é¡»åŠ å…³å¼•å·ã€‚");
 				else CriticalErrorBoxF(L"Malformed command line. A closing quote must be supplied.");
 				NOT_REACHED;
 			}

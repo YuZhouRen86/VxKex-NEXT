@@ -67,6 +67,24 @@ KXBASEAPI LONG WINAPI GetPackageFamilyName(
 	return APPMODEL_ERROR_NO_PACKAGE;
 }
 
+KXBASEAPI LONG WINAPI GetPackagePathByFullName(
+	IN		PCWSTR	PackageFullName,
+	IN	OUT	UINT32	*PathLength,
+	OUT		PWSTR	PackagePath	OPTIONAL)
+{
+	if (!PackageFullName || !PathLength || *PathLength && !PackagePath) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	*PathLength = 0;
+
+	if (PackagePath) {
+		PackagePath[0] = '\0';
+	}
+
+	return APPMODEL_ERROR_NO_PACKAGE;
+}
+
 KXBASEAPI LONG WINAPI GetPackagesByPackageFamily(
 	IN		PCWSTR	PackageFamilyName,
 	IN OUT	PULONG	Count,

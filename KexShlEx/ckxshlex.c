@@ -97,7 +97,7 @@ ULONG STDMETHODCALLTYPE CKexShlEx_Release(
 {
 	LONG NewRefCount;
 
-	NewRefCount = InterlockedDecrement(&NewRefCount);
+	NewRefCount = InterlockedDecrement(&This->RefCount);
 
 	if (NewRefCount == 0) {
 		InterlockedDecrement(&DllReferenceCount);
@@ -143,8 +143,6 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 	Format.lindex			= -1;
 	Format.tymed			= TYMED_HGLOBAL;
 
-	*This->ExeFullPath = L'\0';
-
 	Result = DataObject->lpVtbl->GetData(
 		DataObject,
 		&Format,
@@ -154,8 +152,8 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 		return Result;
 	}
 
-	Drop = (HDROP) GlobalLock(StorageMedium.hGlobal);
-	NumberOfFilesSelected = DragQueryFile(Drop, 0xFFFFFFFF, NULL, 0);
+	Drop = (HDROP) StorageMedium.hGlobal;
+	NumberOfFilesSelected = DragQueryFile(Drop, -1, NULL, 0);
 
 	if (NumberOfFilesSelected != 1) {
 		// If the user selects multiple files before opening properties,
@@ -165,7 +163,6 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 	}
 
 	DragQueryFile(Drop, 0, This->ExeFullPath, ARRAYSIZE(This->ExeFullPath));
-	GlobalUnlock(StorageMedium.hGlobal);
 	ReleaseStgMedium(&StorageMedium);
 
 	//
@@ -208,22 +205,11 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_Initialize(
 		// If it's not .EXE or .MSI, we won't display a property page.
 		//
 
-		if (StringEqualI(FileExtension, L".EXE") ||
-			StringEqualI(FileExtension, L".MSI")) {
-				
-			WCHAR WinDir[MAX_PATH];
-			WCHAR KexDir[MAX_PATH];
-			
-			GetWindowsDirectory(WinDir, ARRAYSIZE(WinDir));
-			unless (!KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir)) ||
-				PathIsPrefix(WinDir, This->ExeFullPath) ||
-				PathIsPrefix(KexDir, This->ExeFullPath)) {
-				ShowPropertiesDialog(This->ExeFullPath, SW_SHOW, TRUE);
-			}
+		if (!StringEqualI(FileExtension, L".EXE") &&
+			!StringEqualI(FileExtension, L".MSI")) {
 
+			return E_NOTIMPL;
 		}
-
-		return E_NOTIMPL;
 	}
 
 	return S_OK;

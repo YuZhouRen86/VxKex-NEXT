@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+﻿///////////////////////////////////////////////////////////////////////////////
 //
 // Module Name:
 //
@@ -119,20 +119,20 @@ INT_PTR CALLBACK DialogProc(
 
 		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 			ToolTip(Window, IDUSEVXKEX,
-				L"���û������ VxKex NEXT ���ݲ㡣");
+				L"启用或禁用主 VxKex NEXT 兼容层。");
 			ToolTip(Window, IDSPOOFVERSIONCHECK,
-				L"һЩӦ�ó������ Windows �汾������汾���ͣ���ܾ����С�"
-				L"��ѡ����԰�����ЩӦ�ó����������С�\r\n\r\n"
-				L"ͨ������Ӧʹ�ø�������Ӧ�ó�������� Windows �汾����Ϊ��ή��Ӧ�ó���ļ����ԡ�");
+				L"一些应用程序会检查 Windows 版本，如果版本过低，则拒绝运行。"
+				L"此选项可以帮助这些应用程序正常运行。\r\n\r\n"
+				L"通常，不应使用高于运行应用程序所需的 Windows 版本，因为这会降低应用程序的兼容性。");
 			ToolTip(Window, IDSTRONGSPOOF,
-				L"һЩӦ�ó���ʹ�ò����õķ������ Windows �汾��"
-				L"���ѡ����԰�����ʹ���ǹ�����"
-				L"�����������汾��ⷽ������⣬�����������ô����á�");
+				L"一些应用程序使用不常用的方法检查 Windows 版本。"
+				L"这个选项可以帮助诱使它们工作。"
+				L"除非您遇到版本检测方面的问题，否则请勿启用此设置。");
 			ToolTip(Window, IDDISABLEFORCHILD,
-				L"Ĭ������£��ɴ˳��������������������򶼻����� VxKex NEXT ���С���ѡ�������һ��Ϊ��");
+				L"默认情况下，由此程序启动的所有其他程序都会启用 VxKex NEXT 运行。此选项禁用这一行为。");
 			ToolTip(Window, IDDISABLEAPPSPECIFIC,
-				L"����ĳЩӦ�ó���VxKex NEXT ���ܻ�ʹ���ض���Ӧ�ó���ı�ͨ�������޲�����"
-				L"��ѡ�������һ��Ϊ��ʹ�ô�ѡ����ܻή��Ӧ�ó���ļ����ԡ�");
+				L"对于某些应用程序，VxKex NEXT 可能会使用特定于应用程序的变通方法或修补程序。"
+				L"此选项禁用这一行为。使用此选项可能会降低应用程序的兼容性。");
 		} else {
 			ToolTip(Window, IDUSEVXKEX,
 				L"Enable or disable the main VxKex NEXT compatibility layer.");

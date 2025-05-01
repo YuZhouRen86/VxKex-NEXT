@@ -163,3 +163,9 @@ KXCOMAPI BOOL WINAPI RoTransformError(
 
 	return RoOriginateError(NewError, Message);
 }
+
+KXCOMAPI HRESULT WINAPI RoCaptureErrorContext(
+	HRESULT	hr)
+{
+	return E_NOTIMPL;
+}
