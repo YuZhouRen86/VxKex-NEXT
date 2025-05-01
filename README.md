@@ -19,12 +19,12 @@ To download and install, see the [releases page](https://github.com/YuZhouRen86/
   它可能导致所有程序在启用 VxKex NEXT 后无法启动。
 
 After installation, usage is easy. Here are the ways to enable VxKex NEXT:
-1. Just right click on a program (.exe or .msi), open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program. For shortcuts, select "Shortcut" tab in the Properties dialog, click "Open file location" button, and then perform the actions above.
-2. Find "VxKex NEXT Global Settings" from start menu and open it, click "Add" button, select a program (.exe or .msi), click "Open" button, and try to run the program.
+1. Just right click on a program, open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program.
+2. Find "VxKex NEXT Global Settings" from start menu and open it, click "Add" button, select a program, click "Open" button, and try to run the program.
 
 安装后，使用很简单。以下是启用 VxKex NEXT 的方法：
-1. 右键单击程序（.exe 或 .msi），打开属性对话框，选择“VxKex”选项卡。然后，选中“为此程序启用 VxKex NEXT”复选框，并尝试运行程序。对于快捷方式，需要在属性对话框中选择“快捷方式”选项卡，点击“打开文件位置”按钮，然后执行以上操作。
-2. 从开始菜单中找到“VxKex NEXT Global Settings”并打开，点击“添加”按钮，选择程序（.exe 或 .msi），点击“打开”按钮，并尝试运行程序。
+1. 右键单击程序，打开属性对话框，选择“VxKex”选项卡。然后，选中“为此程序启用 VxKex NEXT”复选框，并尝试运行程序。
+2. 从开始菜单中找到“VxKex NEXT Global Settings”并打开，点击“添加”按钮，选择程序，点击“打开”按钮，并尝试运行程序。
 
 ![VxKex configuration GUI](/example-screenshot.png)
 
