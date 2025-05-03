@@ -22,6 +22,16 @@ STATIC PWSTR FailureFormattingText_CHS[] = {
 	L"请尝试关闭其他应用程序或浏览器标签页，然后重试。",
 };
 
+STATIC PWSTR FailureFormattingText_CHT[] = {
+	L"無法將「%s」轉換為 NT 檔案名（%s）",
+	L"無法開啟 %s（%s）",
+	L"查詢有關 %s 的資訊失敗。%s。",
+	L"您選擇的日誌檔案中沒有條目。\r\n"
+	L"請選擇一個非空的日誌檔案。",
+	L"未能分配內存儲存日誌條目緩存。"
+	L"請嘗試關閉其他應用程式或瀏覽器標籤頁，然後重試。",
+};
+
 //
 // This file contains functions to interact with VXLL, maintain a cache
 // of log entries, and filter/sort the log entries.
@@ -92,9 +102,11 @@ BOOLEAN OpenLogFile(
 	NewLogEntryCache = NULL;
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) FailureFormattingText = FailureFormattingText_CHS;
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) FailureFormattingText = FailureFormattingText_CHS;
 	else FailureFormattingText = FailureFormattingText_ENG;
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"正在打开文件，请稍候...");
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetWindowText(StatusBarWindow, L"正在開啟檔案，請稍候...");
 	else SetWindowText(StatusBarWindow, L"Opening file, please wait...");
 
 	//
@@ -198,6 +210,10 @@ BOOLEAN OpenLogFile(
 		SetWindowText(StatusBarWindow, L"完成。");
 		StatusBar_SetTextF(StatusBarWindow, 1, L"文件中有 %lu 个条目",
 						   State->NumberOfLogEntries);
+	} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+		SetWindowText(StatusBarWindow, L"完成。");
+		StatusBar_SetTextF(StatusBarWindow, 1, L"檔案中有 %lu 個條目",
+						   State->NumberOfLogEntries);
 	} else {
 		SetWindowText(StatusBarWindow, L"Finished.");
 		StatusBar_SetTextF(StatusBarWindow, 1, L"%lu entry(ies) in file",
@@ -216,6 +232,7 @@ OpenFailure:
 	}
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"无法打开日志文件。");
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetWindowText(StatusBarWindow, L"無法開啟日誌檔案。");
 	else SetWindowText(StatusBarWindow, L"Couldn't open the log file.");
 	return FALSE;
 }
@@ -237,6 +254,9 @@ BOOLEAN OpenLogFileWithPrompt(
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 		OpenDialogInfo.lpstrFilter				= L"VXLog 文件（*.vxl）\0*.vxl\0所有文件（*.*）\0*.*\0";
 		OpenDialogInfo.lpstrTitle				= L"选择日志文件...";
+	} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+		OpenDialogInfo.lpstrFilter				= L"VXLog 檔案（*.vxl）\0*.vxl\0所有檔案（*.*）\0*.*\0";
+		OpenDialogInfo.lpstrTitle				= L"選擇日誌檔案...";
 	} else {
 		OpenDialogInfo.lpstrFilter				= L"VXLog Files (*.vxl)\0*.vxl\0All Files (*.*)\0*.*\0";
 		OpenDialogInfo.lpstrTitle				= L"Select a log file...";
@@ -378,6 +398,7 @@ BOOLEAN ExportLogWithPrompt(
 	SaveDialogInfo.lStructSize				= sizeof(SaveDialogInfo);
 	SaveDialogInfo.hwndOwner				= MainWindow;
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SaveDialogInfo.lpstrFilter				= L"文本文件（*.txt）\0*.txt\0所有文件（*.*）\0*.*\0";
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SaveDialogInfo.lpstrFilter				= L"文本檔案（*.txt）\0*.txt\0所有檔案（*.*）\0*.*\0";
 	else SaveDialogInfo.lpstrFilter				= L"Text Files (*.txt)\0*.txt\0All Files (*.*)\0*.*\0";
 	SaveDialogInfo.nMaxFile					= ARRAYSIZE(SaveFileName);
 	SaveDialogInfo.lpstrFile				= SaveFileName;

@@ -64,6 +64,7 @@ VOID KexSetupWriteUninstallEntry(
 {
 	HKEY KeyHandle;
 	WCHAR FormattedDate[9]; // YYYYMMDD\0
+	WCHAR DisplayIcon[MAX_PATH + 2];
 	WCHAR UninstallString[MAX_PATH + 11]; // +11 for " /UNINSTALL"
 
 	try {
@@ -77,8 +78,10 @@ VOID KexSetupWriteUninstallEntry(
 		ASSERT (KeyHandle != INVALID_HANDLE_VALUE);
 
 		GetDateFormat(LOCALE_INVARIANT, 0, NULL, L"yyyyMMdd", FormattedDate, ARRAYSIZE(FormattedDate));
+		StringCchPrintf(DisplayIcon, ARRAYSIZE(DisplayIcon), L"%s\\KexSetup.exe,1", KexDir);
 		StringCchPrintf(UninstallString, ARRAYSIZE(UninstallString), L"%s\\KexSetup.exe /UNINSTALL", KexDir);
-
+		
+		KexSetupRegWriteString(KeyHandle, L"DisplayIcon",		DisplayIcon);
 		KexSetupRegWriteString(KeyHandle, L"DisplayName",		L"VxKex NEXT API Extensions for Windows® 7");
 		KexSetupRegWriteString(KeyHandle, L"DisplayVersion",	_L(KEX_VERSION_STR));
 		KexSetupRegWriteString(KeyHandle, L"Publisher",			L"YuZhouRen");

@@ -40,6 +40,9 @@ INT_PTR CALLBACK GotoRawDlgProc(
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 					BalloonTip.pszTitle	= L"项目编号无效";
 					BalloonTip.pszText	= L"您输入的项目编号超出了范围，或者您选择的当前筛选器集没有显示。";
+				} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+					BalloonTip.pszTitle	= L"項目編號無效";
+					BalloonTip.pszText	= L"您輸入的項目編號超出了範圍，或者您選擇的當前篩選器集沒有顯示。";
 				} else {
 					BalloonTip.pszTitle	= L"Invalid Item Number";
 					BalloonTip.pszText	= L"The item number you entered was either out of range "

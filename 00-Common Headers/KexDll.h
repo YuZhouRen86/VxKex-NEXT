@@ -655,7 +655,7 @@ KEXAPI NTSTATUS NTAPI VxlReadMultipleEntriesLog(
 // vxlsever.c
 //
 
-KEXAPI PCWSTR NTAPI VxlSeverityToText(
+KEXAPI PCWSTR NTAPI VxlSeverityToText_ENG(
 	IN		VXLSEVERITY		Severity,
 	IN		BOOLEAN			LongDescription);
 

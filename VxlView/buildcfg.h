@@ -38,3 +38,4 @@
 #define KEX_ENV_WIN32
 #define FRIENDLYAPPNAME_ENG L"VxKex NEXT Log Viewer"
 #define FRIENDLYAPPNAME_CHS L"VxKex NEXT 日志查看器"
+#define FRIENDLYAPPNAME_CHT L"VxKex NEXT ﻿日誌查看器"

@@ -375,7 +375,7 @@ KXBASEAPI int WINAPI Ext_GetThreadPriority(
 	IN	HANDLE	hThread)
 {
 	int Priority = GetThreadPriority(hThread);
-	unless (KexData->IfeoParameters.DisableAppSpecific){
+	unless (KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) && KexRtlCurrentProcessBitness() == 32 && Priority == 4) {
 			Priority = -4;
 		}

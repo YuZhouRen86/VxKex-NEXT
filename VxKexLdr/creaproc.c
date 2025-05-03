@@ -188,6 +188,7 @@ NoExtendedStartupInfo:
 				NOTHING;
 			} else {
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"CreateProcess 失败：%s", Win32ErrorAsString(ErrorCode));
+				else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ErrorBoxF(L"CreateProcess 失敗：%s", Win32ErrorAsString(ErrorCode));
 				else ErrorBoxF(L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
 				return FALSE;
 			}
@@ -253,6 +254,47 @@ NoExtendedStartupInfo:
 					break;
 			}
 			ErrorBoxF(L"ShellExecute 失败：%s", ErrorMessage);
+		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			switch ((ULONG) ShellExecuteError) {
+				case 0:
+				case SE_ERR_OOM:
+					ErrorMessage = L"資源不足。";
+					break;
+				case ERROR_FILE_NOT_FOUND:
+				case ERROR_PATH_NOT_FOUND:
+				case ERROR_BAD_FORMAT:
+					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
+					break;
+				case SE_ERR_ACCESSDENIED:
+					ErrorMessage = L"存取被拒絕。";
+					break;
+				case SE_ERR_DLLNOTFOUND:
+					ErrorMessage = L"未找到 DLL。";
+					break;
+				case SE_ERR_SHARE:
+					ErrorMessage = L"發生違規共享。";
+					break;
+				case SE_ERR_ASSOCINCOMPLETE:
+					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
+					break;
+				case SE_ERR_DDEBUSY:
+					ErrorMessage = L"SE_ERR_DDEBUSY.";
+					break;
+				case SE_ERR_DDEFAIL:
+					ErrorMessage = L"SE_ERR_DDEFAIL.";
+					break;
+				case SE_ERR_DDETIMEOUT:
+					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
+					break;
+				case SE_ERR_NOASSOC:
+					ErrorMessage = L"SE_ERR_NOASSOC.";
+					break;
+				default:
+					ASSERT (FALSE);
+					ErrorMessage = L"未知錯誤。";
+					break;
+			}
+			ErrorBoxF(L"ShellExecute 失敗：%s", ErrorMessage);
 		} else {
 			switch ((ULONG) ShellExecuteError) {
 				case 0:

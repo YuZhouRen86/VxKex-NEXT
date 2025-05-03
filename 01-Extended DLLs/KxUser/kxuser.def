@@ -36,6 +36,10 @@ EXPORTS
 	;; featurestaging.c
 	;;
 
+	GetFeatureEnabledState
+	GetFeatureVariant
+	RecordFeatureError
+	RecordFeatureUsage
 	SubscribeFeatureStateChangeNotification
 	UnsubscribeFeatureStateChangeNotification
 

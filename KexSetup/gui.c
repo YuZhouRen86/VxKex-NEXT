@@ -89,18 +89,12 @@ VOID UpdateDiskFreeSpace(
 	WCHAR FormattedSize[16];
 	WCHAR LabelText[22 + ARRAYSIZE(FormattedSize)];
 	ULARGE_INTEGER uliFreeSpace;
-	
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-		StringCchCopy(
-			LabelText,
-			ARRAYSIZE(LabelText),
-			L"可用磁盘空间：");
-	} else {
-		StringCchCopy(
-			LabelText,
-			ARRAYSIZE(LabelText),
-			L"Disk space available: ");
-	}
+	StringCchCopy(
+		LabelText,
+		ARRAYSIZE(LabelText),
+		(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"可用磁盘空间：" :
+		(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"可用磁碟空間：" :
+		L"Disk space available: ");
 	StaticControlWindow = GetDlgItem(MainWindow, IDS1SPACEAVAIL);
 	GetDlgItemText(MainWindow, IDS1DIRPATH, InstallationDir, ARRAYSIZE(InstallationDir));
 	GetVolumePathName(InstallationDir, InstallationVolume, ARRAYSIZE(InstallationVolume));
@@ -224,11 +218,28 @@ VOID SetScene(
 		{L"正在更新...",				L"更新正在进行中。"},
 		{L"更新完成",					L"VxKex NEXT 现已准备就绪，可供使用。"}
 	};
+	PCWSTR HeaderTextsCHT[9][2] = {
+		{L"選擇安裝位置",				L"選擇您希望 VxKex NEXT 安裝檔案的位置。"},
+		{L"正在安裝...",				L"安裝正在進行中。"},
+		{L"安裝完成",					L"VxKex NEXT 現已準備就緒，可供使用。"},
+		{L"解除安裝 VxKex NEXT",		L"查看以下資訊，然後單擊「解除安裝」。"},
+		{L"正在解除安裝...",			L"解除安裝正在進行中。"},
+		{L"解除安裝完成",				L"已從您的電腦中刪除 VxKex NEXT。"},
+		{L"更新 VxKex",					L"查看以下資訊，然後單擊「更新」。"},
+		{L"正在更新...",				L"更新正在進行中。"},
+		{L"更新完成",					L"VxKex NEXT 現已準備就緒，可供使用。"}
+	};
 	int i, j;
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 		for (i=0; i<9; ++i) {
 			for (j=0; j<2; ++j) {
 				HeaderTexts[i][j] = HeaderTextsCHS[i][j];
+			}
+		};
+	} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+		for (i=0; i<9; ++i) {
+			for (j=0; j<2; ++j) {
+				HeaderTexts[i][j] = HeaderTextsCHT[i][j];
 			}
 		};
 	} else {
@@ -279,19 +290,18 @@ VOID SetScene(
 		WCHAR RequiredSpaceString[64];
 
 		ASSERT (OperationMode == OperationModeInstall);
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			StringCchCopy(
-				RequiredSpaceString,
-				ARRAYSIZE(RequiredSpaceString),
-				L"所需磁盘空间：最高 ");
-			SetDlgItemText(MainWindow, IDNEXT, L"安装(&I)");
-		} else {
-			StringCchCopy(
-				RequiredSpaceString,
-				ARRAYSIZE(RequiredSpaceString),
-				L"Disk space required: up to ");
-			SetDlgItemText(MainWindow, IDNEXT, L"&Install");
-		}
+		StringCchCopy(
+			RequiredSpaceString,
+			ARRAYSIZE(RequiredSpaceString),
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"所需磁盘空间：最高 " :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"所需磁碟空間：最高 " :
+			L"Disk space required: up to ");
+		SetDlgItemText(
+			MainWindow,
+			IDNEXT,
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"安装(&I)" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"安裝(&I)" :
+			L"&Install");
 		Button_SetShield(GetDlgItem(MainWindow, IDNEXT), TRUE);
 
 		// populate the installation location edit control with KexDir
@@ -310,11 +320,12 @@ VOID SetScene(
 		SetDlgItemText(MainWindow, IDS1SPACEREQ, RequiredSpaceString);
 	} else if (SceneNumber == SCENE_UNINSTALL_CONFIRM) {
 		ASSERT (OperationMode == OperationModeUninstall);
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			SetDlgItemText(MainWindow, IDNEXT, L"卸载(&U)");
-		} else {
-			SetDlgItemText(MainWindow, IDNEXT, L"&Uninstall");
-		}
+		SetDlgItemText(
+			MainWindow,
+			IDNEXT,
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"卸载(&U)" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"解除安裝(&U)" :
+			L"&Uninstall");
 		Button_SetShield(GetDlgItem(MainWindow, IDNEXT), TRUE);
 	} else if (SceneNumber == SCENE_UPDATE_CHANGELOG) {
 		HWND EditWindow;
@@ -328,11 +339,12 @@ VOID SetScene(
 		CannotDisplay = FALSE;
 
 		ASSERT (OperationMode == OperationModeUpgrade);
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			SetDlgItemText(MainWindow, IDNEXT, L"更新(&U)");
-		} else {
-			SetDlgItemText(MainWindow, IDNEXT, L"&Update");
-		}
+		SetDlgItemText(
+			MainWindow,
+			IDNEXT,
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"更新(&U)" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"更新(&U)" :
+			L"&Update");
 		Button_SetShield(GetDlgItem(MainWindow, IDNEXT), TRUE);
 
 		GetModuleFileName(NULL, ChangelogPath, ARRAYSIZE(ChangelogPath));
@@ -399,11 +411,11 @@ CannotDisplayChangelog:
 		HWND NextButton;
 
 		NextButton = GetDlgItem(MainWindow, IDNEXT);
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			SetWindowText(NextButton, L"完成(&F)");
-		} else {
-			SetWindowText(NextButton, L"&Finish");
-		}
+		SetWindowText(
+			NextButton,
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"完成(&F)" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"完成(&F)" :
+			L"&Finish");
 		Button_SetShield(NextButton, FALSE);
 
 		switch (SceneNumber) {
@@ -433,12 +445,10 @@ HGDIOBJ SetStaticControlBackground(
 {
 	static HFONT BoldFont = NULL;
 	PCWSTR DEFAULTFONTFAMILY;
-
-	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-		DEFAULTFONTFAMILY = L"Microsoft Yahei";
-	} else {
-		DEFAULTFONTFAMILY = L"Segoe UI";
-	}
+	DEFAULTFONTFAMILY = (
+		CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"Microsoft Yahei" :
+		CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"Microsoft Jhenghei" :
+		L"Segoe UI");
 
 	if (!BoldFont) {
 		BoldFont = CreateFont(
@@ -469,8 +479,6 @@ HGDIOBJ SetStaticControlBackground(
 		SetTextColor(DeviceContext, GetSysColor(COLOR_WINDOWTEXT));
 		SetBkColor(DeviceContext, GetSysColor(COLOR_WINDOW));
 		return GetSysColorBrush(COLOR_WINDOW);
-	case IDNEXT:
-		return CreateSolidBrush(RGB(13, 0, 0));
 	}
 
 	return FALSE;
@@ -496,19 +504,17 @@ DWORD WINAPI WaitForElevatedProcessEnd(
 	GetExitCodeProcess(ElevatedProcess, (PULONG) &ExitCode);
 
 	if (WaitResult == WAIT_TIMEOUT) {
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			ErrorBoxF(L"以高权限运行的安装程序进程似乎已停止响应。", ExitCode);
-		} else {
-			ErrorBoxF(L"The elevated setup process appears to have stopped responding.", ExitCode);
-		}
-		
+		ErrorBoxF(
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"以高权限运行的安装程序进程似乎已停止响应。" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"﻿以高權限執行的安裝程式處理程序似乎已停止響應。" :
+			L"The elevated setup process appears to have stopped responding.", ExitCode);
+
 		SendMessage(MainWindow, WM_USER + 3, 0, 0);
 	} else if (!NT_SUCCESS(ExitCode)) {
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			ErrorBoxF(L"以高权限运行的安装程序进程退出，错误代码：0x%08lx", ExitCode);
-		} else {
-			ErrorBoxF(L"The elevated setup process exited with an error code: 0x%08lx", ExitCode);
-		}
+		ErrorBoxF(
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"以高权限运行的安装程序进程退出，错误代码：0x%08lx" :
+			(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"以高權限執行的安裝程式處理程序退出，錯誤碼：0x%08lx" :
+			L"The elevated setup process exited with an error code: 0x%08lx", ExitCode);
 		
 		SendMessage(MainWindow, WM_USER + 3, 0, 0);
 	} else {
@@ -551,14 +557,14 @@ INT_PTR CALLBACK DialogProc(
 		} else if (OperationMode == OperationModeUninstall) {
 			CheckDlgButton(Window, IDS4PRESERVECONFIG, PreserveConfig ? BST_CHECKED : BST_UNCHECKED);
 			
-			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-				ToolTip(Window, IDS4PRESERVECONFIG, L"保留应用程序的兼容性设置（如 Windows 版本欺骗）。这些应用程序仍将禁用 VxKex NEXT，如果您决定重新安装，则需要重新启用 VxKex NEXT。");
-			} else {
-				ToolTip(Window, IDS4PRESERVECONFIG,
-					L"Preserve the application compatibility settings (such as Windows version spoofing) "
-					L"for applications. VxKex NEXT will still be disabled for these applications and you will "
-					L"need to re-enable VxKex NEXT if you decide to reinstall.");
-			}
+			ToolTip(
+				Window,
+				IDS4PRESERVECONFIG,
+				(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"保留应用程序的兼容性设置（如 Windows 版本欺骗）。这些应用程序仍将禁用 VxKex NEXT，如果您决定重新安装，则需要重新启用 VxKex NEXT。" :
+				(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"保留應用程式的相容性設定（如 Windows 版本欺騙）。這些應用程式仍將停用 VxKex NEXT，如果您決定重新安裝，則需要重新啟用 VxKex NEXT。" :
+				(L"Preserve the application compatibility settings (such as Windows version spoofing) "
+				L"for applications. VxKex NEXT will still be disabled for these applications and you will "
+				L"need to re-enable VxKex NEXT if you decide to reinstall."));
 		}
 	} else if (Message == WM_DRAWITEM) {
 		LPDRAWITEMSTRUCT lpDrawItemStruct = (LPDRAWITEMSTRUCT) LParam;
@@ -584,19 +590,13 @@ INT_PTR CALLBACK DialogProc(
 
 				INT UserResponse;
 
-				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-					UserResponse = MessageBox(
-						Window,
-						L"您要取消设置吗？",
-						FRIENDLYAPPNAME,
-						MB_ICONQUESTION | MB_YESNO);
-				} else {
-					UserResponse = MessageBox(
-						Window,
-						L"Do you want to cancel Setup?",
-						FRIENDLYAPPNAME,
-						MB_ICONQUESTION | MB_YESNO);
-				}
+				UserResponse = MessageBox(
+					Window,
+					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"您要取消设置吗？" :
+					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"您要取消設定嗎？" :
+					L"Do you want to cancel Setup?",
+					FRIENDLYAPPNAME,
+					MB_ICONQUESTION | MB_YESNO);
 
 				if (UserResponse == IDYES) {
 					EndDialog(Window, 0);
@@ -676,15 +676,10 @@ INT_PTR CALLBACK DialogProc(
 				// SE_ERR_ACCESSDENIED happens when user clicks No on the
 				// elevation prompt, so it's not an error for us.
 				if (ShellExecuteResult <= 32 && ShellExecuteResult != SE_ERR_ACCESSDENIED) {
-					if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-						ErrorBoxF(
-							L"ShellExecute 失败，错误代码为 %d。设置无法继续。",
-							ShellExecuteResult);
-					} else {
-						ErrorBoxF(
-							L"ShellExecute failed with error code %d. Setup cannot continue.",
-							ShellExecuteResult);
-					}
+					ErrorBoxF(
+						(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"ShellExecute 失败，错误代码为 %d。设置无法继续。" :
+						(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"ShellExecute 失敗，錯誤碼為 %d。設定無法繼續。" :
+						L"ShellExecute failed with error code %d. Setup cannot continue.", ShellExecuteResult);
 					ExitProcess(STATUS_UNSUCCESSFUL);
 				}
 			}

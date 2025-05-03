@@ -10,7 +10,7 @@ HRESULT WINAPI Ext_CoCreateInstance(
 	IN	REFIID		riid,
 	OUT	LPVOID		*ppv)
 {
-	unless (KexData->IfeoParameters.DisableAppSpecific){
+	unless (KexData->IfeoParameters.DisableAppSpecific) {
 		if (AshExeBaseNameIs(L"firefox.exe")
 			|| AshExeBaseNameIs(L"thunderbird.exe")
 			|| AshExeBaseNameIs(L"betterbird.exe")

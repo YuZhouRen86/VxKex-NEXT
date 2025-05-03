@@ -152,6 +152,9 @@ VOID ResizeStatusBar(
 
 // vxlview.c
 
+PCWSTR VxlSeverityToText(
+	IN		VXLSEVERITY		Severity,
+	IN		BOOLEAN			LongDescription);
 INT_PTR CALLBACK MainWndProc(
 	IN	HWND	_MainWindow,
 	IN	UINT	Message,

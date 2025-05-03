@@ -33,7 +33,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("MFPlat",										"kxdx"				)
 	DLL_REDIRECT("xinput1_4",									"xinput1_3"			)
 
-	DLL_REDIRECT("DWrite",										"dwrw10"			)
+	DLL_REDIRECT("DWrite",										"kxdw"			)
 
 	DLL_REDIRECT("powrprof",									"kxmi"				)
 	DLL_REDIRECT("userenv",										"kxmi"				)

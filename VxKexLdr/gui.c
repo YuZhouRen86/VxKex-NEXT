@@ -3,6 +3,8 @@
 
 STATIC PKEX_PROCESS_DATA KexData = NULL;
 
+typedef HRESULT (WINAPI *PFNENABLETHEMEDIALOGTEXTURE)(HWND, DWORD);
+
 STATIC INT_PTR CALLBACK MoreOptionsDlgProc(
 	IN	HWND	Window,
 	IN	UINT	Message,
@@ -70,10 +72,17 @@ INT_PTR CALLBACK VklDialogProc(
 	IN	LPARAM	LParam)
 {
 	if (Message == WM_INITDIALOG) {
+		HMODULE hUxTheme;
+		PFNENABLETHEMEDIALOGTEXTURE pfnEnableThemeDialogTexture;
 		KexgApplicationMainWindow = Window;
 		SetWindowIcon(Window, IDI_APPICON);
 
 		KexDataInitialize(&KexData);
+
+		hUxTheme = LoadLibrary(L"uxtheme.dll");
+		pfnEnableThemeDialogTexture = (PFNENABLETHEMEDIALOGTEXTURE) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
+		if (pfnEnableThemeDialogTexture) pfnEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+		FreeLibrary(hUxTheme);
 
 		//
 		// Allow files to be dragged and dropped onto the main window when
@@ -140,10 +149,12 @@ INT_PTR CALLBACK VklDialogProc(
 			OpenFileInfo.lStructSize	= sizeof(OpenFileInfo);
 			OpenFileInfo.hwndOwner		= Window;
 			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrFilter	= L"程序（*.exe、*.msi）\0*.exe;*.msi\0所有文件（*.*）\0*.*\0";
+			else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) OpenFileInfo.lpstrFilter	= L"程式（*.exe、*.msi）\0*.exe;*.msi\0所有檔案（*.*）\0*.*\0";
 			else OpenFileInfo.lpstrFilter	= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0All Files (*.*)\0*.*\0";
 			OpenFileInfo.lpstrFile		= FilePath;
 			OpenFileInfo.nMaxFile		= ARRAYSIZE(FilePath);
 			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) OpenFileInfo.lpstrTitle		= L"选择程序";
+			else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) OpenFileInfo.lpstrTitle		= L"﻿選擇程式";
 			else OpenFileInfo.lpstrTitle		= L"Select Program";
 			OpenFileInfo.Flags			= OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 			OpenFileInfo.lpstrDefExt	= L"exe";
@@ -194,6 +205,7 @@ INT_PTR CALLBACK VklDialogProc(
 					SWP_NOSENDCHANGING | SWP_NOZORDER);
 
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▼ 更多选项(&O)");
+				else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ 更多選項(&O)");
 				else SetDlgItemText(Window, IDC_MOREOPTIONS, L"▼ More &options");
 			} else {
 				//
@@ -210,6 +222,7 @@ INT_PTR CALLBACK VklDialogProc(
 					SWP_NOSENDCHANGING | SWP_NOZORDER);
 				
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ 隐藏选项(&O)");
+				else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ 隱藏選項(&O)");
 				else SetDlgItemText(Window, IDC_MOREOPTIONS, L"▲ Hide &options");
 			}
 

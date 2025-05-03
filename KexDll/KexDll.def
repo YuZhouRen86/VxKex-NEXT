@@ -88,7 +88,7 @@ EXPORTS
 	VxlWriteLogEx
 	VxlReadLog
 	VxlReadMultipleEntriesLog
-	VxlSeverityToText
+	VxlSeverityToText_ENG
 
 	Ext_NtQueryInformationThread
 	Ext_NtSetInformationThread

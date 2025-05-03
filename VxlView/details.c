@@ -40,6 +40,7 @@ VOID ResetDetailsWindow(
 	SetDlgItemText(DetailsWindow, IDC_DETAILSDATETIMETEXT, L"");
 	SetDlgItemText(DetailsWindow, IDC_DETAILSSOURCETEXT, L"");
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"（未选择日志条目。）");
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"（未選擇日誌條目。）");
 	else SetDlgItemText(DetailsWindow, IDC_DETAILSMESSAGETEXT, L"(No log entry selected.)");
 }
 
@@ -75,6 +76,7 @@ VOID PopulateDetailsWindow(
 	PCWSTR SourceFormattingText;
 
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SourceFormattingText = L"【%04lx：%04lx】，%s（%s，第 %lu 行，在函数 %s 中）";
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SourceFormattingText = L"【%04lx：%04lx】，%s（%s，第 %lu 行，在函數 %s 中）";
 	else SourceFormattingText = L"[%04lx:%04lx], %s (%s, line %lu, in function %s)";
 
 	CacheEntry = GetLogEntry(EntryIndex);

@@ -12,3 +12,4 @@
 #define KEX_COMPONENT L"KexCfg"
 #define FRIENDLYAPPNAME_ENG L"VxKex NEXT Configuration Tool"
 #define FRIENDLYAPPNAME_CHS L"VxKex NEXT 配置工具"
+#define FRIENDLYAPPNAME_CHT L"VxKex NEXT ﻿配置工具"

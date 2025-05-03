@@ -47,9 +47,6 @@
     <ClInclude Include="kexsetup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\lenovo\Pictures\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KexSetup.rc">

@@ -49,6 +49,12 @@ VOID EntryPoint(
 			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
 			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHS;
 			break;
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_MACAU):
+			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHT;
+			break;
 		default:
 			CURRENTLANG = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
 			FRIENDLYAPPNAME = FRIENDLYAPPNAME_ENG;
@@ -72,6 +78,11 @@ VOID EntryPoint(
 			CriticalErrorBoxF(
 				L"无法初始化传播。\r\n"
 				L"NTSTATUS 错误代码：%s",
+				KexRtlNtStatusToString(Status));
+		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			CriticalErrorBoxF(
+				L"無法初始化傳播。\r\n"
+				L"NTSTATUS 錯誤碼：%s",
 				KexRtlNtStatusToString(Status));
 		} else {
 			CriticalErrorBoxF(
@@ -136,6 +147,7 @@ VOID EntryPoint(
 				// Expected matching quote, but reached end of string.
 				// Malformed command line without an end quote.
 				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) CriticalErrorBoxF(L"命令行格式错误。必须加关引号。");
+				else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) CriticalErrorBoxF(L"﻿命令行格式錯誤。必須加關引號。");
 				else CriticalErrorBoxF(L"Malformed command line. A closing quote must be supplied.");
 				NOT_REACHED;
 			}

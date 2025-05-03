@@ -133,6 +133,22 @@ INT_PTR CALLBACK DialogProc(
 			ToolTip(Window, IDDISABLEAPPSPECIFIC,
 				L"对于某些应用程序，VxKex NEXT 可能会使用特定于应用程序的变通方法或修补程序。"
 				L"此选项禁用这一行为。使用此选项可能会降低应用程序的兼容性。");
+		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			ToolTip(Window, IDUSEVXKEX,
+				L"啟用或停用主 VxKex NEXT 相容層。");
+			ToolTip(Window, IDSPOOFVERSIONCHECK,
+				L"一些應用程式會檢查 Windows 版本，如果版本過低，則拒絕執行。"
+				L"此選項可以幫助這些應用程式正常執行。\r\n\r\n"
+				L"通常，不應使用高於執行應用程式所需的 Windows 版本，因為這會降低應用程式的相容性。");
+			ToolTip(Window, IDSTRONGSPOOF,
+				L"一些應用程式使用不常用的方法檢查 Windows 版本。"
+				L"這個選項可以幫助誘使它們工作。"
+				L"除非您遇到版本檢測方面的問題，否則請勿啟用此設定。");
+			ToolTip(Window, IDDISABLEFORCHILD,
+				L"預設情況下，由此程式啟動的所有其他程式都會啟用 VxKex NEXT 執行。此選項停用這一行為。");
+			ToolTip(Window, IDDISABLEAPPSPECIFIC,
+				L"對於某些應用程式，VxKex NEXT 可能會使用特定於應用程式的變通方法或修補程式。"
+				L"此選項停用這一行為。使用此選項可能會降低應用程式的相容性。");
 		} else {
 			ToolTip(Window, IDUSEVXKEX,
 				L"Enable or disable the main VxKex NEXT compatibility layer.");

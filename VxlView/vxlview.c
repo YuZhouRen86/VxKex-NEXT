@@ -4,6 +4,47 @@
 LANGID CURRENTLANG = 0;
 PWSTR FRIENDLYAPPNAME;
 
+static PCWSTR SeverityLookupTable_ENG[][2] = {
+	{L"Critical",		L"The application encountered a critical error and cannot continue"},
+	{L"Error",			L"The application encountered a non-critical error which affected its function"},
+	{L"Warning",		L"An event occurred which should be investigated but does not affect the immediate functioning of the application"},
+	{L"Information",	L"An informational message which is not a cause for concern"},
+	{L"Detail",			L"An informational message, generated in large quantities, which is not a cause for concern"},
+	{L"Debug",			L"Information useful only to the developer of the application"},
+	{L"Unknown",		L"An invalid or unknown severity value"}
+};
+
+static PCWSTR SeverityLookupTable_CHS[][2] = {
+	{L"严重错误",		L"应用程序遇到严重错误，无法继续运行"},
+	{L"错误",			L"应用程序遇到影响其功能的非严重错误"},
+	{L"警告",			L"发生了一个应调查的事件，但不影响应用程序直接运行"},
+	{L"信息",			L"信息性消息，无需担心"},
+	{L"详细信息",		L"大量产生的信息性消息，无需担心"},
+	{L"调试",			L"仅对应用程序开发人员有用的信息"},
+	{L"未知",			L"无效或未知的严重程度值"}
+};
+
+static PCWSTR SeverityLookupTable_CHT[][2] = {
+	{L"嚴重錯誤",		L"應用程式遇到嚴重錯誤，無法繼續執行"},
+	{L"錯誤",			L"應用程式遇到影響其功能的非嚴重錯誤"},
+	{L"警告",			L"發生了一個應調查的事件，但不影響應用程式直接執行"},
+	{L"資訊",			L"資訊性消息，無需擔心"},
+	{L"詳細資訊",		L"大量產生的資訊性消息，無需擔心"},
+	{L"調試",			L"僅對應用程式開發人員有用的資訊"},
+	{L"未知",			L"無效或未知的嚴重程度值"}
+};
+
+PCWSTR VxlSeverityToText(
+	IN		VXLSEVERITY		Severity,
+	IN		BOOLEAN			LongDescription)
+{
+    PCWSTR (*SeverityLookupTable)[2];
+	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SeverityLookupTable = SeverityLookupTable_CHS;
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SeverityLookupTable = SeverityLookupTable_CHT;
+	else SeverityLookupTable = SeverityLookupTable_ENG;
+	return SeverityLookupTable[min((ULONG) Severity, LogSeverityMaximumValue)][!!LongDescription];
+}
+
 NTSTATUS NTAPI EntryPoint(
 	IN	PVOID	Parameter)
 {
@@ -17,6 +58,12 @@ NTSTATUS NTAPI EntryPoint(
 		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE):
 			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
 			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHS;
+			break;
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG):
+		case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_MACAU):
+			CURRENTLANG = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL);
+			FRIENDLYAPPNAME = FRIENDLYAPPNAME_CHT;
 			break;
 		default:
 			CURRENTLANG = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
@@ -182,6 +229,9 @@ INT_PTR CALLBACK MainWndProc(
 				if (ChangedItemInfo->uNewState & LVIS_FOCUSED) {
 					if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 						SetWindowTextF(StatusBarWindow, L"已选择条目 #%d。", 
+							GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
+					} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+						SetWindowTextF(StatusBarWindow, L"﻿已選擇條目 #%d。", 
 							GetLogEntryRawIndex(ChangedItemInfo->iItem) + 1);
 					} else {
 						SetWindowTextF(StatusBarWindow, L"Entry #%d selected.", 

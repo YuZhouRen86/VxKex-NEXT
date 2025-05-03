@@ -44,11 +44,11 @@ NTSTATUS NTAPI ThreadProc(
 			Severity,
 			L"This is the %ld'th %s log entry.",
 			Index,
-			VxlSeverityToText(Severity, FALSE));
+			VxlSeverityToText_ENG(Severity, FALSE));
 
 		if (!NT_SUCCESS(Status)) {
 			DbgPrint("Failed to write log entry %ld of severity %ws: 0x%08lx\r\n",
-					 Index, VxlSeverityToText(Severity, FALSE), Status);
+					 Index, VxlSeverityToText_ENG(Severity, FALSE), Status);
 		}
 	}
 

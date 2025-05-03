@@ -31,6 +31,16 @@ STATIC PWSTR ColumnNames_CHS[] = {
 	L"消息"
 };
 
+STATIC PWSTR ColumnNames_CHT[] = {
+	L"嚴重程度",
+	L"日期/時間",
+	L"組件",
+	L"檔案",
+	L"行",
+	L"函數",
+	L"消息"
+};
+
 STATIC CONST USHORT ColumnDefaultWidths[] = {
 	90, 130, 80, 80, 40, 130, 500
 };
@@ -73,6 +83,7 @@ VOID InitializeListView(
 	//
 	ColumnInformation.mask = LVCF_FMT | LVCF_ORDER | LVCF_TEXT | LVCF_WIDTH | LVCF_MINWIDTH;
 	if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ColumnNames = ColumnNames_CHS;
+	else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ColumnNames = ColumnNames_CHT;
 	else ColumnNames = ColumnNames_ENG;
 	for (Index = 0; Index <= ColumnMaxValue - 1; Index++) {
 		ColumnInformation.fmt = (Index == ColumnSourceLine) ? LVCFMT_RIGHT : LVCFMT_LEFT;
@@ -264,6 +275,7 @@ VOID HandleListViewContextMenu(
 		SetClipboardData(CF_UNICODETEXT, CopiedText);
 		CloseClipboard();
 		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowText(StatusBarWindow, L"文本已复制到剪贴板。");
+		else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetWindowText(StatusBarWindow, L"﻿文本已複製到剪貼板。");
 		else SetWindowText(StatusBarWindow, L"Text copied to clipboard.");
 	}
 }

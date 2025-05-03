@@ -133,6 +133,7 @@ NTSTATUS NTAPI ExportLogThreadProc(
 
 		if (CompletedPercentage != PreviousCompletedPercentage) {
 			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) SetWindowTextF(StatusBarWindow, L"正在导出日志条目。请稍候...（%ld%%）", CompletedPercentage);
+			else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) SetWindowTextF(StatusBarWindow, L"正在導出日誌條目。請稍候...（%ld%%）", CompletedPercentage);
 			else SetWindowTextF(StatusBarWindow, L"Exporting log entries. Please wait... (%ld%%)", CompletedPercentage);
 			PreviousCompletedPercentage = CompletedPercentage;
 		}
@@ -148,6 +149,10 @@ Finished:
 		SetWindowText(StatusBarWindow, L"完成。");
 		if (NT_SUCCESS(Status)) InfoBoxF(L"导出完成。");
 		else ErrorBoxF(L"导出日志失败（%s）", KexRtlNtStatusToString(Status));
+	} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+		SetWindowText(StatusBarWindow, L"完成。");
+		if (NT_SUCCESS(Status)) InfoBoxF(L"導出完成。");
+		else ErrorBoxF(L"導出日誌失敗（%s）", KexRtlNtStatusToString(Status));
 	} else {
 		SetWindowText(StatusBarWindow, L"Finished.");
 		if (NT_SUCCESS(Status)) InfoBoxF(L"Export complete.");

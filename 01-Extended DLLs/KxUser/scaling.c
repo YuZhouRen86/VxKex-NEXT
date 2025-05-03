@@ -221,7 +221,7 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 		*DpiY = GetDeviceCaps(DeviceContext, LOGPIXELSY);
 	}
 
-	unless (KexData->IfeoParameters.DisableAppSpecific){
+	unless (KexData->IfeoParameters.DisableAppSpecific) {
 		if (AshExeBaseNameIs(L"java.exe")
 			|| AshExeBaseNameIs(L"ABDownloadManager.exe")
 			|| AshExeBaseNameIs(L"jetbrains_client64.exe")

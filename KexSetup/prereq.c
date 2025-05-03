@@ -162,6 +162,17 @@ VOID KexSetupCheckForPrerequisites(
 			Updates[0] = L"\r\n    • 适用于 Windows® 7 的 Service Pack 1（SP1）";
 			Updates[1] = L"\r\n    • 更新 KB2533623（DllDirectories 更新）";
 			Updates[2] = L"\r\n    • 更新 KB2670838（平台更新）";
+		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			Buttons[0].pszButtonText = L"取消安裝";
+			Buttons[1].pszButtonText = L"仍然繼續安裝\n"
+				L"如果沒有上面列出的先決條件，請注意某些應用程式將無法執行，即使使用 VxKex NEXT 也是如此。";
+			StringCchCopy(
+				MainText,
+				ARRAYSIZE(MainText),
+				L"安裝程式檢測到您的電腦上未安裝以下先決條件：\r\n");
+			Updates[0] = L"\r\n    • 適用於 Windows® 7 的 Service Pack 1（SP1）";
+			Updates[1] = L"\r\n    • 更新 KB2533623（DllDirectories 更新）";
+			Updates[2] = L"\r\n    • 更新 KB2670838（平台更新）";
 		} else {
 			Buttons[0].pszButtonText = L"Cancel installation";
 			Buttons[1].pszButtonText = L"Continue installation anyway\n"
@@ -209,9 +220,12 @@ VOID KexSetupCheckForPrerequisites(
 		TaskDialogConfig.cButtons			= ARRAYSIZE(Buttons);
 		TaskDialogConfig.pButtons			= Buttons;
 		TaskDialogConfig.nDefaultButton		= IDOK;
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)){
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
 			TaskDialogConfig.pszMainInstruction	= L"不符合系统要求";
 			TaskDialogConfig.pszVerificationText= L"不再显示此警告";
+		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			TaskDialogConfig.pszMainInstruction	= L"不符合系統要求";
+			TaskDialogConfig.pszVerificationText= L"不再顯示此警告";
 		} else {
 			TaskDialogConfig.pszMainInstruction	= L"System requirements not met";
 			TaskDialogConfig.pszVerificationText= L"Don't show this warning again";

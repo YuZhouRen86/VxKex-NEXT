@@ -28,7 +28,22 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgQueryLoggingSettings(
 	ASSERT (VxKexUserKeyHandle != NULL);
 
 	if (!VxKexUserKeyHandle) {
-		return FALSE;
+		ErrorCode = RegCreateKeyEx(
+			HKEY_CURRENT_USER,
+			L"Software\\VXsoft\\VxKex",
+			0,
+			NULL,
+			0,
+			KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
+			NULL,
+			&VxKexUserKeyHandle,
+			NULL);
+
+		ASSERT (ErrorCode == ERROR_SUCCESS);
+
+		ASSERT (VxKexUserKeyHandle != NULL);
+
+		if (!VxKexUserKeyHandle) return FALSE;
 	}
 
 	if (IsEnabled != NULL) {
@@ -64,7 +79,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgConfigureLoggingSettings(
 	ULONG ErrorCode;
 
 	if (!LogDir || LogDir[0] == '\0') {
-		LogDir = L"%%LOCALAPPDATA%%\\VxKex\\Logs";
+		LogDir = L"%LOCALAPPDATA%\\VxKex\\Logs";
 	}
 
 	LogDirExpandedCch = ExpandEnvironmentStrings(

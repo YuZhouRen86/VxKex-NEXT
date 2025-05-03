@@ -1,0 +1,4 @@
+LIBRARY KxDw
+EXPORTS
+	;; factory.c
+	DWriteCreateFactory					= Ext_DWriteCreateFactory

@@ -65,6 +65,11 @@ VOID NTAPI KexDllNotificationCallback(
 			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE):
 				DefaultUILanguageId = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED);
 				break;
+			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL):
+			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG):
+			case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_MACAU):
+				DefaultUILanguageId = MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL);
+				break;
 			default:
 				DefaultUILanguageId = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
 				break;
@@ -77,6 +82,14 @@ VOID NTAPI KexDllNotificationCallback(
 				L"\n\n"
 				L"建议结束此进程，以防止程序进一步的错误。是否想要立即结束此进程？", ImageBaseName);
 			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex NEXT 应用程序警告", Message);
+		} else if (DefaultUILanguageId == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
+			WCHAR Message[3000];
+			StringCchPrintf(Message, 3000, L"檢測到 MacType 正在執行。此程式已啟用 VxKex NEXT 相容層，VxKex NEXT 與 MacType 同時啟用可能導致程式當機。"
+				L"\n\n"
+				L"要為此處理程序停用 MacType ，請開啟 MacType Wizard ，單擊「處理程序管理」，取消勾選「隱藏高權限程式」，在「處理程序名稱」一欄中找到「%s」（一般位於列表底部）並右擊，勾選「排除此處理程序」。設定將在重新啟動 MacType 後生效。"
+				L"\n\n"
+				L"建議結束此處理程序，以防止程式進一步的錯誤。是否想要立即結束此處理程序？", ImageBaseName);
+			Response = KexMessageBox(MB_ICONEXCLAMATION | MB_YESNO, L"VxKex NEXT 應用程式警告", Message);
 		} else {
 			WCHAR Message[3000];
 			StringCchPrintf(Message, 3000, L"Detected MacType is running. VxKex NEXT compatibility layer is enabled for this program, enabling VxKex NEXT and MacType at the same time may cause the program to crash."

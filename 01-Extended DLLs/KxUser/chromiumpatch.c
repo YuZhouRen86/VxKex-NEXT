@@ -2,13 +2,13 @@
 #include "kxuserp.h"
 #include <ShellAPI.h>
 
-PPWSTR Ext_CommandLineToArgvW(
+KXUSERAPI PPWSTR WINAPI Ext_CommandLineToArgvW(
 	IN	LPCWSTR	lpCmdLine,
 	OUT	PINT	pNumArgs)
 {
 	PPWSTR Result = CommandLineToArgvW(lpCmdLine, pNumArgs);
 	
-	unless (KexData->IfeoParameters.DisableAppSpecific){
+	unless (KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) && KexRtlCurrentProcessBitness() == 32 && Result && *pNumArgs >= 1) {
 			ULONG Index;
 			PCWSTR NoSandbox = L"--no-sandbox";
