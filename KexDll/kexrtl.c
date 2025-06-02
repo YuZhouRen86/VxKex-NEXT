@@ -22,6 +22,16 @@
 #include "buildcfg.h"
 #include "kexdllp.h"
 
+KEXAPI VOID NTAPI KexRtlGetNtVersionNumbers(
+	OUT	PULONG	MajorVersion OPTIONAL,
+	OUT	PULONG	MinorVersion OPTIONAL,
+	OUT	PULONG	BuildNumber OPTIONAL)
+{
+    if (MajorVersion) *MajorVersion = OriginalMajorVersion; 
+    if (MinorVersion) *MinorVersion = OriginalMinorVersion; 
+    if (BuildNumber) *BuildNumber = OriginalBuildNumber;
+}
+
 // Examples:
 // C:\Windows\system32\notepad.exe -> notepad.exe
 // notepad.exe -> notepad.exe
@@ -518,6 +528,34 @@ KEXAPI VOID NTAPI KexRtlRetreatUnicodeString(
 	String->MaximumLength += RetreatCb;
 }
 
+// note: once this function returns, NewEnd will point to the first character
+// which is outside the bounds of the String's buffer.
+KEXAPI NTSTATUS NTAPI KexRtlSetUnicodeStringBufferEnd(
+	OUT	PUNICODE_STRING	String,
+	IN	PCWCHAR			NewEnd)
+{
+	if (!WELL_FORMED_UNICODE_STRING(String) || String->Buffer == NULL) {
+		return STATUS_INVALID_PARAMETER_1;
+	}
+
+	if (!NewEnd) {
+		return STATUS_INVALID_PARAMETER_2;
+	}
+
+	if (String->Buffer > NewEnd) {
+		return STATUS_INTEGER_OVERFLOW;
+	}
+
+	if (KexRtlEndOfUnicodeString(String) > NewEnd) {
+		return STATUS_INVALID_PARAMETER;
+	}
+
+	String->MaximumLength = ((USHORT) (NewEnd - String->Buffer)) * sizeof(WCHAR);
+	ASSERT (VALID_UNICODE_STRING(String));
+
+	return STATUS_SUCCESS;
+}
+
 KEXAPI NTSTATUS NTAPI KexRtlShiftUnicodeString(
 	IN OUT	PUNICODE_STRING	String,
 	IN		USHORT			ShiftCch,
@@ -802,6 +840,27 @@ KEXAPI NTSTATUS NTAPI KexRtlNullTerminateUnicodeString(
 
 	*KexRtlEndOfUnicodeString(String) = '\0';
 	return STATUS_SUCCESS;
+}
+
+// This function returns TRUE if a UNICODE_STRING contains embedded null characters
+// and FALSE if it does not.
+KEXAPI BOOLEAN NTAPI KexRtlUnicodeStringContainsEmbeddedNull(
+	IN	PUNICODE_STRING	String)
+{
+	ULONG Index;
+
+	ASSERT (VALID_UNICODE_STRING(String));
+
+	for (Index = 0; Index < KexRtlUnicodeStringCch(String); ++Index) {
+		// ensure we don't go past the end of the buffer
+		ASSERT (&String->Buffer[Index] < KexRtlEndOfUnicodeString(String));
+
+		if (String->Buffer[Index] == '\0') {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 // Create an object directory which is accessible to untrusted processes.

@@ -160,7 +160,7 @@ VOID KexSetupDeleteKey(
 		RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
 	}
 
-	ErrorCode = RegDeleteTree(NewKeyHandle, NULL);
+	ErrorCode = SHDeleteKey(NewKeyHandle, NULL);
 	if (ErrorCode != ERROR_SUCCESS) {
 		RegCloseKey(NewKeyHandle);
 		ErrorBoxF(L"Failed to delete keys and subkeys. %s", Win32ErrorAsString(ErrorCode));
@@ -352,8 +352,17 @@ VOID KexSetupMoveFileSpecToDirectory(
 		0);
 
 	if (FindHandle == INVALID_HANDLE_VALUE) {
-		ErrorBoxF(L"VxKex setup files could not be found. %s", GetLastErrorAsString());
-		RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
+		FindHandle = FindFirstFileEx(
+			FileSpec,
+			FindExInfoStandard,
+			&FindData,
+			FindExSearchNameMatch,
+			NULL,
+			0);
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			ErrorBoxF(L"VxKex setup files could not be found. %s", GetLastErrorAsString());
+			RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
+		}
 	}
 
 	SetLastError(ERROR_SUCCESS);
@@ -474,7 +483,16 @@ BOOLEAN KexSetupRemoveDirectoryRecursive(
 		FIND_FIRST_EX_LARGE_FETCH);
 
 	if (FindHandle == INVALID_HANDLE_VALUE) {
-		return FALSE;
+		FindHandle = FindFirstFileEx(
+			DirectoryPathSpec,
+			FindExInfoStandard,
+			&FindData,
+			FindExSearchNameMatch,
+			NULL,
+			0);
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			return FALSE;
+		}
 	}
 
 	do {
@@ -529,9 +547,18 @@ BOOLEAN KexSetupDeleteFilesBySpec(
 		FIND_FIRST_EX_LARGE_FETCH);
 
 	if (FindHandle == INVALID_HANDLE_VALUE) {
-		return FALSE;
+		FindHandle = FindFirstFileEx(
+			FileSpec,
+			FindExInfoStandard,
+			&FindData,
+			FindExSearchNameMatch,
+			NULL,
+			0);
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			return FALSE;
+		}
 	}
-
+	
 	Success = 0xff;
 
 	do {

@@ -134,6 +134,29 @@ EXPORTS
 	RegCopyTreeW						= KxAdvapi.RegCopyTreeW
 
 	;;
+	;; Forwarders to KxUser
+	;;
+	
+	CharLowerA							= KxUser.CharLowerA
+	CharLowerBuffA						= KxUser.CharLowerBuffA
+	CharLowerBuffW						= KxUser.CharLowerBuffW
+	CharLowerW							= KxUser.CharLowerW
+	CharNextA							= KxUser.CharNextA
+	CharNextExA							= KxUser.CharNextExA
+	CharNextW							= KxUser.CharNextW
+	CharPrevA							= KxUser.CharPrevA
+	CharPrevExA							= KxUser.CharPrevExA
+	CharPrevW							= KxUser.CharPrevW
+	CharToOemA							= KxUser.CharToOemA
+	CharToOemBuffA						= KxUser.CharToOemBuffA
+	CharToOemBuffW						= KxUser.CharToOemBuffW
+	CharToOemW							= KxUser.CharToOemW
+	CharUpperA							= KxUser.CharUpperA
+	CharUpperBuffA						= KxUser.CharUpperBuffA
+	CharUpperBuffW						= KxUser.CharUpperBuffW
+	CharUpperW							= KxUser.CharUpperW
+
+	;;
 	;; VxKex Extended Functions
 	;;
 
@@ -159,6 +182,7 @@ EXPORTS
 
 	;; verspoof.c
 	GetVersionExA						= Ext_GetVersionExA
+	GetVersionExW						= Ext_GetVersionExW
 
 	;; stubs.c
 	DuplicateHandle						= Ext_DuplicateHandle

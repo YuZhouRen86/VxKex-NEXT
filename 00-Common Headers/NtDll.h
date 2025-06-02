@@ -4035,6 +4035,14 @@ NTSYSAPI NTSTATUS NTAPI RtlSetCurrentEnvironment(
 	IN	PVOID	Environment,
 	OUT	PVOID	*PreviousEnvironment OPTIONAL);
 
+NTSYSAPI NTSTATUS NTAPI RtlQueryEnvironmentVariable(
+    IN		PVOID	Environment OPTIONAL,
+    IN		PCWSTR	Name,
+    IN		SIZE_T	NameLength,
+    OUT		PWSTR	Value OPTIONAL,
+    IN		SIZE_T	ValueLength OPTIONAL,
+    OUT		PSIZE_T	ReturnLength);
+
 NTSYSAPI NTSTATUS NTAPI RtlQueryEnvironmentVariable_U(
 	IN		PVOID				Environment OPTIONAL,
 	IN		PCUNICODE_STRING	Name,

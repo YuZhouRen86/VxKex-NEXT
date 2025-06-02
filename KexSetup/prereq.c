@@ -139,7 +139,7 @@ VOID KexSetupCheckForPrerequisites(
 	// him whether he wants to cancel setup.
 	//
 
-	unless (ServicePack1Present && DllDirectoriesUpdatePresent && PlatformUpdatePresent) {
+	unless ((ServicePack1Present && DllDirectoriesUpdatePresent && PlatformUpdatePresent) || (NtCurrentPeb()->OSMajorVersion != 6 || NtCurrentPeb()->OSMinorVersion != 1)) {
 		HRESULT Result;
 		WCHAR MainText[1024];
 		PWSTR Updates[3];

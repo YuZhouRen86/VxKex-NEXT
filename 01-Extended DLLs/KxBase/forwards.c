@@ -677,7 +677,7 @@
 #pragma comment(linker, "/EXPORT:GetVDMCurrentDirectories=kernel32.GetVDMCurrentDirectories")
 #pragma comment(linker, "/EXPORT:GetVersion=kernel32.GetVersion")
 //#pragma comment(linker, "/EXPORT:GetVersionExA=kernel32.GetVersionExA")
-#pragma comment(linker, "/EXPORT:GetVersionExW=kernel32.GetVersionExW")
+//#pragma comment(linker, "/EXPORT:GetVersionExW=kernel32.GetVersionExW")
 #pragma comment(linker, "/EXPORT:GetVolumeInformationA=kernel32.GetVolumeInformationA")
 #pragma comment(linker, "/EXPORT:GetVolumeInformationByHandleW=kernel32.GetVolumeInformationByHandleW")
 #pragma comment(linker, "/EXPORT:GetVolumeInformationW=kernel32.GetVolumeInformationW")

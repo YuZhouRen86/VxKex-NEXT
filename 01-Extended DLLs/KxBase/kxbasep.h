@@ -26,6 +26,7 @@
 
 EXTERN PKEX_PROCESS_DATA KexData;
 EXTERN HANDLE KsecDD;
+EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
 
 //
 // module.c

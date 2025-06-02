@@ -96,8 +96,8 @@ VOID ProcessCommandLineOptions(
 		}
 
 		ParentProcessHwnd += StringLiteralLength(L"/HWND:");
-		Window = NULL;
-		swscanf_s(ParentProcessHwnd, L"%u", &Window);
+
+		Window = (HWND)wcstoul(ParentProcessHwnd, NULL, 0);
 
 		if (IsWindow(Window)) {
 			MainWindow = Window;

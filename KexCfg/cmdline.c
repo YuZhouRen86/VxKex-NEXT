@@ -1,6 +1,16 @@
 #include "buildcfg.h"
 #include "kexcfg.h"
 
+#pragma warning(disable:4996)
+
+#if defined(KEX_TARGET_TYPE_EXE) || defined(KEX_TARGET_TYPE_DLL)
+#  if defined(KEX_ARCH_X64)
+#    pragma comment(lib, "msvcrt_x64.lib")
+#  elif defined(KEX_ARCH_X86)
+#    pragma comment(lib, "msvcrt_x86.lib")
+#  endif
+#endif
+
 STATIC VOID DisplayHelpMessage(
 	VOID)
 {
@@ -256,7 +266,7 @@ VOID KexCfgHandleCommandLine(
 		} else {
 			ULONG Value;
 
-			if (swscanf_s(Parameter, L"%lu", &Value) != 1) {
+			if (swscanf(Parameter, L"%lu", &Value) != 1) {
 				KexCfgMessageBox(
 					NULL,
 					L"The argument to /WINVERSPOOF could not be parsed.",
@@ -294,7 +304,7 @@ VOID KexCfgHandleCommandLine(
 			Parameter += ARRAYSIZE(L"0x");
 		}
 
-		if (swscanf_s(Parameter, L"%lx", &Value) != 1) {
+		if (swscanf(Parameter, L"%lx", &Value) != 1) {
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /STRONGSPOOF could not be parsed.",

@@ -81,7 +81,7 @@ INT_PTR CALLBACK DialogProc(
 
 		WinVerComboBox = GetDlgItem(Window, IDWINVERCOMBOBOX);
 
-		ComboBox_AddString(WinVerComboBox, L"Windows 7 Service Pack 1");
+		ComboBox_AddString(WinVerComboBox, L"Windows 7 (Service Pack 1)");
 		ComboBox_AddString(WinVerComboBox, L"Windows 8");
 		ComboBox_AddString(WinVerComboBox, L"Windows 8.1");
 		ComboBox_AddString(WinVerComboBox, L"Windows 10");

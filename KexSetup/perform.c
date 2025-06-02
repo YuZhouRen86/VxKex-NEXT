@@ -602,6 +602,15 @@ VOID KexSetupUninstall(
 	WCHAR PathBuffer[MAX_PATH];
 
 	//
+	// If PreserveConfig is TRUE, disable VxKex for all programs.
+	// Otherwise, delete all VxKex program configuration.
+	//
+	
+	KxCfgEnumerateConfiguration(
+		KexSetupConfigurationEnumerationCallback,
+		NULL);
+
+	//
 	// If the installer is running from KexDir, we will move it out of KexDir to a
 	// temporary location. Otherwise, we won't be able to fully remove KexDir.
 	//
@@ -745,15 +754,6 @@ VOID KexSetupUninstall(
 	} else {
 		KexSetupDeleteKey(HKEY_CURRENT_USER, L"Software\\VXsoft\\VxKex");
 	}
-
-	//
-	// If PreserveConfig is TRUE, disable VxKex for all programs.
-	// Otherwise, delete all VxKex program configuration.
-	//
-	
-	KxCfgEnumerateConfiguration(
-		KexSetupConfigurationEnumerationCallback,
-		NULL);
 	
 	//
 	// Unregister shell extension and .vxl file extension handler.
@@ -879,7 +879,7 @@ VOID KexSetupInstall(
 		KexSetupRegWriteI32(KeyHandle, L"InstalledVersion", InstallerVxKexVersion);
 		KexSetupRegWriteString(KeyHandle, L"KexDir", KexDir);
 		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, 0, (LPWSTR)LogDir);
-		wcscat_s(LogDir, MAX_PATH, L"\\VxKex\\Logs");
+		StringCchCat(LogDir, MAX_PATH, L"\\VxKex\\Logs");
 		KexSetupRegWriteString(KeyHandle, L"LogDir", LogDir);
 	} finally {
 		RegCloseKey(KeyHandle);

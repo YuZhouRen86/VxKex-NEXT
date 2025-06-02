@@ -68,6 +68,9 @@
     <ClCompile Include="syscal32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="syscal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="avrf.c">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -30,6 +30,7 @@
 #include <KexW32ML.h>
 
 PKEX_PROCESS_DATA KexData = NULL;
+ULONG OriginalMajorVersion = 0, OriginalMinorVersion = 0, OriginalBuildNumber = 0;
 
 BOOL WINAPI DllMain(
 	IN	PVOID		DllBase,
@@ -40,6 +41,7 @@ BOOL WINAPI DllMain(
 		LdrDisableThreadCalloutsForDll(DllBase);
 
 		KexDataInitialize(&KexData);
+		KexRtlGetNtVersionNumbers(&OriginalMajorVersion, &OriginalMinorVersion, &OriginalBuildNumber);
 		KexLogDebugEvent(L"DllMain called with DLL_PROCESS_ATTACH");
 
 		//
@@ -69,8 +71,10 @@ BOOL WINAPI DllMain(
 		// Get base named object directories and put handles to them in KexData.
 		//
 
-		KexData->BaseNamedObjects = BaseGetNamedObjectDirectory();
-		KexData->UntrustedNamedObjects = BaseGetUntrustedNamedObjectDirectory();
+		if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) {
+			KexData->BaseNamedObjects = BaseGetNamedObjectDirectory();
+			KexData->UntrustedNamedObjects = BaseGetUntrustedNamedObjectDirectory();
+		}
 	}
 
 	return TRUE;

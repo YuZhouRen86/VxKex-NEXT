@@ -155,3 +155,19 @@ VOID AshApplyQBittorrentEnvironmentVariableHacks(
 	RtlInitConstantUnicodeString(&VariableValue, L"1.0000001");
 	RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
 }
+
+VOID AshApplyPythonEnvironmentVariableHacks(
+	VOID)
+{
+	UNICODE_STRING VariableName;
+	UNICODE_STRING VariableValue;
+
+	ASSERT (StringBeginsWithI(KexData->ImageBaseName.Buffer, L"python"));
+
+	if (LOWORD(OriginalBuildNumber) < 10586) {
+		KexLogInformationEvent(L"App-Specific Hack applied for Python");
+		RtlInitConstantUnicodeString(&VariableName, L"PYTHON_BASIC_REPL");
+		RtlInitConstantUnicodeString(&VariableValue, L"1");
+		RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
+	}
+}

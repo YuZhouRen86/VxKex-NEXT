@@ -17,7 +17,7 @@ STATIC INT_PTR CALLBACK MoreOptionsDlgProc(
 		HWND ComboBoxWindow;
 
 		ComboBoxWindow = GetDlgItem(Window, IDC_WINVER);
-		ComboBox_AddString(ComboBoxWindow, L"Windows 7 Service Pack 1");
+		ComboBox_AddString(ComboBoxWindow, L"Windows 7 (Service Pack 1)");
 		ComboBox_AddString(ComboBoxWindow, L"Windows 8");
 		ComboBox_AddString(ComboBoxWindow, L"Windows 8.1");
 		ComboBox_AddString(ComboBoxWindow, L"Windows 10");

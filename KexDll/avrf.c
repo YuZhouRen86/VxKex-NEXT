@@ -40,7 +40,7 @@ NTSTATUS KexDisableAVrf(
 
 	RtlInitConstantUnicodeString(&VerifierDllName, L"verifier.dll");
 
-	Status = LdrGetDllHandleByName(&VerifierDllName, NULL, &VerifierDllBase);
+	Status = LdrGetDllHandle(NULL, NULL, &VerifierDllName, &VerifierDllBase);
 	ASSERT (NT_SUCCESS(Status));
 
 	if (!NT_SUCCESS(Status)) {
@@ -55,10 +55,13 @@ NTSTATUS KexDisableAVrf(
 	ASSERT (NT_SUCCESS(Status));
 
 	if (NT_SUCCESS(Status) && VerifierDllMain != NULL) {
-		if (!VerifierDllMain(VerifierDllBase, DLL_PROCESS_DETACH, NULL)) {
-			KexLogWarningEvent(L"Verifier.dll failed to de-initialize.");
-			ASSERT (FALSE);
+		BOOLEAN Result;
+		try {
+			Result = VerifierDllMain(VerifierDllBase, DLL_PROCESS_DETACH, NULL);
+		} except (GetExceptionCode() == STATUS_ACCESS_VIOLATION) {
+			Result = FALSE;
 		}
+		if (!Result) KexLogDetailEvent(L"Verifier.dll failed to de-initialize.");
 	}
 
 	NtCurrentPeb()->NtGlobalFlag &= ~(FLG_APPLICATION_VERIFIER | FLG_HEAP_PAGE_ALLOCS);

@@ -62,6 +62,9 @@
     <ClCompile Include="featurestaging.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="window.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxuser.def">

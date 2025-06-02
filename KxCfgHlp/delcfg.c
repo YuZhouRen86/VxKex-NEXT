@@ -40,10 +40,10 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 	IN	PCWSTR	ExeFullPath,
 	IN	HANDLE	TransactionHandle OPTIONAL)
 {
-	NTSTATUS Status;
 	ULONG ErrorCode;
 	BOOLEAN Success;
 	HKEY IfeoKeyHandle;
+	HKEY OriginalIfeoKeyHandle = 0;
 	ULONG Index;
 	UNICODE_STRING ExeFullPathUS;
 	WCHAR VerifierDlls[256];
@@ -87,22 +87,106 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 
 	RtlInitUnicodeString(&ExeFullPathUS, ExeFullPath);
 
-	Status = LdrOpenImageFileOptionsKey(
-		&ExeFullPathUS,
-		FALSE,
-		(PHANDLE) &IfeoKeyHandle);
-
-	if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
-		return TRUE;
-	} else {
-		if (!NT_SUCCESS(Status)) {
-			SetLastError(RtlNtStatusToDosError(Status));
+	{
+		HKEY IfeoBaseKey;
+		HKEY IfeoExeKey;
+		ULONG UseFilter;
+		
+		ErrorCode = RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+			L"Image File Execution Options",
+			0,
+			KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY,
+			&IfeoBaseKey);
+		if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+			return TRUE;
+		} else if (ErrorCode != ERROR_SUCCESS) {
+			SetLastError(ErrorCode);
 			return FALSE;
 		}
-	}
 
-	// Note that the LdrOpenImageFileOptionsKey opens the key read-only.
-	// We will have to reopen it read-write.
+		ErrorCode = RegOpenKeyEx(
+			IfeoBaseKey,
+			PathFindFileName(ExeFullPath),
+			0,
+			KEY_READ | KEY_WOW64_64KEY,
+			&IfeoExeKey);
+		if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+			return TRUE;
+		} else if (ErrorCode != ERROR_SUCCESS) {
+			RegCloseKey(IfeoBaseKey);
+			SetLastError(ErrorCode);
+			return FALSE;
+		}
+
+		ErrorCode = RegReadI32(IfeoExeKey, NULL, L"UseFilter", &UseFilter);
+		ASSERT (ErrorCode == ERROR_SUCCESS);
+		
+		if (UseFilter) {
+			ULONG SubkeyIndex = 0;
+			while (TRUE) {
+				WCHAR SubkeyName[32];
+				ULONG SubkeyNameCch;
+				WCHAR FilterFullPath[MAX_PATH];
+
+				SubkeyNameCch = ARRAYSIZE(SubkeyName);
+				ErrorCode = RegEnumKeyEx(
+					IfeoExeKey,
+					SubkeyIndex++,
+					SubkeyName,
+					&SubkeyNameCch,
+					NULL,
+					NULL,
+					NULL,
+					NULL);
+
+				if (ErrorCode == ERROR_NO_MORE_ITEMS) {
+					break;
+				}
+
+				if (ErrorCode != ERROR_SUCCESS) {
+					continue;
+				}
+
+				RegReadString(
+					IfeoExeKey,
+					SubkeyName,
+					L"FilterFullPath",
+					FilterFullPath,
+					ARRAYSIZE(FilterFullPath));
+
+				if (FilterFullPath[0] == '\0') {
+					continue;
+				}
+
+				if (StringEqualI(FilterFullPath, ExeFullPath)) {
+					ErrorCode = RegOpenKeyEx(
+						IfeoExeKey,
+						SubkeyName,
+						0,
+						KEY_READ | KEY_WOW64_64KEY,
+						&IfeoKeyHandle);
+					if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+						return TRUE;
+					} else if (ErrorCode != ERROR_SUCCESS) {
+						RegCloseKey(IfeoExeKey);
+						RegCloseKey(IfeoBaseKey);
+						SetLastError(ErrorCode);
+						return FALSE;
+					}
+
+					OriginalIfeoKeyHandle = IfeoKeyHandle;
+					break;
+				}
+			}
+		}
+
+		if (!OriginalIfeoKeyHandle) return TRUE;
+		RegCloseKey(IfeoExeKey);
+		RegCloseKey(IfeoBaseKey);
+	}
+	
 	Success = RegReOpenKey(
 		&IfeoKeyHandle,
 		KEY_READ | KEY_WRITE | DELETE,
@@ -181,13 +265,15 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 			L"VerifierDlls",
 			VerifierDlls,
 			ARRAYSIZE(VerifierDlls));
-
-		if (ErrorCode == ERROR_FILE_NOT_FOUND) {
-			// VxKex isn't enabled.
-			return TRUE;
-		} else if (ErrorCode != ERROR_SUCCESS) {
-			SetLastError(ErrorCode);
-			return FALSE;
+		if (ErrorCode != ERROR_SUCCESS) {
+			RegCloseKey(OriginalIfeoKeyHandle);
+			if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+				// VxKex isn't enabled.
+				return TRUE;
+			} else {
+				SetLastError(ErrorCode);
+				return FALSE;
+			}
 		}
 
 		KexDllWasRemoved = KxCfgpRemoveKexDllFromVerifierDlls(VerifierDlls);
@@ -207,8 +293,9 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 					L"VerifierDlls",
 					VerifierDlls);
 			}
-
-			if (ErrorCode != ERROR_SUCCESS) {
+			
+			if (ErrorCode != ERROR_SUCCESS && ErrorCode != ERROR_FILE_NOT_FOUND) {
+				RegCloseKey(OriginalIfeoKeyHandle);
 				SetLastError(ErrorCode);
 				return FALSE;
 			}
@@ -221,13 +308,12 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 		//
 
 		if (KexDllWasRemoved && VerifierDlls[0] == '\0') {
-			ULONG GlobalFlag;
+			ULONG GlobalFlag = 0;
 
 			ErrorCode = RegReadI32(IfeoKeyHandle, NULL, L"GlobalFlag", &GlobalFlag);
-
-			if (ErrorCode == ERROR_FILE_NOT_FOUND) {
-				return TRUE;
-			} else if (ErrorCode != ERROR_SUCCESS) {
+			
+			if (ErrorCode != ERROR_SUCCESS && ErrorCode != ERROR_FILE_NOT_FOUND) {
+				RegCloseKey(OriginalIfeoKeyHandle);
 				SetLastError(ErrorCode);
 				return FALSE;
 			}
@@ -244,7 +330,8 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 					ErrorCode = RegWriteI32(IfeoKeyHandle, NULL, L"GlobalFlag", GlobalFlag);
 				}
 
-				if (ErrorCode != ERROR_SUCCESS) {
+				if (ErrorCode != ERROR_SUCCESS && ErrorCode != ERROR_FILE_NOT_FOUND) {
+					RegCloseKey(OriginalIfeoKeyHandle);
 					SetLastError(ErrorCode);
 					return FALSE;
 				}
@@ -309,30 +396,33 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 				//
 
 				{
+					HKEY IfeoBaseKey;
 					PCWSTR ExeBaseName;
 
 					ExeBaseName = PathFindFileName(ExeFullPath);
 					
-					Status = RegOpenKeyExW (
+					ErrorCode = RegOpenKeyEx(
 						HKEY_LOCAL_MACHINE,
 						L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
 						L"Image File Execution Options",
 						0,
-						KEY_READ | KEY_WRITE,
-						&IfeoKeyHandle);
+						KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
+						&IfeoBaseKey);
 
-					ASSERT (NT_SUCCESS(Status));
+					ASSERT (ErrorCode == ERROR_SUCCESS);
 
 					IfeoKeyHandle = KxCfgpOpenKey(
-						IfeoKeyHandle,
+						IfeoBaseKey,
 						ExeBaseName,
 						KEY_READ | KEY_WRITE | DELETE,
 						TransactionHandle);
-
+					RegCloseKey(IfeoBaseKey);
+					
 					ASSERT (IfeoKeyHandle != NULL);
 
 					if (!IfeoKeyHandle) {
 						// ignore the error, it's not critical
+						RegCloseKey(OriginalIfeoKeyHandle);
 						return TRUE;
 					}
 				}
@@ -354,6 +444,7 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 				ASSERT (ErrorCode == ERROR_SUCCESS);
 
 				if (ErrorCode != ERROR_SUCCESS) {
+					RegCloseKey(OriginalIfeoKeyHandle);
 					return TRUE;
 				}
 				
@@ -404,8 +495,8 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgDeleteLegacyConfiguration(
 	IN	PCWSTR	ExeFullPath,
 	IN	HANDLE	TransactionHandle OPTIONAL)
 {
-	NTSTATUS Status;
 	ULONG ErrorCode;
+	HKEY IfeoBaseKey;
 	HKEY IfeoKey;
 	PCWSTR ExeBaseName;
 	WCHAR Debugger[MAX_PATH];
@@ -421,24 +512,27 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgDeleteLegacyConfiguration(
 		return FALSE;
 	}
 	
-	Status = RegOpenKeyExW (
+	ErrorCode = RegOpenKeyEx(
 		HKEY_LOCAL_MACHINE,
 		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
 		L"Image File Execution Options",
 		0,
-		KEY_READ | KEY_WRITE,
-		&IfeoKey);
+		KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
+		&IfeoBaseKey);
 
-	if (!NT_SUCCESS(Status)) {
-		SetLastError(RtlNtStatusToDosError(Status));
+	if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+		return TRUE;
+	} else if (ErrorCode != ERROR_SUCCESS) {
+		SetLastError(ErrorCode);
 		return FALSE;
 	}
 
 	IfeoKey = KxCfgpOpenKey(
-		IfeoKey,
+		IfeoBaseKey,
 		ExeBaseName,
 		KEY_READ | KEY_WRITE | DELETE,
 		TransactionHandle);
+	RegCloseKey(IfeoBaseKey);
 
 	if (!IfeoKey) {
 		ErrorCode = GetLastError();

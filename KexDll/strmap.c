@@ -32,6 +32,263 @@
 #include "buildcfg.h"
 #include "kexdllp.h"
 
+BOOLEAN CreateHashTable(
+	IN OUT	PPRTL_DYNAMIC_HASH_TABLE	HashTable,
+	IN		ULONG						Shift,
+	IN		ULONG						Flags)
+{
+	ULONG Index;
+    PRTL_DYNAMIC_HASH_TABLE Table;
+	PLIST_ENTRY Directory;
+
+    // Validate input parameters
+    if (!HashTable || Shift >= 0x40) return FALSE;
+	
+    // Allocate hash table structure
+	if (!*HashTable) {
+		Table = SafeAlloc(RTL_DYNAMIC_HASH_TABLE, 1);
+		if (!Table) return FALSE;
+		*HashTable = Table;
+		Flags |= 1;
+	}
+    Table = *HashTable;
+    RtlZeroMemory(Table, sizeof(RTL_DYNAMIC_HASH_TABLE));
+
+    // Initialize basic parameters
+    Table->Flags = Flags;
+    Table->Shift = Shift;
+    Table->TableSize = 0x80;
+    Table->DivisorMask = Table->TableSize - 1;
+    Table->Pivot = 0;
+
+    // Allocate and initialize directory array
+	Directory = SafeAlloc(LIST_ENTRY, Table->TableSize);
+    if (!Directory) {
+        SafeFree(Table);
+        return FALSE;
+    }
+
+	for (Index = 0; Index < Table->TableSize; ++Index) {
+		Directory[Index].Blink = &Directory[Index];
+		Directory[Index].Flink = &Directory[Index];
+	}
+
+	Table->Directory = Directory;
+
+    return TRUE;
+}
+
+ULONG DeleteHashTable(
+	IN	PRTL_DYNAMIC_HASH_TABLE	HashTable)
+{
+	if (!HashTable || HashTable->NumEnumerators != 0) return FALSE;
+	SafeFree(HashTable->Directory);
+	SafeFree(HashTable);
+	return TRUE;
+}
+
+BOOLEAN InitEnumerationHashTable(
+	IN	PRTL_DYNAMIC_HASH_TABLE				HashTable,
+	OUT	PRTL_DYNAMIC_HASH_TABLE_ENUMERATOR	Enumerator)
+{
+	ULONG Index;
+
+	if (!HashTable || !Enumerator) return FALSE;
+
+	RtlZeroMemory(Enumerator, sizeof(RTL_DYNAMIC_HASH_TABLE_ENUMERATOR));
+
+	for (Index = 0; Index < HashTable->TableSize; ++Index) {
+		PLIST_ENTRY Chain = &((PLIST_ENTRY)HashTable->Directory)[Index];
+		if (!IsListEmpty(Chain)) {
+			Enumerator->BucketIndex = Index;
+			Enumerator->ChainHead = Chain;
+			Enumerator->HashEntry.Linkage.Flink = Chain->Flink;
+			InterlockedIncrement((PLONG)&HashTable->NumEnumerators);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+VOID EndEnumerationHashTable(
+	IN		PRTL_DYNAMIC_HASH_TABLE				HashTable,
+	IN OUT	PRTL_DYNAMIC_HASH_TABLE_ENUMERATOR	Enumerator)
+{
+	if (HashTable && Enumerator) {
+		InterlockedDecrement((PLONG)&HashTable->NumEnumerators);
+		RtlZeroMemory(Enumerator, sizeof(RTL_DYNAMIC_HASH_TABLE_ENUMERATOR));
+	}
+}
+
+PRTL_DYNAMIC_HASH_TABLE_ENTRY EnumerateEntryHashTable(
+	IN		PRTL_DYNAMIC_HASH_TABLE				HashTable,
+	IN OUT	PRTL_DYNAMIC_HASH_TABLE_ENUMERATOR	Enumerator)
+{
+	if (!HashTable || !Enumerator) return NULL;
+
+	while (Enumerator->BucketIndex < HashTable->TableSize) {
+		PLIST_ENTRY NextChain;
+
+		if (Enumerator->ChainHead) {
+			PLIST_ENTRY Current = Enumerator->HashEntry.Linkage.Flink;
+			PLIST_ENTRY Chain = Enumerator->ChainHead;
+
+			if (Current != Chain) {
+				PRTL_DYNAMIC_HASH_TABLE_ENTRY Entry = CONTAINING_RECORD(
+					Current,
+					RTL_DYNAMIC_HASH_TABLE_ENTRY,
+					Linkage);
+				Enumerator->HashEntry.Linkage.Flink = Current->Flink;
+				return Entry;
+			}
+		}
+
+		Enumerator->BucketIndex++;
+		if (Enumerator->BucketIndex >= HashTable->TableSize) break;
+
+		NextChain = &((PLIST_ENTRY)HashTable->Directory)[Enumerator->BucketIndex];
+		if (!IsListEmpty(NextChain)) {
+			Enumerator->ChainHead = NextChain;
+			Enumerator->HashEntry.Linkage.Flink = NextChain->Flink;
+		}
+	}
+	return NULL;
+}
+
+BOOLEAN InsertEntryHashTable(
+	IN		PRTL_DYNAMIC_HASH_TABLE			HashTable,
+	IN		PRTL_DYNAMIC_HASH_TABLE_ENTRY	Entry,
+	IN		ULONG_PTR						Signature,
+	IN OUT	PRTL_DYNAMIC_HASH_TABLE_CONTEXT	Context OPTIONAL)
+{
+	PLIST_ENTRY Chain;
+	BOOLEAN WasEmpty;
+
+	if (!HashTable || !Entry) return FALSE;
+
+	Chain = &((PLIST_ENTRY)HashTable->Directory)[Signature & HashTable->DivisorMask];
+	WasEmpty = IsListEmpty(Chain);
+
+	Entry->Signature = Signature;
+	InsertHeadList(Chain, &Entry->Linkage);
+
+	HashTable->NumEntries++;
+	if (WasEmpty) HashTable->NonEmptyBuckets++;
+
+	if (HashTable->NumEntries > HashTable->TableSize * 2) {
+		ULONG NewShift = HashTable->Shift + 1;
+		ULONG NewSize = 1 << NewShift;
+		PLIST_ENTRY NewDir = SafeAlloc(LIST_ENTRY, NewSize);
+
+		if (NewDir) {
+			ULONG Index;
+			ULONG OldBucket;
+			for (Index = 0; Index < NewSize; ++Index) {
+				InitializeListHead(&NewDir[Index]);
+			}
+
+			for (OldBucket = 0; OldBucket < HashTable->TableSize; ++OldBucket) {
+				PLIST_ENTRY OldChain = &((PLIST_ENTRY)HashTable->Directory)[OldBucket];
+				while (!IsListEmpty(OldChain)) {
+					PLIST_ENTRY Entry = RemoveHeadList(OldChain);
+					PRTL_DYNAMIC_HASH_TABLE_ENTRY Item = CONTAINING_RECORD(
+						Entry,
+						RTL_DYNAMIC_HASH_TABLE_ENTRY,
+						Linkage);
+					ULONG NewBucket = Item->Signature & (NewSize - 1);
+					InsertHeadList(&NewDir[NewBucket], Entry);
+				}
+			}
+
+			SafeFree(HashTable->Directory);
+			HashTable->Directory = NewDir;
+			HashTable->Shift = NewShift;
+			HashTable->TableSize = NewSize;
+			HashTable->DivisorMask = NewSize - 1;
+		}
+	}
+
+	if (Context) {
+		Context->ChainHead = Chain;
+		Context->PrevLinkage = &Entry->Linkage;
+		Context->Signature = Signature;
+	}
+
+	return TRUE;
+}
+
+PRTL_DYNAMIC_HASH_TABLE_ENTRY LookupEntryHashTable(
+	IN	PRTL_DYNAMIC_HASH_TABLE			HashTable,
+	IN	ULONG_PTR						Signature,
+	OUT	PRTL_DYNAMIC_HASH_TABLE_CONTEXT	Context OPTIONAL)
+{
+	PLIST_ENTRY Entry;
+	PLIST_ENTRY Chain;
+
+	if (!HashTable) return NULL;
+	
+	Chain = &((PLIST_ENTRY)HashTable->Directory)[Signature & HashTable->DivisorMask];
+
+	for (Entry = Chain->Flink; Entry != Chain; Entry = Entry->Flink) {
+		PRTL_DYNAMIC_HASH_TABLE_ENTRY Item = CONTAINING_RECORD(
+			Entry,
+			RTL_DYNAMIC_HASH_TABLE_ENTRY,
+			Linkage);
+		if (Item->Signature == Signature) {
+			if (Context) {
+				Context->ChainHead = Chain;
+				Context->PrevLinkage = Entry->Blink;
+				Context->Signature = Signature;
+			}
+			return Item;
+		}
+	}
+	return NULL;
+}
+
+PRTL_DYNAMIC_HASH_TABLE_ENTRY GetNextEntryHashTable(
+	IN	PRTL_DYNAMIC_HASH_TABLE			HashTable,
+	IN	PRTL_DYNAMIC_HASH_TABLE_CONTEXT	Context)
+{
+	PLIST_ENTRY Current;
+	PRTL_DYNAMIC_HASH_TABLE_ENTRY Entry;
+
+	if (!HashTable || !Context) return NULL;
+	Current = Context->PrevLinkage->Flink;
+	if (Current == Context->ChainHead) return NULL;
+
+	Entry = CONTAINING_RECORD(Current, RTL_DYNAMIC_HASH_TABLE_ENTRY, Linkage);
+	Context->PrevLinkage = Current;
+	return Entry;
+}
+
+BOOLEAN RemoveEntryHashTable(
+	IN		PRTL_DYNAMIC_HASH_TABLE			HashTable,
+	IN		PRTL_DYNAMIC_HASH_TABLE_ENTRY	Entry,
+	IN OUT	PRTL_DYNAMIC_HASH_TABLE_CONTEXT	Context OPTIONAL)
+{
+	PLIST_ENTRY Chain;
+	PLIST_ENTRY Current;
+	PLIST_ENTRY EntryLink;
+
+	if (!HashTable || !Entry) return FALSE;
+
+	Chain = Context ? Context->ChainHead : &((PLIST_ENTRY)HashTable->Directory)[Entry->Signature & HashTable->DivisorMask];
+
+	if (IsListEmpty(Chain)) return FALSE;
+
+	EntryLink = &Entry->Linkage;
+	for (Current = Chain->Flink; Current != Chain; Current = Current->Flink) {
+		if (Current == EntryLink) {
+			RemoveEntryList(Current);
+			HashTable->NumEntries--;
+			if (IsListEmpty(Chain)) HashTable->NonEmptyBuckets--;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 //
 // Create a new string mapper.
 //
@@ -67,7 +324,7 @@ KEXAPI NTSTATUS NTAPI KexRtlCreateStringMapper(
 	}
 
 	HashTable = &Mapper->HashTable;
-	Success = RtlCreateHashTable(&HashTable, 0, 0);
+	Success = CreateHashTable(&HashTable, 0, 0);
 	if (!Success) {
 		// The only way RtlCreateHashTable can fail is by running out of memory.
 		// (Or an invalid parameter, but that won't happen to us.)
@@ -104,20 +361,20 @@ KEXAPI NTSTATUS NTAPI KexRtlDeleteStringMapper(
 	// Enumerate entries in the hash table and free all the memory.
 	//
 
-	RtlInitEnumerationHashTable(&Mapper->HashTable, &Enumerator);
+	InitEnumerationHashTable(&Mapper->HashTable, &Enumerator);
 
 	do {
-		Entry = RtlEnumerateEntryHashTable(&Mapper->HashTable, &Enumerator);
+		Entry = EnumerateEntryHashTable(&Mapper->HashTable, &Enumerator);
 		RtlFreeHeap(RtlProcessHeap(), 0, Entry);
 	} until (Entry == NULL);
 
-	RtlEndEnumerationHashTable(&Mapper->HashTable, &Enumerator);
+	EndEnumerationHashTable(&Mapper->HashTable, &Enumerator);
 
 	//
 	// Free the hash table itself.
 	//
 
-	RtlDeleteHashTable(&(*StringMapper)->HashTable);
+	DeleteHashTable(&(*StringMapper)->HashTable);
 	SafeFree(*StringMapper);
 
 	return STATUS_SUCCESS;
@@ -183,7 +440,7 @@ KEXAPI NTSTATUS NTAPI KexRtlInsertEntryStringMapper(
 	Entry->Key = *Key;
 	Entry->Value = *Value;
 
-	RtlInsertEntryHashTable(
+	InsertEntryHashTable(
 		&StringMapper->HashTable,
 		&Entry->HashTableEntry,
 		KeySignature,
@@ -223,7 +480,7 @@ STATIC NTSTATUS NTAPI KexRtlpLookupRawEntryStringMapper(
 		HASH_STRING_ALGORITHM_DEFAULT,
 		&KeySignature);
 
-	Entry = (PKEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY) RtlLookupEntryHashTable(
+	Entry = (PKEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY) LookupEntryHashTable(
 		&StringMapper->HashTable,
 		KeySignature,
 		&Context);
@@ -251,7 +508,7 @@ STATIC NTSTATUS NTAPI KexRtlpLookupRawEntryStringMapper(
 		// With a decent hash function, this code should very rarely be executed.
 		//
 
-		Entry = (PKEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY) RtlGetNextEntryHashTable(
+		Entry = (PKEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY) GetNextEntryHashTable(
 			&StringMapper->HashTable,
 			&Context);
 	}
@@ -327,7 +584,7 @@ KEXAPI NTSTATUS NTAPI KexRtlRemoveEntryStringMapper(
 		return Status;
 	}
 
-	Success = RtlRemoveEntryHashTable(
+	Success = RemoveEntryHashTable(
 		&StringMapper->HashTable,
 		&Entry->HashTableEntry,
 		NULL);

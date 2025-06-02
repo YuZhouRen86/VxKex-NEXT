@@ -215,8 +215,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\00-Import Libraries</AdditionalLibraryDirectories>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>advapi32.lib;kernel32.lib</AdditionalDependencies>
       <Profile>false</Profile>
       <SetChecksum>true</SetChecksum>
       <DelayLoadDLLs>comdlg32.dll</DelayLoadDLLs>

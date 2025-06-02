@@ -74,6 +74,8 @@ KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	ASSERT (ApiAddress != NULL);
 	ASSERT (RedirectedAddress != NULL);
 
+	if (OriginalMajorVersion != 6 || OriginalMinorVersion != 1) return STATUS_ACCESS_VIOLATION;
+
 	if (!ApiAddress) {
 		return STATUS_INVALID_PARAMETER_1;
 	}

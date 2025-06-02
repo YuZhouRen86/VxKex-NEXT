@@ -107,9 +107,10 @@ KEXAPI NTSTATUS NTAPI KexPatchCpiwSubsystemVersionCheck(
 
 	RtlInitConstantUnicodeString(&Kernel32Name, L"kernel32.dll");
 
-	Status = LdrGetDllHandleByName(
-		&Kernel32Name,
+	Status = LdrGetDllHandle(
 		NULL,
+		NULL,
+		&Kernel32Name,
 		&Kernel32);
 
 	ASSERT (NT_SUCCESS(Status));

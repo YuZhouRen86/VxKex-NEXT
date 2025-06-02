@@ -238,6 +238,7 @@
     <ClCompile Include="forwards.c" />
     <ClCompile Include="sysmetrc.c" />
     <ClCompile Include="timer.c" />
+    <ClCompile Include="window.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kxuser.def" />

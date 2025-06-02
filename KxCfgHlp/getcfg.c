@@ -124,7 +124,6 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnumerateConfiguration(
 	IN	PKXCFG_ENUMERATE_CONFIGURATION_CALLBACK	ConfigurationCallback,
 	IN	PVOID									CallbackExtraParameter)
 {
-	NTSTATUS Status;
 	HKEY IfeoBaseKey;
 	ULONG Index;
 	ULONG ErrorCode;
@@ -136,16 +135,18 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnumerateConfiguration(
 	// Note that we should not close this key.
 	//
 	
-	Status = RegOpenKeyExW (
+	ErrorCode = RegOpenKeyEx(
 		HKEY_LOCAL_MACHINE,
 		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
 		L"Image File Execution Options",
 		0,
-		KEY_READ | KEY_WRITE,
+		KEY_READ | KEY_WOW64_64KEY,
 		&IfeoBaseKey);
 
-	if (!NT_SUCCESS(Status)) {
-		SetLastError(RtlNtStatusToDosError(Status));
+	if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+		return TRUE;
+	} else if (ErrorCode != ERROR_SUCCESS) {
+		SetLastError(ErrorCode);
 		return FALSE;
 	}
 
@@ -206,6 +207,8 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnumerateConfiguration(
 		// Legacy configuration has been found - call the callback
 		ContinueEnumeration = ConfigurationCallback(ExeBaseName, TRUE, CallbackExtraParameter);
 		if (!ContinueEnumeration) {
+			RegCloseKey(IfeoExeKey);
+			RegCloseKey(IfeoBaseKey);
 			SetLastError(ERROR_SUCCESS);
 			return FALSE;
 		}
@@ -224,7 +227,7 @@ NoLegacyConfigurationFound:
 			IfeoBaseKey,
 			ExeBaseName,
 			0,
-			KEY_READ,
+			KEY_READ | KEY_WOW64_64KEY,
 			&IfeoExeKey);
 
 		if (ErrorCode != ERROR_SUCCESS) {
@@ -295,6 +298,7 @@ NoLegacyConfigurationFound:
 
 			if (!ContinueEnumeration) {
 				RegCloseKey(IfeoExeKey);
+				RegCloseKey(IfeoBaseKey);
 				SetLastError(ERROR_SUCCESS);
 				return FALSE;
 			}
@@ -303,5 +307,6 @@ NoLegacyConfigurationFound:
 		RegCloseKey(IfeoExeKey);
 	}
 
+	RegCloseKey(IfeoBaseKey);
 	return TRUE;
 }

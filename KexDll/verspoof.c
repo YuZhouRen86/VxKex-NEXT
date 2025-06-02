@@ -85,9 +85,10 @@ STATIC NTSTATUS NTAPI Ext_RtlGetVersion(
 		// real version number to the target application.
 		//
 
-		Version->dwMajorVersion	= 6;
-		Version->dwMinorVersion	= 1;
-		Version->dwBuildNumber	= 7601;
+		Version->dwMajorVersion = OriginalMajorVersion ? OriginalMajorVersion : 6;
+		Version->dwMinorVersion	= OriginalMinorVersion ? OriginalMinorVersion : 1;
+		Version->dwBuildNumber	= OriginalBuildNumber ? LOWORD(OriginalBuildNumber) : 7601;
+
 	} else if (AshModuleBaseNameIs(ReturnAddress(), L"System.Private.CoreLib.dll")) {
 		//
 		// As far as I can tell, System.Private.CoreLib is what tells "managed code" the
@@ -171,9 +172,9 @@ STATIC VOID NTAPI Ext_RtlGetNtVersionNumbers(
 	//
 
 	if (AshModuleIsWindowsModule(ReturnAddress())) {
-		ReturnMajorVersion = 6;
-		ReturnMinorVersion = 1;
-		ReturnBuildNumber = 7601;
+		ReturnMajorVersion = OriginalMajorVersion ? OriginalMajorVersion : 6;
+		ReturnMinorVersion = OriginalMinorVersion ? OriginalMinorVersion : 1;
+		ReturnBuildNumber = OriginalBuildNumber ? LOWORD(OriginalBuildNumber) : 7601;
 	}
 
 	if (MajorVersion) {
@@ -226,13 +227,37 @@ VOID KexApplyVersionSpoof(
 			AshExeBaseNameIs(L"paintdotnet.exe") ||
 			AshExeBaseNameIs(L"ChocolateyGui.exe") ||
 			AshExeBaseNameIs(L"Listary.exe") ||
-			AshExeBaseNameIs(L"Listary.Service.exe")) {
+			AshExeBaseNameIs(L"Listary.Service.exe") ||
+			AshExeBaseNameIs(L"Update.exe")) {
 			
 			return;
 		}
 	}
 
 	Peb = NtCurrentPeb();
+	
+	if (KexData->Flags & KEXDATA_FLAG_CHROMIUM) {
+		NTSTATUS Status;
+		ANSI_STRING g_nt;
+		PVOID ProcedureAddress;
+		
+		RtlInitConstantAnsiString(&g_nt, "g_nt");
+
+		Status = LdrGetProcedureAddress(
+			Peb->ImageBaseAddress,
+			&g_nt,
+			0,
+			&ProcedureAddress);
+
+		ASSERT (
+			NT_SUCCESS(Status) ||
+			Status == STATUS_PROCEDURE_NOT_FOUND ||
+			Status == STATUS_ENTRYPOINT_NOT_FOUND);
+
+		if (!NT_SUCCESS(Status)) {
+			return;
+		}
+	}
 
 	//
 	// CSDVersion is the service pack number, and therefore should be 0

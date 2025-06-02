@@ -79,10 +79,19 @@ ULONG KexDllProtectedFunctionExceptionFilter(
 #endif
 
 //
+// dllmain.c
+//
+
+EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
+
+//
 // ash.c
 //
 
 VOID AshApplyQBittorrentEnvironmentVariableHacks(
+	VOID);
+
+VOID AshApplyPythonEnvironmentVariableHacks(
 	VOID);
 
 //

@@ -34,6 +34,7 @@
 #include "kexdllp.h"
 
 INT WINAPI MessageBoxAHookProc(HWND, PCSTR, PCSTR, UINT);
+ULONG OriginalMajorVersion = 0, OriginalMinorVersion = 0, OriginalBuildNumber = 0;
 
 STATIC RTL_VERIFIER_DLL_DESCRIPTOR AVrfDllDescriptor[] = {
 	{NULL, 0, NULL, NULL}
@@ -93,6 +94,7 @@ BOOL WINAPI DllMain(
 		//
 
 		KexDataInitialize(&KexData);
+		RtlGetNtVersionNumbers(&OriginalMajorVersion, &OriginalMinorVersion, &OriginalBuildNumber);
 		KexData->KexDllBase = DllBase;
 	}
 
@@ -135,12 +137,14 @@ BOOL WINAPI DllMain(
 
 		KexLogInformationEvent(
 			L"Process created\r\n\r\n"
-			L"The VxKex version is %hs (%s)\r\n"
+			L"The VxKex NEXT version is %hs (%s)\r\n"
+			L"The Windows version is %u.%u.%u\r\n"
 			L"The program is %d-bit and the operating system is %d-bit\r\n"
 			L"Full path to the EXE: %wZ\r\n"
 			L"Command line:         %wZ\r\n",
 			KEX_VERSION_STR,
 			KexIsDebugBuild ? L"Debug" : L"Release",
+			OriginalMajorVersion, OriginalMinorVersion, LOWORD(OriginalBuildNumber),
 			KexRtlCurrentProcessBitness(), KexRtlOperatingSystemBitness(),
 			&Peb->ProcessParameters->ImagePathName,
 			&Peb->ProcessParameters->CommandLine);
@@ -150,7 +154,7 @@ BOOL WINAPI DllMain(
 		// possible.
 		//
 
-		KexDisableAVrf();
+		if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) KexDisableAVrf();
 
 		//
 		// Initialize Propagation subsystem.
@@ -173,12 +177,6 @@ BOOL WINAPI DllMain(
 			KexData->IfeoParameters.DisableAppSpecific,
 			KexData->IfeoParameters.WinVerSpoof,
 			KexData->IfeoParameters.StrongVersionSpoof);
-
-		//
-		// Perform version spoofing, if required.
-		//
-
-		KexApplyVersionSpoof();
 
 		//
 		// Initialize DLL rewrite subsystem.
@@ -213,9 +211,21 @@ BOOL WINAPI DllMain(
 				AshApplyQBittorrentEnvironmentVariableHacks();
 			}
 
+			// APPSPECIFICHACK: Environment variable hack for Python to disable
+			// PyREPL.
+			if (StringBeginsWithI(KexData->ImageBaseName.Buffer, L"python")) {
+				AshApplyPythonEnvironmentVariableHacks();
+			}
+
 			// APPSPECIFICHACK: Detect Chromium based on EXE exports.
 			AshPerformChromiumDetectionFromModuleExports(Peb->ImageBaseAddress);
 		}
+
+		//
+		// Perform version spoofing, if required.
+		//
+
+		KexApplyVersionSpoof();
 
 		//
 		// Rewrite DLL Imports of our main application EXE.

@@ -219,9 +219,10 @@ PVOID BaseGetBaseDllHandle(
 
 	RtlInitConstantUnicodeString(&Kernel32, L"kernel32.dll");
 
-	Status = LdrGetDllHandleByName(
-		&Kernel32,
+	Status = LdrGetDllHandle(
 		NULL,
+		NULL,
+		&Kernel32,
 		&KexData->BaseDllBase);
 
 	ASSERT (NT_SUCCESS(Status));

@@ -213,12 +213,4 @@ PWSTR CDECL _W_Gettnames(
 	return UcrtGettnamesResult;
 }
 
-//
-// A note on _Wcsftime: This function is implemented by calling _Wcsftime_l,
-// which is present but non-exported in Win7 msvcrt. We can grab its location
-// out of the functions wcsftime or _wcsftime_l, which are just stubs that
-// call _Wcsftime_l.
-//
-// I will only bother doing that if there are actually apps that call it,
-// though.
-//
+#pragma comment(linker, "/EXPORT:_Wcsftime=ucrtbase._Wcsftime")

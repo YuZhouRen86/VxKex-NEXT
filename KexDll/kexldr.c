@@ -204,7 +204,7 @@ KEXAPI PVOID NTAPI KexLdrGetSystemDllBase(
 
 	RtlInitConstantUnicodeString(&NtdllBaseName, L"ntdll.dll");
 
-	Status = LdrGetDllHandleByName(&NtdllBaseName, NULL, &NtdllBaseAddress);
+	Status = LdrGetDllHandle(NULL, NULL, &NtdllBaseName, &NtdllBaseAddress);
 	ASSERT (NT_SUCCESS(Status));
 
 	if (NT_SUCCESS(Status)) {
@@ -354,7 +354,7 @@ KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
 	RtlInitConstantUnicodeString(&NtdllBaseName, L"ntdll.dll");
 
 	if (KexRtlCurrentProcessBitness() == KexRtlOperatingSystemBitness()) {
-		Status = LdrGetDllHandleByName(&NtdllBaseName, NULL, (PPVOID) &NtdllBaseAddress);
+		Status = LdrGetDllHandle(NULL, NULL, &NtdllBaseName, (PPVOID) &NtdllBaseAddress);
 		ASSERT (NT_SUCCESS(Status));
 		return (PVOID) NtdllBaseAddress;
 	}
@@ -608,11 +608,12 @@ BailOut:
 		// Prepend Kex3264Dir in front of the original DLL path.
 		//
 
-		NewDllPathCch = wcslen(DllPath) + KexRtlUnicodeStringCch(&KexData->Kex3264DirPath) + 1;
+		NewDllPathCch = wcslen(DllPath) + (KexRtlUnicodeStringCch(&KexData->Kex3264DirPath) + 1) + 1;
 		NewDllPathBuffer = StackAlloc(WCHAR, NewDllPathCch);
 		RtlInitEmptyUnicodeString(&NewDllPath, NewDllPathBuffer, NewDllPathCch * sizeof(WCHAR));
 
 		RtlCopyUnicodeString(&NewDllPath, &KexData->Kex3264DirPath);
+		RtlAppendUnicodeToString(&NewDllPath, L";");
 		RtlAppendUnicodeToString(&NewDllPath, DllPath);
 
 		KexRtlNullTerminateUnicodeString(&NewDllPath);

@@ -143,7 +143,16 @@ ULONG GetDirectorySize(
 		FIND_FIRST_EX_LARGE_FETCH);
 
 	if (FindHandle == INVALID_HANDLE_VALUE) {
-		return -1;
+		FindHandle = FindFirstFileEx(
+			FindSpec,
+			FindExInfoStandard,
+			&FindData,
+			FindExSearchNameMatch,
+			NULL,
+			0);
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			return -1;
+		}
 	}
 
 	do {

@@ -85,7 +85,7 @@ NTSTATUS KexInitializeDllRewrite(
 	//
 
 	Status = KexRtlCreateStringMapper(
-		&DllRewriteStringMapper, 
+		&DllRewriteStringMapper,
 		KEX_RTL_STRING_MAPPER_CASE_INSENSITIVE_KEYS);
 
 	ASSERT (NT_SUCCESS(Status));

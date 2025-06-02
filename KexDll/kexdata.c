@@ -352,9 +352,9 @@ KEXAPI NTSTATUS NTAPI KexDataInitialize(
 	RtlCopyUnicodeString(&_KexData.Kex3264DirPath, &_KexData.KexDir);
 
 	if (KexIs64BitBuild) {
-		Status = RtlAppendUnicodeToString(&_KexData.Kex3264DirPath, L"\\Kex64;");
+		Status = RtlAppendUnicodeToString(&_KexData.Kex3264DirPath, L"\\Kex64");
 	} else {
-		Status = RtlAppendUnicodeToString(&_KexData.Kex3264DirPath, L"\\Kex32;");
+		Status = RtlAppendUnicodeToString(&_KexData.Kex3264DirPath, L"\\Kex32");
 	}
 
 	ASSERT (NT_SUCCESS(Status));

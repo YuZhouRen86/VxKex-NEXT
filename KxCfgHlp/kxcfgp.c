@@ -102,7 +102,6 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 	OUT	PHKEY	KeyHandle,
 	IN	HANDLE	TransactionHandle OPTIONAL)
 {
-	NTSTATUS Status;
 	ULONG ErrorCode;
 	WCHAR IfeoSubkeyPath[MAX_PATH];
 	PCWSTR ExeBaseName;
@@ -132,15 +131,33 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 	// and in fact should not close it after we are done using it.
 	// See ntdll!RtlOpenImageFileOptionsKey for more information.
 	
-	Status = RegOpenKeyExW (
+	ErrorCode = RegOpenKeyEx(
 		HKEY_LOCAL_MACHINE,
 		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
 		L"Image File Execution Options",
 		0,
-		KEY_READ | KEY_WRITE,
+		KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
 		&IfeoBaseKey);
 
-	ASSERT (NT_SUCCESS(Status));
+	if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+		ErrorCode = RegCreateKeyEx(
+			HKEY_LOCAL_MACHINE,
+			L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+			L"Image File Execution Options",
+			0,
+			NULL,
+			0,
+			KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
+			NULL,
+			&IfeoBaseKey,
+			NULL);
+		ASSERT (ErrorCode == ERROR_SUCCESS);
+	} else if (ErrorCode != ERROR_SUCCESS) {
+		SetLastError(ErrorCode);
+		return FALSE;
+	}
+
+	ASSERT (ErrorCode == ERROR_SUCCESS);
 
 	//
 	// Generate a random identifier to name the subkey inside the EXE key.
@@ -157,6 +174,7 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 	ExeBaseName = PathFindFileName(ExeFullPath);
 	if (ExeBaseName == NULL) {
 		// caller must have passed some garbage path...
+		RegCloseKey(IfeoBaseKey);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
@@ -223,7 +241,8 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 		if (IfeoSubkey) {
 			RegCloseKey(IfeoSubkey);
 		}
-
+		
+		RegCloseKey(IfeoBaseKey);
 		SetLastError(ErrorCode);
 		return FALSE;
 	}
@@ -233,6 +252,7 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 
 	if (ErrorCode != ERROR_SUCCESS) {
 		RegCloseKey(IfeoSubkey);
+		RegCloseKey(IfeoBaseKey);
 		SetLastError(ErrorCode);
 		return FALSE;
 	}
@@ -245,11 +265,13 @@ BOOLEAN KxCfgpCreateIfeoKeyForProgram(
 
 	if (ErrorCode != ERROR_SUCCESS) {
 		RegCloseKey(IfeoSubkey);
+		RegCloseKey(IfeoBaseKey);
 		SetLastError(ErrorCode);
 		return FALSE;
 	}
 
 	*KeyHandle = IfeoSubkey;
+	RegCloseKey(IfeoBaseKey);
 	return TRUE;
 }
 
