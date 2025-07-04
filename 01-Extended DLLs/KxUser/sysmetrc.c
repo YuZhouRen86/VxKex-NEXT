@@ -5,7 +5,18 @@ INT WINAPI GetSystemMetricsForDpi(
 	IN	INT		Index,
 	IN	UINT	Dpi)
 {
+	HMODULE User32;
+	INT (WINAPI *pGetSystemMetricsForDpi) (INT, UINT);
 	INT Value;
+	
+	User32 = LoadSystemLibrary(L"user32.dll");
+	pGetSystemMetricsForDpi = (INT (WINAPI *) (INT, UINT)) GetProcAddress(User32, "GetSystemMetricsForDpi");
+	if (pGetSystemMetricsForDpi) {
+		Value = pGetSystemMetricsForDpi(Index, Dpi);
+		FreeLibrary(User32);
+		return Value;
+	}
+	FreeLibrary(User32);
 
 	Value = GetSystemMetrics(Index);
 
@@ -41,8 +52,12 @@ INT WINAPI GetSystemMetricsForDpi(
 	case SM_CXMENUCHECK:
 	case SM_CYMENUCHECK:
 		// These are pixel values that have to be scaled according to DPI.
-		Value *= Dpi;
-		Value /= (INT) GetDpiForSystem();
+		{
+			UINT SystemDpi = GetDpiForSystem();
+			if (SystemDpi == 0) SystemDpi = USER_DEFAULT_SCREEN_DPI;
+			Value *= Dpi;
+			Value /= SystemDpi;
+		}
 		break;
 	}
 
@@ -56,7 +71,20 @@ BOOL WINAPI SystemParametersInfoForDpi(
 	IN		UINT	WinIni,
 	IN		UINT	Dpi)
 {
+	HMODULE User32;
+	BOOL (WINAPI *pSystemParametersInfoForDpi) (UINT, UINT, PVOID, UINT, UINT);
 	INT SystemDpi = GetDpiForSystem();
+	
+	User32 = LoadSystemLibrary(L"user32.dll");
+	pSystemParametersInfoForDpi = (BOOL (WINAPI *) (UINT, UINT, PVOID, UINT, UINT)) GetProcAddress(User32, "SystemParametersInfoForDpi");
+	if (pSystemParametersInfoForDpi) {
+		BOOL Success = pSystemParametersInfoForDpi(Action, Parameter, Data, WinIni, Dpi);
+		FreeLibrary(User32);
+		return Success;
+	}
+	FreeLibrary(User32);
+	
+	if (SystemDpi == 0) SystemDpi = USER_DEFAULT_SCREEN_DPI;
 
 	switch (Action) {
 	case SPI_GETICONTITLELOGFONT:

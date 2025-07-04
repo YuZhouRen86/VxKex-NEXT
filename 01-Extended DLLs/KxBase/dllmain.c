@@ -31,6 +31,8 @@
 
 PKEX_PROCESS_DATA KexData = NULL;
 ULONG OriginalMajorVersion = 0, OriginalMinorVersion = 0, OriginalBuildNumber = 0;
+DLL_DIRECTORY_DATA DllDirectoryData = {DLL_DIRECTORY_DATA_VERIFICATION_CODE, NULL, NULL, NULL};
+ULONG DefaultDllDirectoryFlags = 0;
 
 BOOL WINAPI DllMain(
 	IN	PVOID		DllBase,

@@ -20,12 +20,12 @@ typedef enum _DWRITE_FACTORY_TYPE {
     DWRITE_FACTORY_TYPE_ISOLATED
 } TYPEDEF_TYPE_NAME(DWRITE_FACTORY_TYPE);
 
-__declspec(dllimport) HRESULT WINAPI DWriteCreateFactory(
+DECLSPEC_IMPORT HRESULT WINAPI DWriteCreateFactory(
 	IN	DWRITE_FACTORY_TYPE	factoryType,
 	IN	REFIID              iid,
 	OUT	IUnknown            **factory);
 
-__declspec(dllimport) HRESULT WINAPI dwrw10CF(
+DECLSPEC_IMPORT HRESULT WINAPI DWriteCoreCreateFactory(
 	IN	DWRITE_FACTORY_TYPE	factoryType,
 	IN	REFIID              iid,
 	OUT	IUnknown            **factory);

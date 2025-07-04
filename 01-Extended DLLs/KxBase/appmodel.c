@@ -1,6 +1,23 @@
 #include "buildcfg.h"
 #include "kxbasep.h"
 
+KXBASEAPI LONG WINAPI GetCurrentPackageFamilyName(
+	IN OUT	PULONG	NameLength,
+	OUT		PWSTR	PackageFamilyName OPTIONAL)
+{
+	if (!NameLength || *NameLength && !PackageFamilyName) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	*NameLength = 0;
+
+	if (PackageFamilyName) {
+		PackageFamilyName[0] = '\0';
+	}
+
+	return APPMODEL_ERROR_NO_PACKAGE;
+}
+
 KXBASEAPI LONG WINAPI GetCurrentPackageFullName(
 	IN OUT	PULONG	PackageFullNameLength,
 	OUT		PWSTR	PackageFullName OPTIONAL)

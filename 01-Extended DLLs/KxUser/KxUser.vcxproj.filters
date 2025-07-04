@@ -65,6 +65,12 @@
     <ClCompile Include="window.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="loadsyslib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="processref.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxuser.def">

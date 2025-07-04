@@ -169,8 +169,8 @@ INT_PTR CALLBACK DetailsWndProc(
 		SetWindowPos(
 			GetDlgItem(DetailsWindow, IDC_DETAILSMESSAGETEXT),
 			HWND_TOP,
-			DpiScaleX(80), DpiScaleY(80),
-			NewWidth - DpiScaleX(90), NewHeight - DpiScaleY(90),
+			DpiScaleX(80), DpiScaleY(85),
+			NewWidth - DpiScaleX(90), NewHeight - DpiScaleY(95),
 			0);
 
 		// resize the severity, date/time and source text boxes

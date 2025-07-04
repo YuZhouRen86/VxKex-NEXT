@@ -112,7 +112,7 @@ NTSTATUS KexpAddKex3264ToDllPath(
 	DllPathOriginalLength = DllPath->Length;
 
 	RtlInitAnsiString(&LdrAddDllDirectoryName, "LdrAddDllDirectory");
-	LdrGetProcedureAddress(KexData->NativeSystemDllBase, &LdrAddDllDirectoryName, FALSE, (PPVOID) &pLdrAddDllDirectory);
+	LdrGetProcedureAddress(KexData->SystemDllBase, &LdrAddDllDirectoryName, FALSE, (PPVOID) &pLdrAddDllDirectory);
 	
 	if (pLdrAddDllDirectory != NULL && DllPathOriginalLength == 0) {
 		PVOID Cookie;
@@ -125,22 +125,26 @@ NTSTATUS KexpAddKex3264ToDllPath(
 		ASSERT (NT_SUCCESS(Status));
 		
 		Status = RtlQueryEnvironmentVariable(NULL, PathName.Buffer, PathName.Length / sizeof(WCHAR), NULL, 0, &OriginalPathLength);
-		ASSERT (Status == STATUS_BUFFER_TOO_SMALL);
-		
-		OriginalPath.Length = 0;
-		OriginalPath.MaximumLength = (USHORT)OriginalPathLength * sizeof(WCHAR);
-		OriginalPath.Buffer = StackAlloc(WCHAR, KexRtlUnicodeStringBufferCch(&OriginalPath));
+		ASSERT (Status == STATUS_BUFFER_TOO_SMALL || Status == STATUS_VARIABLE_NOT_FOUND);
 
-		Status = RtlQueryEnvironmentVariable_U(NULL, &PathName, &OriginalPath);
-		ASSERT (NT_SUCCESS(Status));
+		if (OriginalPathLength) {
+			OriginalPath.Length = 0;
+			OriginalPath.MaximumLength = (USHORT)OriginalPathLength * sizeof(WCHAR);
+			OriginalPath.Buffer = StackAlloc(WCHAR, KexRtlUnicodeStringBufferCch(&OriginalPath));
+
+			Status = RtlQueryEnvironmentVariable_U(NULL, &PathName, &OriginalPath);
+			ASSERT (NT_SUCCESS(Status));
+		}
 
 		Path.Length = 0;
 		Path.MaximumLength = OriginalPath.Length + (KexData->Kex3264DirPath.Length + sizeof(WCHAR));
 		Path.Buffer = StackAlloc(WCHAR, KexRtlUnicodeStringBufferCch(&Path));
 
 		RtlAppendUnicodeStringToString(&Path, &KexData->Kex3264DirPath);
-		RtlAppendUnicodeToString(&Path, L";");
-		RtlAppendUnicodeStringToString(&Path, &OriginalPath);
+		if (OriginalPathLength) {
+			RtlAppendUnicodeToString(&Path, L";");
+			RtlAppendUnicodeStringToString(&Path, &OriginalPath);
+		}
 
 		Status = RtlSetEnvironmentVariable(NULL, &PathName, &Path);
 		ASSERT (NT_SUCCESS(Status));

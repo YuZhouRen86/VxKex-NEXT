@@ -231,8 +231,10 @@
     <ClCompile Include="chromiumpatch.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="featurestaging.c" />
+    <ClCompile Include="loadsyslib.c" />
     <ClCompile Include="misc.c" />
     <ClCompile Include="pointer.c" />
+    <ClCompile Include="processref.c" />
     <ClCompile Include="pwrnotfy.c" />
     <ClCompile Include="scaling.c" />
     <ClCompile Include="forwards.c" />

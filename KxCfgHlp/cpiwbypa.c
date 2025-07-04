@@ -2,6 +2,23 @@
 #include <KxCfgHlp.h>
 #include <KexW32ML.h>
 
+INT NTAPI RtlOperatingSystemBitness(
+	VOID)
+{
+#ifdef _M_X64
+	return 64;
+#else
+	ULONG Wow64Information = 0;
+	NtQueryInformationProcess(
+		NtCurrentProcess(),
+		ProcessWow64Information,
+		&Wow64Information,
+		sizeof(Wow64Information),
+		NULL);
+	return Wow64Information ? 64 : 32;
+#endif
+}
+
 // returns TRUE if cpiwbypa.dll BHO is registered
 KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgQueryExplorerCpiwBypass(
 	VOID)
@@ -50,7 +67,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableExplorerCpiwBypass(
 		RegWriteString(KeyHandle, NULL, NULL, L"VxKex CPIW Version Check Bypass");
 		SafeClose(KeyHandle);
 
-		if (KexRtlOperatingSystemBitness() == 64) {
+		if (RtlOperatingSystemBitness() == 64) {
 			// Also create Wow64 registry keys/values
 
 			KeyHandle = KxCfgpCreateKey(
@@ -105,7 +122,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableExplorerCpiwBypass(
 			return FALSE;
 		}
 
-		if (KexRtlOperatingSystemBitness() == 64) {
+		if (RtlOperatingSystemBitness() == 64) {
 			// delete the wow64 key as well
 
 			ErrorCode = KxCfgpDeleteKey(

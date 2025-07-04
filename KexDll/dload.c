@@ -44,6 +44,8 @@ PVOID NTAPI KexLdrResolveDelayLoadedAPI(
 	OUT	PIMAGE_THUNK_DATA					ThunkAddress,
 	IN	ULONG								Flags)
 {
+	ANSI_STRING LdrResolveDelayLoadedAPIName;
+	PVOID (NTAPI *pLdrResolveDelayLoadedAPI) (PVOID, PCIMAGE_DELAYLOAD_DESCRIPTOR, PDELAYLOAD_FAILURE_DLL_CALLBACK, PDELAYLOAD_FAILURE_SYSTEM_ROUTINE, PIMAGE_THUNK_DATA, ULONG);
 	NTSTATUS Status;
 	PPVOID DelayLoadedDllHandle;
 	PIMAGE_THUNK_DATA ImportAddressTable;
@@ -53,6 +55,12 @@ PVOID NTAPI KexLdrResolveDelayLoadedAPI(
 	USHORT OrdinalOfDelayLoadedAPI;
 	PVOID ProcedureAddress;
 	ULONG Index;
+	
+	RtlInitAnsiString(&LdrResolveDelayLoadedAPIName, "LdrResolveDelayLoadedAPI");
+	LdrGetProcedureAddress(KexData->SystemDllBase, &LdrResolveDelayLoadedAPIName, FALSE, (PPVOID) &pLdrResolveDelayLoadedAPI);
+	if (pLdrResolveDelayLoadedAPI) {
+		return pLdrResolveDelayLoadedAPI(ParentModuleBase, DelayloadDescriptor, FailureDllHook, FailureSystemHook, ThunkAddress, Flags);
+	}
 
 	ProcedureAddress = NULL;
 

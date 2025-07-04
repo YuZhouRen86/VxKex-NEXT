@@ -70,6 +70,7 @@ EXPORTS
 	AppXFreeMemory
 	GetApplicationUserModelId
 	GetCurrentApplicationUserModelId
+	GetCurrentPackageFamilyName
 	GetCurrentPackageFullName
 	GetCurrentPackageId
 	GetPackageFamilyName
@@ -155,6 +156,14 @@ EXPORTS
 	CharUpperBuffA						= KxUser.CharUpperBuffA
 	CharUpperBuffW						= KxUser.CharUpperBuffW
 	CharUpperW							= KxUser.CharUpperW
+	IsCharAlphaA						= KxUser.IsCharAlphaA
+	IsCharAlphaNumericA					= KxUser.IsCharAlphaNumericA
+	IsCharAlphaNumericW					= KxUser.IsCharAlphaNumericW
+	IsCharAlphaW						= KxUser.IsCharAlphaW
+	IsCharLowerA						= KxUser.IsCharLowerA
+	IsCharLowerW						= KxUser.IsCharLowerW
+	IsCharUpperA						= KxUser.IsCharUpperA
+	IsCharUpperW						= KxUser.IsCharUpperW
 
 	;;
 	;; VxKex Extended Functions
@@ -183,6 +192,7 @@ EXPORTS
 	;; verspoof.c
 	GetVersionExA						= Ext_GetVersionExA
 	GetVersionExW						= Ext_GetVersionExW
+	VerifyVersionInfoW					= Ext_VerifyVersionInfoW
 
 	;; stubs.c
 	DuplicateHandle						= Ext_DuplicateHandle

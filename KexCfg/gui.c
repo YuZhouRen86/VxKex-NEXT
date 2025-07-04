@@ -28,8 +28,6 @@
 #include <KexGui.h>
 #include <ShlObj.h>
 
-typedef HRESULT (WINAPI *PFNENABLETHEMEDIALOGTEXTURE)(HWND, DWORD);
-
 STATIC HWND MainWindow = NULL;
 STATIC HWND ListViewWindow = NULL;
 STATIC BOOLEAN UnsavedChanges;
@@ -828,8 +826,8 @@ STATIC INT_PTR CALLBACK DialogProc(
 	IN	LPARAM	LParam)
 {
 	if (Message == WM_INITDIALOG) {
-		HMODULE hUxTheme = LoadLibrary(L"uxtheme.dll");
-		PFNENABLETHEMEDIALOGTEXTURE pfnEnableThemeDialogTexture = (PFNENABLETHEMEDIALOGTEXTURE) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
+		HMODULE Uxtheme;
+		HRESULT (WINAPI *pEnableThemeDialogTexture) (HWND, DWORD);
 		BOOLEAN Success;
 		HWND ComboBoxWindow;
 		HWND LogDirWindow;
@@ -841,8 +839,10 @@ STATIC INT_PTR CALLBACK DialogProc(
 		KexgApplicationMainWindow = Window;
 		SetWindowIcon(Window, IDI_APPICON);
 
-		if (pfnEnableThemeDialogTexture) pfnEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
-		FreeLibrary(hUxTheme);
+		Uxtheme = LoadLibrary(L"uxtheme.dll");
+		pEnableThemeDialogTexture = (HRESULT (WINAPI *) (HWND, DWORD)) GetProcAddress(Uxtheme, "EnableThemeDialogTexture");
+		if (pEnableThemeDialogTexture) pEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+		FreeLibrary(Uxtheme);
 
 		//
 		// Limit the max length of the log directory path to 200 characters.

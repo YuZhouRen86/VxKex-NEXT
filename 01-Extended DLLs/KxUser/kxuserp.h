@@ -25,3 +25,10 @@
 #include <KxUser.h>
 
 EXTERN PKEX_PROCESS_DATA KexData;
+
+//
+// loadsyslib.c
+//
+
+HMODULE LoadSystemLibrary(
+	LPCWSTR	FileName);

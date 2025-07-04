@@ -237,6 +237,12 @@ STATIC NTSTATUS KexpRewriteImportTableDllNameInPlace(
 	NTSTATUS Status;
 	UNICODE_STRING DllName;
 	UNICODE_STRING RewrittenDllName;
+	BOOLEAN HaveModifiedPageProtection;
+	PVOID BaseAddress;
+	SIZE_T RegionSize;
+	ULONG OldProtect;
+
+	HaveModifiedPageProtection = FALSE;
 
 	ASSERT (AnsiDllName != NULL);
 	ASSERT (AnsiDllName->Length != 0);
@@ -271,6 +277,8 @@ STATIC NTSTATUS KexpRewriteImportTableDllNameInPlace(
 		goto Exit;
 	}
 
+Retry:
+
 	try {
 		//
 		// Convert to ANSI. This will result in RtlUnicodeStringToAnsiString writing
@@ -290,12 +298,66 @@ STATIC NTSTATUS KexpRewriteImportTableDllNameInPlace(
 	} except (GetExceptionCode() == STATUS_ACCESS_VIOLATION) {
 		Status = GetExceptionCode();
 
-		KexLogErrorEvent(
-			L"Failed to rewrite DLL import (%wZ -> %wZ): STATUS_ACCESS_VIOLATION",
-			&DllName,
-			&RewrittenDllName);
+		if (HaveModifiedPageProtection) {
+			//
+			// This shouldn't happen. We will check for it anyway to prevent an infinite
+			// loop if NtProtectVirtualMemory somehow doesn't work.
+			//
 
-		ASSERT (FALSE);
+			ASSERT (FALSE);
+
+			KexLogErrorEvent(
+				L"Failed to rewrite DLL import (%wZ -> %wZ)\r\n\r\n"
+				L"Encountered STATUS_ACCESS_VIOLATION twice even after changing page protections.",
+				&DllName,
+				&RewrittenDllName);
+
+			goto Exit;
+		}
+
+		//
+		// We have an access violation. This can occur with uncommonly formatted
+		// executables or DLLs. In this case we can fix the issue by simply calling
+		// NtProtectVirtualMemory to make the ANSI DLL name read-write.
+		//
+
+		BaseAddress = AnsiDllName->Buffer;
+		RegionSize = AnsiDllName->Length;
+
+		Status = NtProtectVirtualMemory(
+			NtCurrentProcess(),
+			&BaseAddress,
+			&RegionSize,
+			PAGE_READWRITE,
+			&OldProtect);
+
+		ASSERT (NT_SUCCESS(Status));
+
+		if (!NT_SUCCESS(Status)) {
+			KexLogErrorEvent(
+				L"Failed to rewrite DLL import (%wZ -> %wZ)\r\n\r\n"
+				L"Encountered STATUS_ACCESS_VIOLATION upon write to ANSI DLL name."
+				L"While attempting to change memory protections, encountered %s.",
+				&DllName,
+				&RewrittenDllName,
+				KexRtlNtStatusToString(Status));
+		}
+
+		// Record the fact that we've changed the page protections so we can undo
+		// the changes later.
+		HaveModifiedPageProtection = TRUE;
+		goto Retry;
+	}
+
+	if (HaveModifiedPageProtection) {
+		Status = NtProtectVirtualMemory(
+			NtCurrentProcess(),
+			&BaseAddress,
+			&RegionSize,
+			OldProtect,
+			&OldProtect);
+
+		ASSERT (NT_SUCCESS(Status));
 	}
 
 Exit:

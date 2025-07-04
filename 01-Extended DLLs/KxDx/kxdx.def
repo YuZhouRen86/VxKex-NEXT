@@ -27,5 +27,6 @@ EXPORTS
 	DCompositionCreateDevice3
 
 	;; mfplat.c
+	MFCreateDXGISurfaceBuffer
 	MFMapDXGIFormatToDX9Format
 	MFMapDX9FormatToDXGIFormat

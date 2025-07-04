@@ -1602,7 +1602,7 @@ typedef struct _TEB {
 	// to me and there were shitloads of structures to copy so I gave up.
 	PVOID								ActivationContextStackPointer;
 
-	UCHAR								SpareBytes[0x24];
+	UCHAR								SpareBytes[0x18];
 	ULONG								TxFsContext;
 	
 	GDI_TEB_BATCH						GdiTebBatch;
@@ -2920,6 +2920,12 @@ typedef enum _WELL_KNOWN_SID_TYPE {
     WinAuthenticationFreshKeyAuthSid				= 118,
     WinBuiltinDeviceOwnersSid						= 119,
 } TYPEDEF_TYPE_NAME(WELL_KNOWN_SID_TYPE);
+
+typedef struct _LDR_RESOURCE_INFO {
+	ULONG_PTR	Type;
+	ULONG_PTR	Name;
+	ULONG_PTR	Language;
+} TYPEDEF_TYPE_NAME(LDR_RESOURCE_INFO);
 
 #pragma endregion
 
@@ -4572,6 +4578,18 @@ NTSYSAPI NTSTATUS NTAPI LdrEnumerateLoadedModules(
 	IN	ULONG												Flags,
 	IN	PLDR_LOADED_MODULE_ENUMERATION_CALLBACK_FUNCTION	CallbackFunction,
 	IN	PVOID												Context OPTIONAL);
+
+NTSYSAPI NTSTATUS NTAPI LdrAccessResource(
+	IN	PVOID						BaseAddress,
+	IN	PIMAGE_RESOURCE_DATA_ENTRY	ResourceDataEntry,
+	OUT	PPVOID						Resource OPTIONAL,
+	OUT	PULONG						Size OPTIONAL);
+
+NTSYSAPI NTSTATUS NTAPI LdrFindResource_U(
+	PVOID						BaseAddress,
+	PLDR_RESOURCE_INFO			ResourceInfo,
+	ULONG						Level,
+	PIMAGE_RESOURCE_DATA_ENTRY	*ResourceDataEntry);
 
 //
 // Non-Exported Functions - Must manually find, or reimplement.

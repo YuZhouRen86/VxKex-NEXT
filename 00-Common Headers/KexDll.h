@@ -118,10 +118,24 @@
 #define KEXDATA_FLAG_DISABLE_LOGGING		16	// Log files are not to be created.
 #define KEXDATA_FLAG_CHROMIUM				32	// This is a Chromium-based application (Chrome, Edge, Electron, QtWebEngine, etc.)
 #define KEXDATA_FLAG_KB2533623_PRESENT		64	// Indicates the DllDirectory APIs are available
+#define KEXDATA_FLAG_FIREFOX				128	// This is a Firefox-based application (Firefox, Thunderbird, etc.)
 
 #define KEX_STRONGSPOOF_SHAREDUSERDATA	1
 #define KEX_STRONGSPOOF_REGISTRY		2
 #define KEX_STRONGSPOOF_VALID_MASK		(KEX_STRONGSPOOF_SHAREDUSERDATA | KEX_STRONGSPOOF_REGISTRY)
+
+#define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR		0x00000100
+#define LOAD_LIBRARY_SEARCH_APPLICATION_DIR		0x00000200
+#define LOAD_LIBRARY_SEARCH_USER_DIRS			0x00000400
+#define LOAD_LIBRARY_SEARCH_SYSTEM32			0x00000800
+#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS		0x00001000
+#define LOAD_LIBRARY_SAFE_CURRENT_DIRS			0x00002000
+
+#define LOAD_LIBRARY_ALL_DLLDIR_FLAGS			(LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | \
+												 LOAD_LIBRARY_SEARCH_APPLICATION_DIR | \
+												 LOAD_LIBRARY_SEARCH_USER_DIRS | \
+												 LOAD_LIBRARY_SEARCH_SYSTEM32 | \
+												 LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
 
 typedef struct _KEX_RTL_QUERY_KEY_MULTIPLE_VARIABLE_TABLE_ENTRY {
 	IN		CONST UNICODE_STRING			ValueName;
@@ -307,6 +321,8 @@ typedef struct _KEX_PROCESS_DATA {
 	HANDLE					KsecDD;						// handle to \Device\KsecDD
 } TYPEDEF_TYPE_NAME(KEX_PROCESS_DATA);
 
+typedef PVOID TYPEDEF_TYPE_NAME(DLL_DIRECTORY_COOKIE);
+
 #pragma endregion
 
 #pragma region Kex* functions
@@ -320,6 +336,9 @@ KEXAPI NTSTATUS NTAPI KexDataInitialize(
 #pragma endregion
 
 #pragma region KexRtl* functions
+
+KEXAPI INT NTAPI KexRtlOperatingSystemBitness(
+	VOID);
 
 KEXAPI VOID NTAPI KexRtlGetNtVersionNumbers(
 	OUT	PULONG	MajorVersion OPTIONAL,
@@ -491,12 +510,6 @@ KEXAPI NTSTATUS NTAPI KexRtlGenerateRandomData(
 #  define KexRtlCurrentProcessBitness() (32)
 #endif
 
-#ifdef KEX_ARCH_X64
-#  define KexRtlOperatingSystemBitness() (64)
-#else
-#  define KexRtlOperatingSystemBitness() (SharedUserData->SystemCall != 0 ? 32 : 64)
-#endif
-
 #define KexRtlUpdateNullTerminatedUnicodeStringLength(UnicodeString) ((UnicodeString)->Length = (USHORT) (wcslen((UnicodeString)->Buffer) << 1))
 #define KexRtlUpdateNullTerminatedAnsiStringLength(AnsiString) ((AnsiString)->Length = (USHORT) wcslen((AnsiString)->Buffer))
 #define KexRtlUnicodeStringCch(UnicodeString) ((UnicodeString)->Length / sizeof(WCHAR))
@@ -560,10 +573,20 @@ typedef struct _KEX_BASIC_HOOK_CONTEXT {
 	BYTE OriginalInstructions[BASIC_HOOK_LENGTH];
 } TYPEDEF_TYPE_NAME(KEX_BASIC_HOOK_CONTEXT);
 
+KEXAPI NTSTATUS NTAPI KexHkInstallHook(
+	IN		HANDLE					ProcessHandle,
+	IN		PVOID					ApiAddress,
+	IN		PVOID					RedirectedAddress,
+	OUT		PKEX_BASIC_HOOK_CONTEXT	HookContext OPTIONAL);
+
 KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	IN		PVOID					ApiAddress,
 	IN		PVOID					RedirectedAddress,
 	OUT		PKEX_BASIC_HOOK_CONTEXT	HookContext OPTIONAL);
+
+KEXAPI NTSTATUS NTAPI KexHkRemoveHook(
+	IN		HANDLE					ProcessHandle,
+	IN		PKEX_BASIC_HOOK_CONTEXT	HookContext);
 
 KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
 	IN		PKEX_BASIC_HOOK_CONTEXT	HookContext);
@@ -769,10 +792,28 @@ KEXAPI NTSTATUS NTAPI Ext_NtAssignProcessToJobObject(
 
 #pragma region KexNt* functions
 
-KEXAPI NTSTATUS NTAPI KexNtQuerySystemTime_Win7(
+#if defined(KEX_ARCH_X64)
+
+#define DECLARE_SYSCALL(SyscallName, ...) \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName(__VA_ARGS__);
+
+#else
+
+#define DECLARE_SYSCALL(SyscallName, ...) \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7_Native32(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7_Wow64(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81_Native32(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81_Wow64(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName(__VA_ARGS__);
+
+#endif
+
+DECLARE_SYSCALL(NtQuerySystemTime,
 	OUT		PLONGLONG	CurrentTime);
 
-KEXAPI NTSTATUS NTAPI KexNtCreateUserProcess_Win7(
+DECLARE_SYSCALL(NtCreateUserProcess,
 	OUT		PHANDLE							ProcessHandle,
 	OUT		PHANDLE							ThreadHandle,
 	IN		ACCESS_MASK						ProcessDesiredAccess,
@@ -785,14 +826,14 @@ KEXAPI NTSTATUS NTAPI KexNtCreateUserProcess_Win7(
 	IN OUT	PPS_CREATE_INFO					CreateInfo,
 	IN		PPS_ATTRIBUTE_LIST				AttributeList OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtProtectVirtualMemory_Win7(
+DECLARE_SYSCALL(NtProtectVirtualMemory,
 	IN		HANDLE		ProcessHandle,
 	IN OUT	PPVOID		BaseAddress,
 	IN OUT	PSIZE_T		RegionSize,
 	IN		ULONG		NewProtect,
 	OUT		PULONG		OldProtect);
 
-KEXAPI NTSTATUS NTAPI KexNtAllocateVirtualMemory_Win7(
+DECLARE_SYSCALL(NtAllocateVirtualMemory,
 	IN		HANDLE		ProcessHandle,
 	IN OUT	PVOID		*BaseAddress,
 	IN		ULONG_PTR	ZeroBits,
@@ -800,7 +841,7 @@ KEXAPI NTSTATUS NTAPI KexNtAllocateVirtualMemory_Win7(
 	IN		ULONG		AllocationType,
 	IN		ULONG		Protect);
 
-KEXAPI NTSTATUS NTAPI KexNtQueryVirtualMemory_Win7(
+DECLARE_SYSCALL(NtQueryVirtualMemory,
 	IN		HANDLE			ProcessHandle,
 	IN		PVOID			BaseAddress OPTIONAL,
 	IN		MEMINFOCLASS	MemoryInformationClass,
@@ -808,20 +849,20 @@ KEXAPI NTSTATUS NTAPI KexNtQueryVirtualMemory_Win7(
 	IN		SIZE_T			MemoryInformationLength,
 	OUT		PSIZE_T			ReturnLength OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtFreeVirtualMemory_Win7(
+DECLARE_SYSCALL(NtFreeVirtualMemory,
 	IN		HANDLE		ProcessHandle,
 	IN OUT	PVOID		*BaseAddress,
 	IN OUT	PSIZE_T		RegionSize,
 	IN		ULONG		FreeType);
 
-KEXAPI NTSTATUS NTAPI KexNtQueryObject_Win7(
+DECLARE_SYSCALL(NtQueryObject,
 	IN		HANDLE						ObjectHandle,
 	IN		OBJECT_INFORMATION_CLASS	ObjectInformationClass,
 	OUT		PVOID						ObjectInformation,
 	IN		ULONG						Length,
 	OUT		PULONG						ReturnLength OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtOpenFile_Win7(
+DECLARE_SYSCALL(NtOpenFile,
 	OUT		PHANDLE				FileHandle,
 	IN		ACCESS_MASK			DesiredAccess,
 	IN		POBJECT_ATTRIBUTES	ObjectAttributes,
@@ -829,7 +870,7 @@ KEXAPI NTSTATUS NTAPI KexNtOpenFile_Win7(
 	IN		ULONG				ShareAccess,
 	IN		ULONG				OpenOptions);
 
-KEXAPI NTSTATUS NTAPI KexNtWriteFile_Win7(
+DECLARE_SYSCALL(NtWriteFile,
 	IN		HANDLE				FileHandle,
 	IN		HANDLE				Event OPTIONAL,
 	IN		PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
@@ -840,7 +881,7 @@ KEXAPI NTSTATUS NTAPI KexNtWriteFile_Win7(
 	IN		PLONGLONG			ByteOffset OPTIONAL,
 	IN		PULONG				Key OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtRaiseHardError_Win7(
+DECLARE_SYSCALL(NtRaiseHardError,
 	IN	NTSTATUS	ErrorStatus,
 	IN	ULONG		NumberOfParameters,
 	IN	ULONG		UnicodeStringParameterMask,
@@ -848,20 +889,20 @@ KEXAPI NTSTATUS NTAPI KexNtRaiseHardError_Win7(
 	IN	ULONG		ValidResponseOptions,
 	OUT	PULONG		Response);
 
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationThread_Win7(
+DECLARE_SYSCALL(NtQueryInformationThread,
 	IN	HANDLE				ThreadHandle,
 	IN	THREADINFOCLASS		ThreadInformationClass,
 	OUT	PVOID				ThreadInformation,
 	IN	ULONG				ThreadInformationLength,
 	OUT	PULONG				ReturnLength OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtSetInformationThread_Win7(
+DECLARE_SYSCALL(NtSetInformationThread,
 	IN	HANDLE				ThreadHandle,
 	IN	THREADINFOCLASS		ThreadInformationClass,
 	IN	PVOID				ThreadInformation,
 	IN	ULONG				ThreadInformationLength);
 
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeKey_Win7(
+DECLARE_SYSCALL(NtNotifyChangeKey,
 	IN	HANDLE				KeyHandle,
 	IN	HANDLE				Event OPTIONAL,
 	IN	PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
@@ -873,7 +914,7 @@ KEXAPI NTSTATUS NTAPI KexNtNotifyChangeKey_Win7(
 	IN	ULONG				BufferSize,
 	IN	BOOLEAN				Asynchronous);
 
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeMultipleKeys_Win7(
+DECLARE_SYSCALL(NtNotifyChangeMultipleKeys,
 	IN	HANDLE				MasterKeyHandle,
 	IN	ULONG				Count OPTIONAL,
 	IN	OBJECT_ATTRIBUTES	SlaveObjects[] OPTIONAL,
@@ -887,7 +928,7 @@ KEXAPI NTSTATUS NTAPI KexNtNotifyChangeMultipleKeys_Win7(
 	IN	ULONG				BufferSize,
 	IN	BOOLEAN				Asynchronous);
 
-KEXAPI NTSTATUS NTAPI KexNtCreateSection_Win7(
+DECLARE_SYSCALL(NtCreateSection,
 	OUT	PHANDLE				SectionHandle,
 	IN	ULONG				DesiredAccess,
 	IN	POBJECT_ATTRIBUTES	ObjectAttributes OPTIONAL,
@@ -896,288 +937,14 @@ KEXAPI NTSTATUS NTAPI KexNtCreateSection_Win7(
 	IN	ULONG				SectionAttributes,
 	IN	HANDLE				FileHandle OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationProcess_Win7(
+DECLARE_SYSCALL(NtQueryInformationProcess,
 	IN	HANDLE				ProcessHandle,
 	IN	PROCESSINFOCLASS	ProcessInformationClass,
 	OUT	PVOID				ProcessInformation,
 	IN	ULONG				ProcessInformationLength,
 	OUT	PULONG				ReturnLength OPTIONAL);
 
-KEXAPI NTSTATUS NTAPI KexNtAssignProcessToJobObject_Win7(
-	IN	HANDLE				JobHandle,
-	IN	HANDLE				ProcessHandle);
-
-KEXAPI NTSTATUS NTAPI KexNtQuerySystemTime_Win81(
-	OUT		PLONGLONG	CurrentTime);
-
-KEXAPI NTSTATUS NTAPI KexNtCreateUserProcess_Win81(
-	OUT		PHANDLE							ProcessHandle,
-	OUT		PHANDLE							ThreadHandle,
-	IN		ACCESS_MASK						ProcessDesiredAccess,
-	IN		ACCESS_MASK						ThreadDesiredAccess,
-	IN		POBJECT_ATTRIBUTES				ProcessObjectAttributes OPTIONAL,
-	IN		POBJECT_ATTRIBUTES				ThreadObjectAttributes OPTIONAL,
-	IN		ULONG							ProcessFlags,
-	IN		ULONG							ThreadFlags,
-	IN		PRTL_USER_PROCESS_PARAMETERS	ProcessParameters,
-	IN OUT	PPS_CREATE_INFO					CreateInfo,
-	IN		PPS_ATTRIBUTE_LIST				AttributeList OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtProtectVirtualMemory_Win81(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PPVOID		BaseAddress,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		NewProtect,
-	OUT		PULONG		OldProtect);
-
-KEXAPI NTSTATUS NTAPI KexNtAllocateVirtualMemory_Win81(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PVOID		*BaseAddress,
-	IN		ULONG_PTR	ZeroBits,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		AllocationType,
-	IN		ULONG		Protect);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryVirtualMemory_Win81(
-	IN		HANDLE			ProcessHandle,
-	IN		PVOID			BaseAddress OPTIONAL,
-	IN		MEMINFOCLASS	MemoryInformationClass,
-	OUT		PVOID			MemoryInformation,
-	IN		SIZE_T			MemoryInformationLength,
-	OUT		PSIZE_T			ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtFreeVirtualMemory_Win81(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PVOID		*BaseAddress,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		FreeType);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryObject_Win81(
-	IN		HANDLE						ObjectHandle,
-	IN		OBJECT_INFORMATION_CLASS	ObjectInformationClass,
-	OUT		PVOID						ObjectInformation,
-	IN		ULONG						Length,
-	OUT		PULONG						ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtOpenFile_Win81(
-	OUT		PHANDLE				FileHandle,
-	IN		ACCESS_MASK			DesiredAccess,
-	IN		POBJECT_ATTRIBUTES	ObjectAttributes,
-	OUT		PIO_STATUS_BLOCK	IoStatusBlock,
-	IN		ULONG				ShareAccess,
-	IN		ULONG				OpenOptions);
-
-KEXAPI NTSTATUS NTAPI KexNtWriteFile_Win81(
-	IN		HANDLE				FileHandle,
-	IN		HANDLE				Event OPTIONAL,
-	IN		PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN		PVOID				ApcContext OPTIONAL,
-	OUT		PIO_STATUS_BLOCK	IoStatusBlock,
-	IN		PVOID				Buffer,
-	IN		ULONG				Length,
-	IN		PLONGLONG			ByteOffset OPTIONAL,
-	IN		PULONG				Key OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtRaiseHardError_Win81(
-	IN	NTSTATUS	ErrorStatus,
-	IN	ULONG		NumberOfParameters,
-	IN	ULONG		UnicodeStringParameterMask,
-	IN	PULONG_PTR	Parameters,
-	IN	ULONG		ValidResponseOptions,
-	OUT	PULONG		Response);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationThread_Win81(
-	IN	HANDLE				ThreadHandle,
-	IN	THREADINFOCLASS		ThreadInformationClass,
-	OUT	PVOID				ThreadInformation,
-	IN	ULONG				ThreadInformationLength,
-	OUT	PULONG				ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtSetInformationThread_Win81(
-	IN	HANDLE				ThreadHandle,
-	IN	THREADINFOCLASS		ThreadInformationClass,
-	IN	PVOID				ThreadInformation,
-	IN	ULONG				ThreadInformationLength);
-
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeKey_Win81(
-	IN	HANDLE				KeyHandle,
-	IN	HANDLE				Event OPTIONAL,
-	IN	PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN	PVOID				ApcContext OPTIONAL,
-	OUT	PIO_STATUS_BLOCK	IoStatusBlock,
-	IN	ULONG				CompletionFilter,
-	IN	BOOLEAN				WatchTree,
-	OUT	PVOID				Buffer OPTIONAL,
-	IN	ULONG				BufferSize,
-	IN	BOOLEAN				Asynchronous);
-
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeMultipleKeys_Win81(
-	IN	HANDLE				MasterKeyHandle,
-	IN	ULONG				Count OPTIONAL,
-	IN	OBJECT_ATTRIBUTES	SlaveObjects[] OPTIONAL,
-	IN	HANDLE				Event OPTIONAL,
-	IN	PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN	PVOID				ApcContext OPTIONAL,
-	OUT	PIO_STATUS_BLOCK	IoStatusBlock,
-	IN	ULONG				CompletionFilter,
-	IN	BOOLEAN				WatchTree,
-	OUT	PVOID				Buffer OPTIONAL,
-	IN	ULONG				BufferSize,
-	IN	BOOLEAN				Asynchronous);
-
-KEXAPI NTSTATUS NTAPI KexNtCreateSection_Win81(
-	OUT	PHANDLE				SectionHandle,
-	IN	ULONG				DesiredAccess,
-	IN	POBJECT_ATTRIBUTES	ObjectAttributes OPTIONAL,
-	IN	PLONGLONG			MaximumSize OPTIONAL,
-	IN	ULONG				PageAttributes,
-	IN	ULONG				SectionAttributes,
-	IN	HANDLE				FileHandle OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationProcess_Win81(
-	IN	HANDLE				ProcessHandle,
-	IN	PROCESSINFOCLASS	ProcessInformationClass,
-	OUT	PVOID				ProcessInformation,
-	IN	ULONG				ProcessInformationLength,
-	OUT	PULONG				ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtAssignProcessToJobObject_Win81(
-	IN	HANDLE				JobHandle,
-	IN	HANDLE				ProcessHandle);KEXAPI NTSTATUS NTAPI KexNtQuerySystemTime(
-	OUT		PLONGLONG	CurrentTime);
-
-KEXAPI NTSTATUS NTAPI KexNtCreateUserProcess(
-	OUT		PHANDLE							ProcessHandle,
-	OUT		PHANDLE							ThreadHandle,
-	IN		ACCESS_MASK						ProcessDesiredAccess,
-	IN		ACCESS_MASK						ThreadDesiredAccess,
-	IN		POBJECT_ATTRIBUTES				ProcessObjectAttributes OPTIONAL,
-	IN		POBJECT_ATTRIBUTES				ThreadObjectAttributes OPTIONAL,
-	IN		ULONG							ProcessFlags,
-	IN		ULONG							ThreadFlags,
-	IN		PRTL_USER_PROCESS_PARAMETERS	ProcessParameters,
-	IN OUT	PPS_CREATE_INFO					CreateInfo,
-	IN		PPS_ATTRIBUTE_LIST				AttributeList OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtProtectVirtualMemory(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PPVOID		BaseAddress,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		NewProtect,
-	OUT		PULONG		OldProtect);
-
-KEXAPI NTSTATUS NTAPI KexNtAllocateVirtualMemory(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PVOID		*BaseAddress,
-	IN		ULONG_PTR	ZeroBits,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		AllocationType,
-	IN		ULONG		Protect);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryVirtualMemory(
-	IN		HANDLE			ProcessHandle,
-	IN		PVOID			BaseAddress OPTIONAL,
-	IN		MEMINFOCLASS	MemoryInformationClass,
-	OUT		PVOID			MemoryInformation,
-	IN		SIZE_T			MemoryInformationLength,
-	OUT		PSIZE_T			ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtFreeVirtualMemory(
-	IN		HANDLE		ProcessHandle,
-	IN OUT	PVOID		*BaseAddress,
-	IN OUT	PSIZE_T		RegionSize,
-	IN		ULONG		FreeType);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryObject(
-	IN		HANDLE						ObjectHandle,
-	IN		OBJECT_INFORMATION_CLASS	ObjectInformationClass,
-	OUT		PVOID						ObjectInformation,
-	IN		ULONG						Length,
-	OUT		PULONG						ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtOpenFile(
-	OUT		PHANDLE				FileHandle,
-	IN		ACCESS_MASK			DesiredAccess,
-	IN		POBJECT_ATTRIBUTES	ObjectAttributes,
-	OUT		PIO_STATUS_BLOCK	IoStatusBlock,
-	IN		ULONG				ShareAccess,
-	IN		ULONG				OpenOptions);
-
-KEXAPI NTSTATUS NTAPI KexNtWriteFile(
-	IN		HANDLE				FileHandle,
-	IN		HANDLE				Event OPTIONAL,
-	IN		PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN		PVOID				ApcContext OPTIONAL,
-	OUT		PIO_STATUS_BLOCK	IoStatusBlock,
-	IN		PVOID				Buffer,
-	IN		ULONG				Length,
-	IN		PLONGLONG			ByteOffset OPTIONAL,
-	IN		PULONG				Key OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtRaiseHardError(
-	IN	NTSTATUS	ErrorStatus,
-	IN	ULONG		NumberOfParameters,
-	IN	ULONG		UnicodeStringParameterMask,
-	IN	PULONG_PTR	Parameters,
-	IN	ULONG		ValidResponseOptions,
-	OUT	PULONG		Response);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationThread(
-	IN	HANDLE				ThreadHandle,
-	IN	THREADINFOCLASS		ThreadInformationClass,
-	OUT	PVOID				ThreadInformation,
-	IN	ULONG				ThreadInformationLength,
-	OUT	PULONG				ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtSetInformationThread(
-	IN	HANDLE				ThreadHandle,
-	IN	THREADINFOCLASS		ThreadInformationClass,
-	IN	PVOID				ThreadInformation,
-	IN	ULONG				ThreadInformationLength);
-
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeKey(
-	IN	HANDLE				KeyHandle,
-	IN	HANDLE				Event OPTIONAL,
-	IN	PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN	PVOID				ApcContext OPTIONAL,
-	OUT	PIO_STATUS_BLOCK	IoStatusBlock,
-	IN	ULONG				CompletionFilter,
-	IN	BOOLEAN				WatchTree,
-	OUT	PVOID				Buffer OPTIONAL,
-	IN	ULONG				BufferSize,
-	IN	BOOLEAN				Asynchronous);
-
-KEXAPI NTSTATUS NTAPI KexNtNotifyChangeMultipleKeys(
-	IN	HANDLE				MasterKeyHandle,
-	IN	ULONG				Count OPTIONAL,
-	IN	OBJECT_ATTRIBUTES	SlaveObjects[] OPTIONAL,
-	IN	HANDLE				Event OPTIONAL,
-	IN	PIO_APC_ROUTINE		ApcRoutine OPTIONAL,
-	IN	PVOID				ApcContext OPTIONAL,
-	OUT	PIO_STATUS_BLOCK	IoStatusBlock,
-	IN	ULONG				CompletionFilter,
-	IN	BOOLEAN				WatchTree,
-	OUT	PVOID				Buffer OPTIONAL,
-	IN	ULONG				BufferSize,
-	IN	BOOLEAN				Asynchronous);
-
-KEXAPI NTSTATUS NTAPI KexNtCreateSection(
-	OUT	PHANDLE				SectionHandle,
-	IN	ULONG				DesiredAccess,
-	IN	POBJECT_ATTRIBUTES	ObjectAttributes OPTIONAL,
-	IN	PLONGLONG			MaximumSize OPTIONAL,
-	IN	ULONG				PageAttributes,
-	IN	ULONG				SectionAttributes,
-	IN	HANDLE				FileHandle OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtQueryInformationProcess(
-	IN	HANDLE				ProcessHandle,
-	IN	PROCESSINFOCLASS	ProcessInformationClass,
-	OUT	PVOID				ProcessInformation,
-	IN	ULONG				ProcessInformationLength,
-	OUT	PULONG				ReturnLength OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexNtAssignProcessToJobObject(
+DECLARE_SYSCALL(NtAssignProcessToJobObject,
 	IN	HANDLE				JobHandle,
 	IN	HANDLE				ProcessHandle);
 

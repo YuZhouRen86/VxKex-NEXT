@@ -91,10 +91,10 @@ STATIC NTSTATUS BasepGetDllDirectoryProcedure(
 			ProcedureAddress);
 
 		if (!NT_SUCCESS(Status)) {
-			KexLogErrorEvent(
+			/*KexLogErrorEvent(
 				L"%hs is not available on this computer\r\n\r\n"
 				L"This function is only available on Windows 7 with the KB2533623 "
-				L"security update.", ProcedureName);
+				L"security update.", ProcedureName);*/
 
 			BaseSetLastNTError(Status);
 		}
@@ -133,11 +133,11 @@ KXBASEAPI HMODULE WINAPI Ext_GetModuleHandleW(
 	// the export forwarders in KxNt. Neither does it properly work with stubs,
 	// because they actually scan the instruction code of system calls.
 	//
-	if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
+	if (((KexData->Flags & KEXDATA_FLAG_CHROMIUM) || (KexData->Flags & KEXDATA_FLAG_FIREFOX)) &&
 		ModuleName != NULL &&
 		StringEqual(ModuleName, L"ntdll.dll")) {
 
-		KexLogDebugEvent(L"Not rewriting NTDLL for Chromium compatibility");
+		KexLogDebugEvent(L"Not rewriting NTDLL for Chromium or Firefox compatibility");
 		return (HMODULE) KexData->SystemDllBase;
 	}
 
@@ -178,30 +178,31 @@ KXBASEAPI BOOL WINAPI Ext_GetModuleHandleExW(
 	return Success;
 }
 
+STATIC PWSTR CopyPcstrToPwstr(
+	PCSTR Source)
+{
+	PWSTR Dest;
+	INT BufferLength = MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, NULL, 0);
+	if (BufferLength == 0) return NULL;
+	Dest = SafeAlloc(WCHAR, BufferLength);
+	if (!Dest) return NULL;
+	if (MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, Dest, BufferLength) == 0) {
+		SafeFree(Dest);
+		return NULL;
+	}
+	return Dest;
+}
+
 KXBASEAPI HMODULE WINAPI Ext_LoadLibraryA(
 	IN	PCSTR	FileName)
 {
-	HMODULE ModuleHandle;
-	BOOLEAN ReEntrant;
-
-	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	ModuleHandle = LoadLibraryA(FileName);
-	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
-
-	return ModuleHandle;
+	return Ext_LoadLibraryExA(FileName, NULL, 0);
 }
 
 KXBASEAPI HMODULE WINAPI Ext_LoadLibraryW(
 	IN	PCWSTR	FileName)
 {
-	HMODULE ModuleHandle;
-	BOOLEAN ReEntrant;
-
-	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	ModuleHandle = LoadLibraryW(FileName);
-	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
-
-	return ModuleHandle;
+	return Ext_LoadLibraryExW(FileName, NULL, 0);
 }
 
 KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExA(
@@ -218,6 +219,7 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExA(
 	if (SetDefaultDllDirectories) {
 		ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
 	} else {
+		ULONG OriginalFlags = Flags;
 		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
 
 		ModuleHandle = NULL;
@@ -226,6 +228,31 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExA(
 		} else {
 			Flags &= ~LoadLibrarySearchMarks;
 			ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
+			if (!ModuleHandle &&
+				(OriginalFlags & LOAD_LIBRARY_SEARCH_USER_DIRS || (!(OriginalFlags & LoadLibrarySearchMarks) && (DefaultDllDirectoryFlags & LOAD_LIBRARY_SEARCH_USER_DIRS))) &&
+				FileName &&
+				FileName[0] != '\0' &&
+				FileName[0] != '\\' &&
+				FileName[0] != '/' &&
+				GetLastError() == ERROR_MOD_NOT_FOUND) {
+
+				PWSTR FileName_U = CopyPcstrToPwstr(FileName);
+				if (FileName_U) {
+					PDLL_DIRECTORY_DATA Directory;
+					for (Directory = (PDLL_DIRECTORY_DATA)DllDirectoryData.Next; Directory && Directory->String != NULL; Directory = (PDLL_DIRECTORY_DATA)Directory = (PDLL_DIRECTORY_DATA)Directory->Next) {
+						SIZE_T NewFileNameLength = wcslen(FileName_U) + wcslen(Directory->String) + 2;
+						PWSTR NewFileName = SafeAlloc(WCHAR, NewFileNameLength);
+						StringCchCopy(NewFileName, NewFileNameLength, Directory->String);
+						StringCchCat(NewFileName, NewFileNameLength, L"\\");
+						StringCchCat(NewFileName, NewFileNameLength, FileName_U);
+						ModuleHandle = LoadLibraryExW(NewFileName, FileHandle, Flags);
+						if (ModuleHandle || GetLastError() != ERROR_MOD_NOT_FOUND) break;
+					}
+					SafeFree(FileName_U);
+				}
+
+				if (!ModuleHandle) SetLastError(ERROR_MOD_NOT_FOUND);
+			}
 		}
 	}
 	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
@@ -247,6 +274,7 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 	if (SetDefaultDllDirectories) {
 		ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
 	} else {
+		ULONG OriginalFlags = Flags;
 		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
 
 		ModuleHandle = NULL;
@@ -255,6 +283,27 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 		} else {
 			Flags &= ~LoadLibrarySearchMarks;
 			ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
+			if (!ModuleHandle &&
+				(OriginalFlags & LOAD_LIBRARY_SEARCH_USER_DIRS || (!(OriginalFlags & LoadLibrarySearchMarks) && (DefaultDllDirectoryFlags & LOAD_LIBRARY_SEARCH_USER_DIRS))) &&
+				FileName &&
+				FileName[0] != L'\0' &&
+				FileName[0] != L'\\' &&
+				FileName[0] != L'/' &&
+				GetLastError() == ERROR_MOD_NOT_FOUND) {
+
+				PDLL_DIRECTORY_DATA Directory;
+				for (Directory = (PDLL_DIRECTORY_DATA)DllDirectoryData.Next; Directory && Directory->String != NULL; Directory = (PDLL_DIRECTORY_DATA)Directory->Next) {
+					SIZE_T NewFileNameLength = wcslen(FileName) + wcslen(Directory->String) + 2;
+					PWSTR NewFileName = SafeAlloc(WCHAR, NewFileNameLength);
+					StringCchCopy(NewFileName, NewFileNameLength, Directory->String);
+					StringCchCat(NewFileName, NewFileNameLength, L"\\");
+					StringCchCat(NewFileName, NewFileNameLength, FileName);
+					ModuleHandle = LoadLibraryExW(NewFileName, FileHandle, Flags);
+					if (ModuleHandle || GetLastError() != ERROR_MOD_NOT_FOUND) break;
+				}
+
+				if (!ModuleHandle) SetLastError(ERROR_MOD_NOT_FOUND);
+			}
 		}
 	}
 	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
@@ -314,7 +363,49 @@ KXBASEAPI DLL_DIRECTORY_COOKIE WINAPI Ext_AddDllDirectory(
 	if (AddDllDirectory) {
 		return AddDllDirectory(NewDirectory);
 	} else {
-		return (DLL_DIRECTORY_COOKIE) 1;
+		PDLL_DIRECTORY_DATA NewDllDirectoryData, LastDllDirectoryData;
+		DWORD Attributes;
+		RTL_PATH_TYPE PathType;
+
+		if (NewDirectory == NULL) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return 0;
+		}
+
+		PathType = RtlDetermineDosPathNameType_U(NewDirectory);
+		if (PathType == RtlPathTypeUnknown || PathType == RtlPathTypeDriveRelative || PathType == RtlPathTypeRooted || PathType == RtlPathTypeRelative) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return 0;
+		}
+
+		Attributes = GetFileAttributesW(NewDirectory);
+		if (Attributes == INVALID_FILE_ATTRIBUTES || !(Attributes & FILE_ATTRIBUTE_DIRECTORY)) {
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return 0;
+		}
+
+		NewDllDirectoryData = SafeAlloc(DLL_DIRECTORY_DATA, 1);
+		if (!NewDllDirectoryData) {
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return 0;
+		}
+		NewDllDirectoryData->VerificationCode = DLL_DIRECTORY_DATA_VERIFICATION_CODE;
+		NewDllDirectoryData->String = SafeAlloc(WCHAR, wcslen(NewDirectory) + 1);
+		if (!NewDllDirectoryData->String) {
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return 0;
+		}
+		StringCchCopy(NewDllDirectoryData->String, wcslen(NewDirectory) + 1, NewDirectory);
+		if (!DllDirectoryData.Next || !DllDirectoryData.Previous) {
+			DllDirectoryData.Previous = &DllDirectoryData;
+			DllDirectoryData.Next = &DllDirectoryData;
+		}
+		LastDllDirectoryData = (PDLL_DIRECTORY_DATA)DllDirectoryData.Previous;
+		LastDllDirectoryData->Next = NewDllDirectoryData;
+		NewDllDirectoryData->Previous = LastDllDirectoryData;
+		NewDllDirectoryData->Next = &DllDirectoryData;
+		DllDirectoryData.Previous = NewDllDirectoryData;
+		return (DLL_DIRECTORY_COOKIE) NewDllDirectoryData;
 	}
 }
 
@@ -328,6 +419,31 @@ KXBASEAPI BOOL WINAPI Ext_RemoveDllDirectory(
 	if (RemoveDllDirectory) {
 		return RemoveDllDirectory(Cookie);
 	} else {
+		PDLL_DIRECTORY_DATA GarbageDllDirectoryData, PreviousDllDirectoryData, NextDllDirectoryData;
+		GarbageDllDirectoryData = (PDLL_DIRECTORY_DATA)Cookie;
+		if (
+			!Cookie ||
+			GarbageDllDirectoryData->VerificationCode != DLL_DIRECTORY_DATA_VERIFICATION_CODE ||
+			!GarbageDllDirectoryData->String ||
+			!GarbageDllDirectoryData->Next ||
+			!GarbageDllDirectoryData->Previous) {
+
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
+		PreviousDllDirectoryData = (PDLL_DIRECTORY_DATA)GarbageDllDirectoryData->Previous;
+		NextDllDirectoryData = (PDLL_DIRECTORY_DATA)GarbageDllDirectoryData->Next;
+		PreviousDllDirectoryData->Next = GarbageDllDirectoryData->Next;
+		NextDllDirectoryData->Previous = GarbageDllDirectoryData->Previous;
+		GarbageDllDirectoryData->Next = NULL;
+		GarbageDllDirectoryData->Previous = NULL;
+		SafeFree(GarbageDllDirectoryData->String);
+		GarbageDllDirectoryData->String = NULL;
+		SafeFree(GarbageDllDirectoryData);
+		if (&DllDirectoryData == DllDirectoryData.Next || &DllDirectoryData == DllDirectoryData.Previous) {
+			DllDirectoryData.Next = NULL;
+			DllDirectoryData.Previous = NULL;
+		}
 		return TRUE;
 	}
 }
@@ -347,6 +463,7 @@ KXBASEAPI BOOL WINAPI Ext_SetDefaultDllDirectories(
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return FALSE;
 		}
+		DefaultDllDirectoryFlags = DirectoryFlags;
 		return TRUE;
 	}
 }

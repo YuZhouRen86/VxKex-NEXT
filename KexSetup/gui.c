@@ -42,8 +42,6 @@ HANDLE ElevatedProcess = NULL;
 #define SCENE_UPDATING					8
 #define SCENE_UPDATE_COMPLETE			9
 
-typedef HRESULT (WINAPI *PFNENABLETHEMEDIALOGTEXTURE)(HWND, DWORD);
-
 BOOLEAN HideAndDisableControl(
 	IN	USHORT	ControlId)
 {
@@ -543,17 +541,17 @@ INT_PTR CALLBACK DialogProc(
 	IN	LPARAM	LParam)
 {
 	if (Message == WM_INITDIALOG) {
-		HMODULE hUxTheme;
-		PFNENABLETHEMEDIALOGTEXTURE pfnEnableThemeDialogTexture;
+		HMODULE Uxtheme;
+		HRESULT (WINAPI *pEnableThemeDialogTexture) (HWND, DWORD);
 		BOOL pbEnabled = FALSE;
 
 		MainWindow = Window;
 		KexgApplicationMainWindow = MainWindow;
 
-		hUxTheme = LoadLibrary(L"uxtheme.dll");
-		pfnEnableThemeDialogTexture = (PFNENABLETHEMEDIALOGTEXTURE) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
-		if (pfnEnableThemeDialogTexture) pfnEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
-		FreeLibrary(hUxTheme);
+		Uxtheme = LoadLibrary(L"uxtheme.dll");
+		pEnableThemeDialogTexture = (HRESULT (WINAPI *) (HWND, DWORD)) GetProcAddress(Uxtheme, "EnableThemeDialogTexture");
+		if (pEnableThemeDialogTexture) pEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+		FreeLibrary(Uxtheme);
 
 		CurrentScene = 0;
 

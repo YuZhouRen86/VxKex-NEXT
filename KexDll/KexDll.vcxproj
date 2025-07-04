@@ -300,7 +300,6 @@
     <ClCompile Include="status.c" />
     <ClCompile Include="strmap.c" />
     <ClCompile Include="syscal.c" />
-    <ClCompile Include="syscal32.c" />
     <ClCompile Include="verspoof.c" />
     <ClCompile Include="vxlopcl.c" />
     <ClCompile Include="vxlpriv.c" />

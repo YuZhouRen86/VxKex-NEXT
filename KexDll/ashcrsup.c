@@ -66,6 +66,45 @@ STATIC NTSTATUS AshpSetIsChromiumProcess(
 }
 
 //
+// This function is called when we reach a conclusion that the current process
+// either is Firefox, or has loaded a Firefox-based framework.
+//
+STATIC NTSTATUS AshpSetIsFirefoxProcess(
+	VOID)
+{
+	NTSTATUS Status;
+
+	ASSUME (KexData != NULL);
+	ASSUME (!(KexData->Flags & KEXDATA_FLAG_FIREFOX));
+
+	KexData->Flags |= KEXDATA_FLAG_FIREFOX;
+
+	KexLogInformationEvent(L"Detected Firefox, applying compatibility fixes");
+
+	//
+	// Firefox uses dwrite factories introduced in win10.
+	// Will AV if we don't use the win10 dwrite.
+	//
+
+	/*Status = AshSelectDWriteImplementation(DWriteWindows10Implementation);
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}*/
+
+	//
+	// Ensure the random number generator is initialized as soon as possible.
+	// Once Chromium locks down the sandbox this call will fail.
+	//
+
+	Status = KexRtlInitializeRandomNumberGenerator();
+	ASSERT (NT_SUCCESS(Status));
+
+	return Status;
+}
+
+//
 // This function is called from within the DLL notification routine (dllnotif.c)
 // and we're supposed to infer from the loaded DLL whether it's some kind of
 // Chromium DLL.
@@ -116,12 +155,14 @@ NTSTATUS AshPerformChromiumDetectionFromModuleExports(
 	NTSTATUS Status;
 	ANSI_STRING GetHandleVerifier;
 	ANSI_STRING IsSandboxedProcess;
+	ANSI_STRING g_nt;
 	PVOID ProcedureAddress;
 
 	ASSUME (ModuleBase != NULL);
 
 	RtlInitConstantAnsiString(&GetHandleVerifier, "GetHandleVerifier");
 	RtlInitConstantAnsiString(&IsSandboxedProcess, "IsSandboxedProcess");
+	RtlInitConstantAnsiString(&g_nt, "g_nt");
 
 	//
 	// These two function names are exported from Chrome and Electron
@@ -159,11 +200,22 @@ NTSTATUS AshPerformChromiumDetectionFromModuleExports(
 		return Status;
 	}
 
-	//
-	// Both functions found. This is a chromium process.
-	//
+	Status = LdrGetProcedureAddress(
+		ModuleBase,
+		&g_nt,
+		0,
+		&ProcedureAddress);
 
-	Status = AshpSetIsChromiumProcess();
+	ASSERT (
+		NT_SUCCESS(Status) ||
+		Status == STATUS_PROCEDURE_NOT_FOUND ||
+		Status == STATUS_ENTRYPOINT_NOT_FOUND);
+
+	if (NT_SUCCESS(Status)) {
+		Status = AshpSetIsFirefoxProcess();
+	} else {
+		Status = AshpSetIsChromiumProcess();
+	}
 	ASSERT (NT_SUCCESS(Status));
 
 	return Status;

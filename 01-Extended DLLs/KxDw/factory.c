@@ -9,11 +9,16 @@ KXDWAPI HRESULT WINAPI Ext_DWriteCreateFactory(
 	if (IsEqualIID(iid, &IID_IDWriteFactory)) {
 		unless (KexData->IfeoParameters.DisableAppSpecific) {
 			if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM)) {
-				return dwrw10CF(factoryType, iid, factory);
+				return DWriteCoreCreateFactory(factoryType, iid, factory);
 			}
 		}
 		return DWriteCreateFactory(factoryType, iid, factory);
 	} else {
-		return dwrw10CF(factoryType, iid, factory);
+		unless (KexData->IfeoParameters.DisableAppSpecific) {
+			if (AshExeBaseNameIs(L"Zps.exe")) {
+				return DWriteCreateFactory(factoryType, iid, factory);
+			}
+		}
+		return DWriteCoreCreateFactory(factoryType, iid, factory);
 	}
 }

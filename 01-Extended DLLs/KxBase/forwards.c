@@ -1256,7 +1256,7 @@
 #pragma comment(linker, "/EXPORT:VerifyConsoleIoHandle=kernel32.VerifyConsoleIoHandle")
 #pragma comment(linker, "/EXPORT:VerifyScripts=kernel32.VerifyScripts")
 #pragma comment(linker, "/EXPORT:VerifyVersionInfoA=kernel32.VerifyVersionInfoA")
-#pragma comment(linker, "/EXPORT:VerifyVersionInfoW=kernel32.VerifyVersionInfoW")
+//#pragma comment(linker, "/EXPORT:VerifyVersionInfoW=kernel32.VerifyVersionInfoW")
 #pragma comment(linker, "/EXPORT:VirtualAlloc=kernel32.VirtualAlloc")
 #pragma comment(linker, "/EXPORT:VirtualAllocEx=kernel32.VirtualAllocEx")
 #pragma comment(linker, "/EXPORT:VirtualAllocExNuma=kernel32.VirtualAllocExNuma")

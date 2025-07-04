@@ -161,7 +161,7 @@ STATIC VOID NTAPI Ext_RtlGetNtVersionNumbers(
 	Peb = NtCurrentPeb();
 	ReturnMajorVersion = Peb->OSMajorVersion;
 	ReturnMinorVersion = Peb->OSMinorVersion;
-	ReturnBuildNumber = Peb->OSCSDVersion;
+	ReturnBuildNumber = Peb->OSBuildNumber;
 
 	//
 	// If a call to this function comes from a native Windows DLL, we will
@@ -228,36 +228,14 @@ VOID KexApplyVersionSpoof(
 			AshExeBaseNameIs(L"ChocolateyGui.exe") ||
 			AshExeBaseNameIs(L"Listary.exe") ||
 			AshExeBaseNameIs(L"Listary.Service.exe") ||
-			AshExeBaseNameIs(L"Update.exe")) {
+			AshExeBaseNameIs(L"Update.exe") ||
+			(KexData->Flags & KEXDATA_FLAG_CHROMIUM)) {
 			
 			return;
 		}
 	}
 
 	Peb = NtCurrentPeb();
-	
-	if (KexData->Flags & KEXDATA_FLAG_CHROMIUM) {
-		NTSTATUS Status;
-		ANSI_STRING g_nt;
-		PVOID ProcedureAddress;
-		
-		RtlInitConstantAnsiString(&g_nt, "g_nt");
-
-		Status = LdrGetProcedureAddress(
-			Peb->ImageBaseAddress,
-			&g_nt,
-			0,
-			&ProcedureAddress);
-
-		ASSERT (
-			NT_SUCCESS(Status) ||
-			Status == STATUS_PROCEDURE_NOT_FOUND ||
-			Status == STATUS_ENTRYPOINT_NOT_FOUND);
-
-		if (!NT_SUCCESS(Status)) {
-			return;
-		}
-	}
 
 	//
 	// CSDVersion is the service pack number, and therefore should be 0

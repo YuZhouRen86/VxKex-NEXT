@@ -187,9 +187,10 @@ NoExtendedStartupInfo:
 				// Fall through to the ShellExecute code.
 				NOTHING;
 			} else {
-				if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"CreateProcess 失败：%s", Win32ErrorAsString(ErrorCode));
-				else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ErrorBoxF(L"CreateProcess 失敗：%s", Win32ErrorAsString(ErrorCode));
-				else ErrorBoxF(L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
+				ErrorBoxF(
+					CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"CreateProcess 失败：%s" :
+					CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"CreateProcess 失敗：%s" :
+					L"CreateProcess failed: %s", Win32ErrorAsString(ErrorCode));
 				return FALSE;
 			}
 		}
@@ -213,131 +214,66 @@ NoExtendedStartupInfo:
 
 	if ((ULONG) ShellExecuteError <= 32) {
 		PCWSTR ErrorMessage;
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {
-			switch ((ULONG) ShellExecuteError) {
-				case 0:
-				case SE_ERR_OOM:
-					ErrorMessage = L"资源不足。";
-					break;
-				case ERROR_FILE_NOT_FOUND:
-				case ERROR_PATH_NOT_FOUND:
-				case ERROR_BAD_FORMAT:
-					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
-					break;
-				case SE_ERR_ACCESSDENIED:
-					ErrorMessage = L"访问被拒绝。";
-					break;
-				case SE_ERR_DLLNOTFOUND:
-					ErrorMessage = L"未找到 DLL。";
-					break;
-				case SE_ERR_SHARE:
-					ErrorMessage = L"发生违规共享。";
-					break;
-				case SE_ERR_ASSOCINCOMPLETE:
-					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
-					break;
-				case SE_ERR_DDEBUSY:
-					ErrorMessage = L"SE_ERR_DDEBUSY.";
-					break;
-				case SE_ERR_DDEFAIL:
-					ErrorMessage = L"SE_ERR_DDEFAIL.";
-					break;
-				case SE_ERR_DDETIMEOUT:
-					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
-					break;
-				case SE_ERR_NOASSOC:
-					ErrorMessage = L"SE_ERR_NOASSOC.";
-					break;
-				default:
-					ASSERT (FALSE);
-					ErrorMessage = L"未知错误。";
-					break;
-			}
-			ErrorBoxF(L"ShellExecute 失败：%s", ErrorMessage);
-		} else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) {
-			switch ((ULONG) ShellExecuteError) {
-				case 0:
-				case SE_ERR_OOM:
-					ErrorMessage = L"資源不足。";
-					break;
-				case ERROR_FILE_NOT_FOUND:
-				case ERROR_PATH_NOT_FOUND:
-				case ERROR_BAD_FORMAT:
-					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
-					break;
-				case SE_ERR_ACCESSDENIED:
-					ErrorMessage = L"存取被拒絕。";
-					break;
-				case SE_ERR_DLLNOTFOUND:
-					ErrorMessage = L"未找到 DLL。";
-					break;
-				case SE_ERR_SHARE:
-					ErrorMessage = L"發生違規共享。";
-					break;
-				case SE_ERR_ASSOCINCOMPLETE:
-					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
-					break;
-				case SE_ERR_DDEBUSY:
-					ErrorMessage = L"SE_ERR_DDEBUSY.";
-					break;
-				case SE_ERR_DDEFAIL:
-					ErrorMessage = L"SE_ERR_DDEFAIL.";
-					break;
-				case SE_ERR_DDETIMEOUT:
-					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
-					break;
-				case SE_ERR_NOASSOC:
-					ErrorMessage = L"SE_ERR_NOASSOC.";
-					break;
-				default:
-					ASSERT (FALSE);
-					ErrorMessage = L"未知錯誤。";
-					break;
-			}
-			ErrorBoxF(L"ShellExecute 失敗：%s", ErrorMessage);
-		} else {
-			switch ((ULONG) ShellExecuteError) {
-				case 0:
-				case SE_ERR_OOM:
-					ErrorMessage = L"Insufficient resources.";
-					break;
-				case ERROR_FILE_NOT_FOUND:
-				case ERROR_PATH_NOT_FOUND:
-				case ERROR_BAD_FORMAT:
-					ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
-					break;
-				case SE_ERR_ACCESSDENIED:
-					ErrorMessage = L"Access was denied.";
-					break;
-				case SE_ERR_DLLNOTFOUND:
-					ErrorMessage = L"A DLL was not found.";
-					break;
-				case SE_ERR_SHARE:
-					ErrorMessage = L"A sharing violation occurred.";
-					break;
-				case SE_ERR_ASSOCINCOMPLETE:
-					ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
-					break;
-				case SE_ERR_DDEBUSY:
-					ErrorMessage = L"SE_ERR_DDEBUSY.";
-					break;
-				case SE_ERR_DDEFAIL:
-					ErrorMessage = L"SE_ERR_DDEFAIL.";
-					break;
-				case SE_ERR_DDETIMEOUT:
-					ErrorMessage = L"SE_ERR_DDETIMEOUT.";
-					break;
-				case SE_ERR_NOASSOC:
-					ErrorMessage = L"SE_ERR_NOASSOC.";
-					break;
-				default:
-					ASSERT (FALSE);
-					ErrorMessage = L"Unknown error.";
-					break;
-			}
-			ErrorBoxF(L"ShellExecute failed: %s", ErrorMessage);
+
+		switch ((ULONG) ShellExecuteError) {
+		case 0:
+		case SE_ERR_OOM:
+			ErrorMessage = (
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"资源不足。" :
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"資源不足。" :
+				L"Insufficient resources.");
+			break;
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+		case ERROR_BAD_FORMAT:
+			ErrorMessage = Win32ErrorAsString((ULONG) ShellExecuteError);
+			break;
+		case SE_ERR_ACCESSDENIED:
+			ErrorMessage = (
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"访问被拒绝。" :
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"存取被拒絕。" :
+				L"Access was denied.");
+			break;
+		case SE_ERR_DLLNOTFOUND:
+			ErrorMessage = (
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"未找到 DLL。" :
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"未找到 DLL。" :
+				L"A DLL was not found.");
+			break;
+		case SE_ERR_SHARE:
+			ErrorMessage = (
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"发生违规共享。" :
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"發生違規共享。" :
+				L"A sharing violation occurred.");
+			break;
+		case SE_ERR_ASSOCINCOMPLETE:
+			ErrorMessage = L"SE_ERR_ASSOCINCOMPLETE.";
+			break;
+		case SE_ERR_DDEBUSY:
+			ErrorMessage = L"SE_ERR_DDEBUSY.";
+			break;
+		case SE_ERR_DDEFAIL:
+			ErrorMessage = L"SE_ERR_DDEFAIL.";
+			break;
+		case SE_ERR_DDETIMEOUT:
+			ErrorMessage = L"SE_ERR_DDETIMEOUT.";
+			break;
+		case SE_ERR_NOASSOC:
+			ErrorMessage = L"SE_ERR_NOASSOC.";
+			break;
+		default:
+			ASSERT (FALSE);
+			ErrorMessage = (
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"未知错误。" :
+				CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"未知錯誤。" :
+				L"Unknown error.");
+			break;
 		}
 
+		ErrorBoxF(
+			CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) ? L"ShellExecute 失败：%s" :
+			CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) ? L"ShellExecute 失敗：%s" :
+			L"ShellExecute failed: %s", ErrorMessage);
 		return FALSE;
 	}
 

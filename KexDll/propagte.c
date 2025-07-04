@@ -81,6 +81,29 @@ STATIC CONST BYTE KexpNtOpenKeyHook64[] = {
 	0x4B, 0x00, 0x65, 0x00, 0x79, 0x00, 0x7D, 0x00, 0x00, 0x00
 };
 
+USHORT HookDataFlag = 0;
+
+//
+// DO NOT use this function.
+//
+NTSTATUS WINAPI UnstableHookedNtOpenKey(
+	OUT	PHANDLE				KeyHandle,
+	IN	ACCESS_MASK			DesiredAccess,
+	IN	POBJECT_ATTRIBUTES	ObjectAttributes)
+{
+	NTSTATUS Status;
+	if (HookDataFlag == 0) {
+		NtCurrentPeb()->ProcessParameters->Flags &= ~0x4000;
+		if (ObjectAttributes->RootDirectory != NULL) {
+			UNICODE_STRING VxKexPropagationVirtualKeyName;
+			RtlInitConstantUnicodeString(&VxKexPropagationVirtualKeyName, L"{VxKexPropagationVirtualKey}");
+			ObjectAttributes->ObjectName = &VxKexPropagationVirtualKeyName;
+		}
+	}
+	Status = NtOpenKey(KeyHandle, DesiredAccess, ObjectAttributes);
+	return Status;
+}
+
 //
 // This function unhooks NtOpenKey/NtOpenKeyEx and unmaps the
 // temporary KexDll from the current process.
@@ -516,7 +539,7 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 	// a syscall when it wants to call the original function.
 	//
 
-	Status = KexHkInstallBasicHook(&NtCreateUserProcess, Ext_NtCreateUserProcess, NULL);
+	if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) Status = KexHkInstallBasicHook(&NtCreateUserProcess, Ext_NtCreateUserProcess, NULL);
 
 	if (NT_SUCCESS(Status)) {
 		KexLogInformationEvent(L"Successfully initialized propagation system.");
@@ -748,20 +771,22 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	// Write hook into remote process.
 	//
 
-	Status = KexRtlWriteProcessMemory(
-		*ProcessHandle,
-		RemoteNtOpenKey,
-		HookTemplate,
-		HookTemplateCb);
+	if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) {
+		Status = KexRtlWriteProcessMemory(
+			*ProcessHandle,
+			RemoteNtOpenKey,
+			HookTemplate,
+			HookTemplateCb);
 
-	ASSERT (NT_SUCCESS(Status));
+		ASSERT (NT_SUCCESS(Status));
 
-	if (!NT_SUCCESS(Status)) {
-		KexLogWarningEvent(
-			L"Failed to write hook template to remote process.\r\n\r\n"
-			L"NTSTATUS error code: %s (0x%08lx)",
-			KexRtlNtStatusToString(Status), Status);
-		goto BailOut;
+		if (!NT_SUCCESS(Status)) {
+			KexLogWarningEvent(
+				L"Failed to write hook template to remote process.\r\n\r\n"
+				L"NTSTATUS error code: %s (0x%08lx)",
+				KexRtlNtStatusToString(Status), Status);
+			goto BailOut;
+		}
 	}
 
 	//

@@ -24,9 +24,20 @@
 #include <KexDll.h>
 #include <KxBase.h>
 
+#define DLL_DIRECTORY_DATA_VERIFICATION_CODE 'V' + 'x' + 'K' + 'e' + 'x' + 'N' + 'E' + 'X' + 'T'
+
+typedef struct _DLL_DIRECTORY_DATA {
+	USHORT	VerificationCode;
+	PWSTR	String;
+	PVOID	Previous;
+	PVOID	Next;
+} TYPEDEF_TYPE_NAME(DLL_DIRECTORY_DATA);
+
 EXTERN PKEX_PROCESS_DATA KexData;
 EXTERN HANDLE KsecDD;
 EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
+EXTERN DLL_DIRECTORY_DATA DllDirectoryData;
+EXTERN ULONG DefaultDllDirectoryFlags;
 
 //
 // module.c

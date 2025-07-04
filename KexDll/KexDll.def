@@ -4,6 +4,7 @@ EXPORTS
 	KexInitializePropagation
 	KexDllProtectedFunctionExceptionFilter
 	
+	KexRtlOperatingSystemBitness
 	KexRtlGetNtVersionNumbers
 	KexRtlPathFindFileName
 	KexRtlPathRemoveExtension

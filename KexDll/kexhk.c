@@ -61,7 +61,8 @@ STATIC BYTE BasicHookTemplate[BASIC_HOOK_LENGTH] = {
 //     you want to uninstall the hook or if you want to call the original API.
 //     If this parameter is NULL, the hook is permanent.
 //
-KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
+KEXAPI NTSTATUS NTAPI KexHkInstallHook(
+	IN		HANDLE					ProcessHandle,
 	IN		PVOID					ApiAddress,
 	IN		PVOID					RedirectedAddress,
 	OUT		PKEX_BASIC_HOOK_CONTEXT	HookContext OPTIONAL)
@@ -74,7 +75,7 @@ KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	ASSERT (ApiAddress != NULL);
 	ASSERT (RedirectedAddress != NULL);
 
-	if (OriginalMajorVersion != 6 || OriginalMinorVersion != 1) return STATUS_ACCESS_VIOLATION;
+	if (OriginalMajorVersion < 6 || (OriginalMajorVersion == 6 && OriginalMinorVersion < 1)) return STATUS_ACCESS_VIOLATION;
 
 	if (!ApiAddress) {
 		return STATUS_INVALID_PARAMETER_1;
@@ -113,7 +114,7 @@ KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	//
 
 	Status = KexNtProtectVirtualMemory(
-		NtCurrentProcess(),
+		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
 		PAGE_READWRITE,
@@ -132,7 +133,7 @@ KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	KexRtlCopyMemory(ApiAddress, BasicHookTemplate, sizeof(BasicHookTemplate));
 
 	Status = KexNtProtectVirtualMemory(
-		NtCurrentProcess(),
+		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
 		OldProtect,
@@ -143,7 +144,16 @@ KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
 	return STATUS_SUCCESS;
 }
 
-KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
+KEXAPI NTSTATUS NTAPI KexHkInstallBasicHook(
+	IN		PVOID					ApiAddress,
+	IN		PVOID					RedirectedAddress,
+	OUT		PKEX_BASIC_HOOK_CONTEXT	HookContext OPTIONAL)
+{
+	return KexHkInstallHook(NtCurrentProcess(), ApiAddress, RedirectedAddress, HookContext);
+}
+
+KEXAPI NTSTATUS NTAPI KexHkRemoveHook(
+	IN		HANDLE					ProcessHandle,
 	IN		PKEX_BASIC_HOOK_CONTEXT	HookContext)
 {
 	NTSTATUS Status;
@@ -161,7 +171,7 @@ KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
 	HookLength = sizeof(BasicHookTemplate);
 
 	Status = NtProtectVirtualMemory(
-		NtCurrentProcess(),
+		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
 		PAGE_READWRITE,
@@ -179,7 +189,7 @@ KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
 		sizeof(BasicHookTemplate));
 
 	Status = NtProtectVirtualMemory(
-		NtCurrentProcess(),
+		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
 		OldProtect,
@@ -188,4 +198,10 @@ KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
 	ASSERT (NT_SUCCESS(Status));
 
 	return STATUS_SUCCESS;
+}
+
+KEXAPI NTSTATUS NTAPI KexHkRemoveBasicHook(
+	IN		PKEX_BASIC_HOOK_CONTEXT	HookContext)
+{
+	return KexHkRemoveHook(NtCurrentProcess(), HookContext);
 }

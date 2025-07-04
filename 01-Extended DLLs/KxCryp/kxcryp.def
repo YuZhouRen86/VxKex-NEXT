@@ -2,6 +2,11 @@ LIBRARY KxCryp
 EXPORTS
 	;; bcrypt.c
 	BCryptHash
+	BCryptOpenAlgorithmProvider					= Ext_BCryptOpenAlgorithmProvider
+	BCryptCloseAlgorithmProvider				= Ext_BCryptCloseAlgorithmProvider
+	BCryptGenerateSymmetricKey					= Ext_BCryptGenerateSymmetricKey
+	BCryptDestroyKey							= Ext_BCryptDestroyKey
+	BCryptKeyDerivation
 
 	;; rng.c
 	ProcessPrng

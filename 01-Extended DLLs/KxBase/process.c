@@ -190,6 +190,23 @@ KXBASEAPI BOOL WINAPI GetProcessMitigationPolicy(
 		SystemCallDisablePolicy->AuditDisallowFsctlSystemCalls = 0;
 
 		return TRUE;
+	} else if (MitigationPolicy == ProcessSignaturePolicy) {
+		PPROCESS_MITIGATION_BINARY_SIGNATURE_POLICY SignaturePolicy;
+
+		if (BufferCb != sizeof(PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY)) {
+			BaseSetLastNTError(STATUS_INVALID_BUFFER_SIZE);
+			return FALSE;
+		}
+
+		SignaturePolicy = (PPROCESS_MITIGATION_BINARY_SIGNATURE_POLICY) Buffer;
+
+		SignaturePolicy->AuditMicrosoftSignedOnly = 0;
+		SignaturePolicy->AuditStoreSignedOnly = 0;
+		SignaturePolicy->MicrosoftSignedOnly = 0;
+		SignaturePolicy->MitigationOptIn = 0;
+		SignaturePolicy->StoreSignedOnly = 0;
+
+		return TRUE;
 	} else {
 		KexLogWarningEvent(
 			L"GetProcessMitigationPolicy called with unsupported MitigationPolicy value %d",

@@ -532,6 +532,137 @@ interface IDXGIFactory2
     ( (This)->lpVtbl -> CreateSwapChainForComposition(This,pDevice,pDesc,pRestrictToOutput,ppSwapChain) ) 
 
 //
+// IMFMediaBuffer
+//
+
+typedef interface IMFMediaBuffer IMFMediaBuffer;
+
+typedef struct IMFMediaBufferVtbl
+{
+	BEGIN_INTERFACE
+        
+	HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+		IMFMediaBuffer * This,
+		/* [in] */ REFIID riid,
+		/* [annotation][iid_is][out] */ 
+		__RPC__deref_out  void **ppvObject);
+        
+	ULONG ( STDMETHODCALLTYPE *AddRef )( 
+		IMFMediaBuffer * This);
+        
+	ULONG ( STDMETHODCALLTYPE *Release )( 
+		IMFMediaBuffer * This);
+        
+	HRESULT ( STDMETHODCALLTYPE *Lock )( 
+		IMFMediaBuffer * This,
+		/* [annotation][out] */ 
+		__deref_out_bcount_part(*pcbMaxLength, *pcbCurrentLength)  BYTE **ppbBuffer,
+		/* [annotation][out] */ 
+		__out_opt  DWORD *pcbMaxLength,
+		/* [annotation][out] */ 
+		__out_opt  DWORD *pcbCurrentLength);
+        
+	HRESULT ( STDMETHODCALLTYPE *Unlock )( 
+		IMFMediaBuffer * This);
+        
+	HRESULT ( STDMETHODCALLTYPE *GetCurrentLength )( 
+		IMFMediaBuffer * This,
+		/* [annotation][out] */ 
+		__out  DWORD *pcbCurrentLength);
+        
+	HRESULT ( STDMETHODCALLTYPE *SetCurrentLength )( 
+		IMFMediaBuffer * This,
+		/* [in] */ DWORD cbCurrentLength);
+        
+	HRESULT ( STDMETHODCALLTYPE *GetMaxLength )( 
+		IMFMediaBuffer * This,
+		/* [annotation][out] */ 
+		__out  DWORD *pcbMaxLength);
+        
+	END_INTERFACE
+} IMFMediaBufferVtbl;
+
+interface IMFMediaBuffer
+{
+	CONST_VTBL struct IMFMediaBufferVtbl *lpVtbl;
+};
+
+typedef interface IMFDXGIDeviceManager IMFDXGIDeviceManager;
+
+typedef struct IMFDXGIDeviceManagerVtbl
+{
+	BEGIN_INTERFACE
+        
+	HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+		IMFDXGIDeviceManager * This,
+		/* [in] */ REFIID riid,
+		/* [annotation][iid_is][out] */ 
+		__RPC__deref_out  void **ppvObject);
+        
+	ULONG ( STDMETHODCALLTYPE *AddRef )( 
+		IMFDXGIDeviceManager * This);
+        
+	ULONG ( STDMETHODCALLTYPE *Release )( 
+		IMFDXGIDeviceManager * This);
+        
+	HRESULT ( STDMETHODCALLTYPE *CloseDeviceHandle )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  HANDLE hDevice);
+        
+	HRESULT ( STDMETHODCALLTYPE *GetVideoService )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  HANDLE hDevice,
+		/* [annotation] */ 
+		_In_  REFIID riid,
+		/* [annotation] */ 
+		__RPC__deref_out  void **ppService);
+        
+	HRESULT ( STDMETHODCALLTYPE *LockDevice )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  HANDLE hDevice,
+		/* [annotation] */ 
+		_In_  REFIID riid,
+		/* [annotation] */ 
+		__RPC__deref_out  void **ppUnkDevice,
+		/* [annotation] */ 
+		_In_  BOOL fBlock);
+        
+	HRESULT ( STDMETHODCALLTYPE *OpenDeviceHandle )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_Out_  HANDLE *phDevice);
+        
+	HRESULT ( STDMETHODCALLTYPE *ResetDevice )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  IUnknown *pUnkDevice,
+		/* [annotation] */ 
+		_In_  UINT resetToken);
+        
+	HRESULT ( STDMETHODCALLTYPE *TestDevice )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  HANDLE hDevice);
+        
+	HRESULT ( STDMETHODCALLTYPE *UnlockDevice )( 
+		IMFDXGIDeviceManager * This,
+		/* [annotation] */ 
+		_In_  HANDLE hDevice,
+		/* [annotation] */ 
+		_In_  BOOL fSaveState);
+        
+	END_INTERFACE
+} IMFDXGIDeviceManagerVtbl;
+
+interface IMFDXGIDeviceManager
+{
+	CONST_VTBL struct IMFDXGIDeviceManagerVtbl *lpVtbl;
+};
+
+//
 // GUIDs
 //
 

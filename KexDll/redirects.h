@@ -25,7 +25,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("ole32",										"kxcom"				)
 
 	DLL_REDIRECT("msvcrt",										"kxcrt"				)
-	
+
 	DLL_REDIRECT("d3d11",										"kxdx"				)
 	DLL_REDIRECT("d3d12",										"kxdx"				)
 	DLL_REDIRECT("dcomp",										"kxdx"				)
@@ -33,7 +33,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("MFPlat",										"kxdx"				)
 	DLL_REDIRECT("xinput1_4",									"xinput1_3"			)
 
-	DLL_REDIRECT("DWrite",										"kxdw"			)
+	DLL_REDIRECT("DWrite",										"kxdw"				)
 
 	DLL_REDIRECT("powrprof",									"kxmi"				)
 	DLL_REDIRECT("userenv",										"kxmi"				)
@@ -156,7 +156,11 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-downlevel-ole32",					"kxcom"				)
 	DLL_REDIRECT("api-ms-win-downlevel-shell32",				"kxuser"			)
 	DLL_REDIRECT("api-ms-win-eventing-classicprovider",			"kxadvapi"			)
+	DLL_REDIRECT("api-ms-win-eventing-consumer",				"kxadvapi"			)
+	DLL_REDIRECT("api-ms-win-eventing-controller",				"kxadvapi"			)
+	DLL_REDIRECT("api-ms-win-eventing-legacy",					"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-eventing-provider",				"kxadvapi"			)
+	DLL_REDIRECT("api-ms-win-eventlog-legacy",					"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-kernel32-package-current",			"kxbase"			)
 	DLL_REDIRECT("api-ms-win-mm-time",							"winmm"				)
 	DLL_REDIRECT("api-ms-win-ntuser-sysparams",					"kxuser"			)
@@ -188,6 +192,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-shcore-unicodeansi",				"kxuser"			)
 	DLL_REDIRECT("api-ms-win-shell-namespace",					"kxuser"			)
 
+	DLL_REDIRECT("ext-ms-win-branding-winbrand",				"winbrand"			)
 	DLL_REDIRECT("ext-ms-win-gdi-dc",							"gdi32"				)
 	DLL_REDIRECT("ext-ms-win-gdi-dc-create",					"gdi32"				)
 	DLL_REDIRECT("ext-ms-win-gdi-draw",							"gdi32"				)

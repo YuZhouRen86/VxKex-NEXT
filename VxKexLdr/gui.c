@@ -3,8 +3,6 @@
 
 STATIC PKEX_PROCESS_DATA KexData = NULL;
 
-typedef HRESULT (WINAPI *PFNENABLETHEMEDIALOGTEXTURE)(HWND, DWORD);
-
 STATIC INT_PTR CALLBACK MoreOptionsDlgProc(
 	IN	HWND	Window,
 	IN	UINT	Message,
@@ -72,17 +70,17 @@ INT_PTR CALLBACK VklDialogProc(
 	IN	LPARAM	LParam)
 {
 	if (Message == WM_INITDIALOG) {
-		HMODULE hUxTheme;
-		PFNENABLETHEMEDIALOGTEXTURE pfnEnableThemeDialogTexture;
+		HMODULE Uxtheme;
+		HRESULT (WINAPI *pEnableThemeDialogTexture) (HWND, DWORD);
 		KexgApplicationMainWindow = Window;
 		SetWindowIcon(Window, IDI_APPICON);
 
 		KexDataInitialize(&KexData);
-
-		hUxTheme = LoadLibrary(L"uxtheme.dll");
-		pfnEnableThemeDialogTexture = (PFNENABLETHEMEDIALOGTEXTURE) GetProcAddress(hUxTheme, "EnableThemeDialogTexture");
-		if (pfnEnableThemeDialogTexture) pfnEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
-		FreeLibrary(hUxTheme);
+		
+		Uxtheme = LoadLibrary(L"uxtheme.dll");
+		pEnableThemeDialogTexture = (HRESULT (WINAPI *) (HWND, DWORD)) GetProcAddress(Uxtheme, "EnableThemeDialogTexture");
+		if (pEnableThemeDialogTexture) pEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
+		FreeLibrary(Uxtheme);
 
 		//
 		// Allow files to be dragged and dropped onto the main window when
