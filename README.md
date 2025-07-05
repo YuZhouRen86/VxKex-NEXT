@@ -7,16 +7,18 @@ VxKex NEXT 是一套适用于 Windows 7 的 API 扩展，可让一些 Windows 8�
 To download and install, see the [releases page](https://github.com/YuZhouRen86/VxKex-NEXT/releases).  
 如需下载和安装，请参阅[版本页面](https://github.com/YuZhouRen86/VxKex-NEXT/releases)。
 
-**Uninstalling the following softwares before installing is recommanded.**  
-**安装前，建议卸载以下软件。**
+**Performing the following operations before installing is recommanded.**  
+**安装前，建议执行以下操作。**
 
-- **0patch Agent**  
-  It might cause Chromium-based browsers and JetBrains IDEs to crash after enabling VxKex NEXT and running it.  
-  它可能导致基于 Chromium 的浏览器和 JetBrains IDE 在启用 VxKex NEXT 并运行后崩溃。
+- **Uninstall  卸载**  
+  - **0patch Agent**  
+    It might cause Chromium-based browsers and JetBrains IDEs to crash after enabling VxKex NEXT and running it.  
+    它可能导致基于 Chromium 的浏览器和 JetBrains IDE 在启用 VxKex NEXT 并运行后崩溃。
 
-- **MacType**  
-  It might cause all programs to fail to start after enabling VxKex NEXT.  
-  它可能导致所有程序在启用 VxKex NEXT 后无法启动。
+- **Update  更新**  
+  - **MacType → 2025.6.9+**  
+    An old version of MacType might cause all programs to fail to start after enabling VxKex NEXT.  
+    旧版 MacType 可能导致所有程序在启用 VxKex NEXT 后无法启动。
 
 After installation, usage is easy. Here are the ways to enable VxKex NEXT:
 1. Just right click on a program, open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program.
