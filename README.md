@@ -7,7 +7,7 @@ VxKex NEXT 是一套适用于 Windows 7 的 API 扩展，可让一些 Windows 8�
 To download and install, see the [releases page](https://github.com/YuZhouRen86/VxKex-NEXT/releases).  
 如需下载和安装，请参阅[版本页面](https://github.com/YuZhouRen86/VxKex-NEXT/releases)。
 
-**Performing the following operations before installing is recommanded.**  
+**Performing the following operations before installing is recommended.**  
 **安装前，建议执行以下操作。**
 
 - **Uninstall  卸载**  
@@ -139,6 +139,9 @@ Donations  捐赠
 
 If you would like to support development, consider making a donation.  
 如果您想支持开发，请考虑捐款。
-- USDT address: TLZWKpYaH3XK5KYBVWVKQkXbSHUt2XnWJr
+- ERC20 (ETC/USDT) : 0xaF1AfBDE5F226FB229267D8591D757C3E6E0e1A0
+- Bitcoin (BTC/USDT) : 32XgoYcRVy3CTcga3DUBtua5QCToRtS78G
+- Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
+- TRC10/TRC20 (TRX/USDT) : TEyobAt82WMJN2sXvRTKNrXPf3sVHE2KQT
 - Alipay 支付宝 / WeChat Pay 微信支付
 ![Scan the QR codes and donate](/donation.png)
