@@ -126,4 +126,4 @@ API extension is accomplished by editing the program's DLL import table so that 
 
 # Disclaimer
 
-All rights to Windows are owned by Microsoft Corporation. This product or content is not officially affiliated with Microsoft and its use is at the user's own risk. We or any third party are not responsible for any damages, loss of data, or problems that may arise from the use of this software. All names, logos, and trademarks mentioned are the property of their legal owners.
+This project is not affiliated with Microsoft Corporation. Windows is a registered trademark of Microsoft Corporation. 
