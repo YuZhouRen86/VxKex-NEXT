@@ -123,3 +123,7 @@ The majority of Qt6 applications will work, and many Electron applications will 
 Specifically, the "VerifierDlls" value is set to point to a VxKex DLL. This DLL then loads into the process.
 
 API extension is accomplished by editing the program's DLL import table so that instead of importing from Windows 8/8.1/10/11 DLLs, it imports VxKex DLLs instead. These VxKex DLLs contain implementations of Windows API functions which were introduced in newer versions of Windows.
+
+# Disclaimer
+
+All rights to Windows are owned by Microsoft Corporation. This product or content is not officially affiliated with Microsoft and its use is at the user's own risk. We or any third party are not responsible for any damages, loss of data, or problems that may arise from the use of this software. All names, logos, and trademarks mentioned are the property of their legal owners.
