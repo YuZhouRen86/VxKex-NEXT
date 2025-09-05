@@ -22,6 +22,16 @@ Introduction
 
 VxKex is a set of API extensions for Windows 7 that allow some Windows 8, 8.1 and 10-exclusive applications to run on Windows 7.
 
+Community
+=========
+
+- Join us on Telegram: [t.me/vxkexdev](https://t.me/vxkexdev/)
+
+Donations
+=========
+
+- ETH(ERC-20 Network): `0x6d7fa23E007958cdd8BF8603184b7Cd24a82f1dA`
+
 **Performing the following operations before installing is recommended.**
 
 - **Uninstall**
