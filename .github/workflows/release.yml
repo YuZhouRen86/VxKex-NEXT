@@ -1,0 +1,112 @@
+name: Release on version commit
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags-ignore:
+      - '**'
+
+jobs:
+  detect-and-release:
+    name: Create GitHub Release if commit message has version
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read latest commit message
+        id: commit
+        shell: pwsh
+        run: |
+          $msg = (git log -1 --pretty=%B).Trim()
+          Write-Host "Commit message: $msg"
+          # Match versions like v1.2.3 or 1.2.3
+          $regex = '(^|\s)v?(\d+\.\d+\.\d+)(?=\s|$)'
+          $m = [regex]::Match($msg, $regex)
+          if ($m.Success) {
+            $version = $m.Groups[2].Value
+            Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "Detected version: $version"
+          } else {
+            Write-Host 'No version found in commit message; skipping release.'
+          }
+
+      - name: Stop if no version
+        if: ${{ steps.commit.outputs.version == '' }}
+        shell: pwsh
+        run: |
+          Write-Host 'No version detected. Job will finish without creating a release.'
+
+      - name: Setup MSBuild
+        if: ${{ steps.commit.outputs.version != '' }}
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Locate Solution or Project
+        if: ${{ steps.commit.outputs.version != '' }}
+        id: locate
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path . -Recurse -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($sln) {
+            Write-Output "solution=$($sln.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "Found solution: $($sln.FullName)"
+          } else {
+            $vcx = Get-ChildItem -Path . -Recurse -Filter *.vcxproj -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $vcx) { throw 'No .sln or .vcxproj found' }
+            Write-Output "project=$($vcx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "Found project: $($vcx.FullName)"
+          }
+
+      - name: Build (Release x64)
+        if: ${{ steps.commit.outputs.version != '' }}
+        shell: pwsh
+        run: |
+          if ("${{ steps.locate.outputs.solution }}") {
+            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+          } else {
+            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+          }
+
+      - name: Package artifacts
+        if: ${{ steps.commit.outputs.version != '' }}
+        shell: pwsh
+        run: |
+          New-Item -Path artifacts -ItemType Directory -Force | Out-Null
+          $outDirs = @()
+          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\x64\\Release$" -or $_.FullName -match "\\Release$" }
+          if ($outDirs.Count -eq 0) { throw 'No Release directories found to package.' }
+          $zipPath = Join-Path (Resolve-Path artifacts) "vxkex-release-${{ steps.commit.outputs.version }}-windows-x64.zip"
+          $temp = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP "pack-$([guid]::NewGuid())")
+          foreach ($dir in $outDirs) {
+            Copy-Item -Path (Join-Path $dir.FullName '*') -Destination $temp.FullName -Recurse -Force
+          }
+          Compress-Archive -Path (Join-Path $temp.FullName '*') -DestinationPath $zipPath -Force
+          Write-Host "Packaged: $zipPath"
+
+      - name: Create tag
+        if: ${{ steps.commit.outputs.version != '' }}
+        shell: pwsh
+        run: |
+          $tag = "v${{ steps.commit.outputs.version }}"
+          git tag $tag
+          git push origin $tag
+
+      - name: Create GitHub Release
+        if: ${{ steps.commit.outputs.version != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.commit.outputs.version }}
+          name: vxkex ${{ steps.commit.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/*.zip
+
+

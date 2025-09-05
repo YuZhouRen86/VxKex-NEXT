@@ -1,0 +1,72 @@
+name: CI (Build and Test)
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build-windows:
+    name: Build on Windows (x64 Release)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Locate Solution or Project
+        id: locate
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path . -Recurse -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($sln) {
+            Write-Output "solution=$($sln.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "Found solution: $($sln.FullName)"
+          } else {
+            $vcx = Get-ChildItem -Path . -Recurse -Filter *.vcxproj -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $vcx) { throw 'No .sln or .vcxproj found' }
+            Write-Output "project=$($vcx.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            Write-Host "Found project: $($vcx.FullName)"
+          }
+
+      - name: Build (Release x64)
+        shell: pwsh
+        run: |
+          if ("${{ steps.locate.outputs.solution }}") {
+            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+          } else {
+            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+          }
+
+      - name: Archive build artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          $outDirs = @()
+          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\x64\\Release$" -or $_.FullName -match "\\Release$" }
+          if ($outDirs.Count -eq 0) {
+            Write-Host 'No Release directories found to archive.'
+            exit 0
+          }
+          New-Item -Path artifacts -ItemType Directory -Force | Out-Null
+          $i = 0
+          foreach ($dir in $outDirs) {
+            $name = "artifact_$i.zip"
+            Compress-Archive -Path (Join-Path $dir.FullName '*') -DestinationPath (Join-Path (Resolve-Path artifacts) $name) -Force
+            $i++
+          }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-build
+          path: artifacts/*.zip
+          if-no-files-found: warn
+
+
