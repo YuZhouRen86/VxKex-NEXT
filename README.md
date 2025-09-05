@@ -1,5 +1,3 @@
-<h1>It is under development and not stable!</h1>
-
 # Changes
 - https://github.com/dotexe1337/VxKex/ changes merged.
 - https://github.com/tahaghafuri/vxkex changes merged.

@@ -63,25 +63,25 @@ jobs:
             Write-Host "Found project: $($vcx.FullName)"
           }
 
-      - name: Build (Release x64)
+      - name: Build (Release Win32)
         if: ${{ steps.commit.outputs.version != '' }}
         shell: pwsh
         run: |
           if ("${{ steps.locate.outputs.solution }}") {
-            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal
           } else {
-            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=Win32 /verbosity:minimal
           }
 
-      - name: Package artifacts
+      - name: Package artifacts (Win32)
         if: ${{ steps.commit.outputs.version != '' }}
         shell: pwsh
         run: |
           New-Item -Path artifacts -ItemType Directory -Force | Out-Null
           $outDirs = @()
-          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\x64\\Release$" -or $_.FullName -match "\\Release$" }
+          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\Win32\\Release$" -or $_.FullName -match "\\Release$" }
           if ($outDirs.Count -eq 0) { throw 'No Release directories found to package.' }
-          $zipPath = Join-Path (Resolve-Path artifacts) "vxkex-release-${{ steps.commit.outputs.version }}-windows-x64.zip"
+          $zipPath = Join-Path (Resolve-Path artifacts) "vxkex-release-${{ steps.commit.outputs.version }}-windows-win32.zip"
           $temp = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP "pack-$([guid]::NewGuid())")
           foreach ($dir in $outDirs) {
             Copy-Item -Path (Join-Path $dir.FullName '*') -Destination $temp.FullName -Recurse -Force
