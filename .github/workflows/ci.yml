@@ -10,8 +10,11 @@ on:
 
 jobs:
   build-windows:
-    name: Build on Windows (x64 Release)
+    name: Build on Windows (${{ matrix.platform }} Release)
     runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [Win32]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,13 +37,13 @@ jobs:
             Write-Host "Found project: $($vcx.FullName)"
           }
 
-      - name: Build (Release x64)
+      - name: Build (Release ${{ matrix.platform }})
         shell: pwsh
         run: |
           if ("${{ steps.locate.outputs.solution }}") {
-            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+            msbuild "${{ steps.locate.outputs.solution }}" /m /p:Configuration=Release /p:Platform=${{ matrix.platform }} /verbosity:minimal
           } else {
-            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+            msbuild "${{ steps.locate.outputs.project }}" /m /p:Configuration=Release /p:Platform=${{ matrix.platform }} /verbosity:minimal
           }
 
       - name: Archive build artifacts
@@ -48,7 +51,12 @@ jobs:
         shell: pwsh
         run: |
           $outDirs = @()
-          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\x64\\Release$" -or $_.FullName -match "\\Release$" }
+          $platform = "${{ matrix.platform }}"
+          $outDirs += Get-ChildItem -Path . -Recurse -Directory -Filter Release -ErrorAction SilentlyContinue |
+            Where-Object {
+              if ($platform -eq 'x64') { $_.FullName -match "\\x64\\Release$" -or $_.FullName -match "\\Release$" }
+              else { $_.FullName -match "\\Win32\\Release$" -or $_.FullName -match "\\Release$" }
+            }
           if ($outDirs.Count -eq 0) {
             Write-Host 'No Release directories found to archive.'
             exit 0
@@ -56,7 +64,7 @@ jobs:
           New-Item -Path artifacts -ItemType Directory -Force | Out-Null
           $i = 0
           foreach ($dir in $outDirs) {
-            $name = "artifact_$i.zip"
+            $name = "artifact_${{ matrix.platform }}_$i.zip"
             Compress-Archive -Path (Join-Path $dir.FullName '*') -DestinationPath (Join-Path (Resolve-Path artifacts) $name) -Force
             $i++
           }
@@ -65,7 +73,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release-build
+          name: windows-release-build-${{ matrix.platform }}
           path: artifacts/*.zip
           if-no-files-found: warn
 
