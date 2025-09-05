@@ -74,10 +74,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>$(SolutionDir)00-Import Libraries\</OutDir>
+    <TargetExt>.dll</TargetExt>
+    <ImportLibrary>$(SolutionDir)00-Import Libraries\KexDll.lib</ImportLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>$(SolutionDir)00-Import Libraries\</OutDir>
+    <TargetExt>.dll</TargetExt>
+    <ImportLibrary>$(SolutionDir)00-Import Libraries\KexDll.lib</ImportLibrary>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
