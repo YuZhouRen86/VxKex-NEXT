@@ -29,6 +29,7 @@ EXPORTS
 	GetProcessDefaultCpuSetMasks
 	SetProcessMitigationPolicy
 	GetProcessMitigationPolicy
+	IsProcessCritical
 
 	;; pssapi.c
 	PssCaptureSnapshot
