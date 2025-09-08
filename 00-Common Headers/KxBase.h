@@ -699,6 +699,10 @@ KXBASEAPI BOOL WINAPI GetProcessMitigationPolicy(
 	OUT	PVOID						Buffer,
 	IN	SIZE_T						BufferCb);
 
+KXBASEAPI BOOL WINAPI IsProcessCritical(
+    IN  HANDLE  ProcessHandle,
+    OUT PBOOL   Critical);
+
 //
 // file.c
 //
