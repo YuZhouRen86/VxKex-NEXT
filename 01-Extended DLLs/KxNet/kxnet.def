@@ -5,6 +5,10 @@ EXPORTS
 	DnsServiceBrowse
 	DnsServiceBrowseCancel
 
+	;; lmjoin.c
+	NetFreeAadJoinInformation
+	NetGetAadJoinInformation
+
 	;; winhttp.c
 	WinHttpCreateProxyResolver
 	WinHttpGetProxyForUrlEx

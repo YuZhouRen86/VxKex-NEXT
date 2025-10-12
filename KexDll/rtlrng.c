@@ -94,6 +94,8 @@ KEXAPI NTSTATUS NTAPI KexRtlGenerateRandomData(
 	NTSTATUS Status;
 	IO_STATUS_BLOCK IoStatusBlock;
 
+	if (NumberOfBytesToGenerate == 0) return STATUS_SUCCESS;
+
 	ASSUME (RandomBuffer != NULL);
 	ASSUME (KexData != NULL);
 

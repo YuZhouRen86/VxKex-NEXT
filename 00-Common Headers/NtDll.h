@@ -1602,7 +1602,12 @@ typedef struct _TEB {
 	// to me and there were shitloads of structures to copy so I gave up.
 	PVOID								ActivationContextStackPointer;
 
+#ifdef _M_X64
 	UCHAR								SpareBytes[0x18];
+#else
+	UCHAR								SpareBytes[0x24];
+#endif
+
 	ULONG								TxFsContext;
 	
 	GDI_TEB_BATCH						GdiTebBatch;
@@ -2927,11 +2932,27 @@ typedef struct _LDR_RESOURCE_INFO {
 	ULONG_PTR	Language;
 } TYPEDEF_TYPE_NAME(LDR_RESOURCE_INFO);
 
+typedef enum _EVENT_INFORMATION_CLASS {
+	EventBasicInformation
+} TYPEDEF_TYPE_NAME(EVENT_INFORMATION_CLASS);
+
+typedef struct _EVENT_BASIC_INFORMATION {
+	EVENT_TYPE EventType;
+	LONG EventState;
+} TYPEDEF_TYPE_NAME(EVENT_BASIC_INFORMATION);
+
 #pragma endregion
 
 STATIC PKUSER_SHARED_DATA SharedUserData = (PKUSER_SHARED_DATA) 0x7FFE0000;
 
 #pragma region Nt* function declarations
+
+NTSYSCALLAPI NTSTATUS NTAPI NtQueryEvent(
+	IN	HANDLE					EventHandle,
+	IN	EVENT_INFORMATION_CLASS	EventInformationClass,
+	OUT	PVOID					EventInformation,
+	IN	ULONG					EventInformationLength,
+	OUT	PULONG					ReturnLength OPTIONAL);
 
 NTSYSCALLAPI NTSTATUS NTAPI NtQueryObject(
 	IN		HANDLE						ObjectHandle,

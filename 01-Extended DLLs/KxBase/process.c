@@ -217,6 +217,19 @@ KXBASEAPI BOOL WINAPI GetProcessMitigationPolicy(
 	return FALSE;
 }
 
+KXBASEAPI BOOL WINAPI IsProcessCritical(
+	IN	HANDLE	ProcessHandle,
+	OUT	PBOOL	Critical)
+{
+	ULONG BreakOnTermination = 0;
+	NTSTATUS Status = NtQueryInformationProcess(ProcessHandle, ProcessBreakOnTermination,  &BreakOnTermination, sizeof(BreakOnTermination), NULL);
+	if (NT_SUCCESS(Status)) {
+		*Critical = BreakOnTermination != 0;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 KXBASEAPI BOOL WINAPI Ext_IsProcessInJob(
 	IN	HANDLE	ProcessHandle,
 	IN	HANDLE	JobHandle,

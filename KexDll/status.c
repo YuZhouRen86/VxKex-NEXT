@@ -46,6 +46,9 @@ PCWSTR NTAPI KexRtlNtStatusToString(
 	case STATUS_KEXSETUP_FAILURE:				return L"STATUS_KEXSETUP_FAILURE";
 	case STATUS_IMAGE_SECTION_NOT_FOUND:		return L"STATUS_IMAGE_SECTION_NOT_FOUND";
 	case STATUS_DLL_NOT_IN_SYSTEM_ROOT:			return L"STATUS_DLL_NOT_IN_SYSTEM_ROOT";
+	case STATUS_PATH_TOO_SHORT:					return L"STATUS_PATH_TOO_SHORT";
+
+	case STATUS_NOT_SAME_OBJECT:				return L"STATUS_NOT_SAME_OBJECT";
 
 	//
 	// All this other stuff is auto generated with a powershell script

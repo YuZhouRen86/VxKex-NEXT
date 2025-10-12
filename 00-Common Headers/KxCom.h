@@ -643,9 +643,118 @@ KXCOMAPI HRESULT WINAPI WindowsPromoteStringBuffer(
 // firefoxpatch.c
 //
 
-HRESULT WINAPI Ext_CoCreateInstance(
-	IN	REFCLSID	rclsid,
-	IN	LPUNKNOWN	pUnkOuter,
-	IN	DWORD		dwClsContext,
-	IN	REFIID		riid,
-	OUT	LPVOID		*ppv);
+KXCOMAPI HRESULT WINAPI Ext_CoCreateInstance(
+	IN	REFCLSID	RefCLSID,
+	IN	LPUNKNOWN	OuterUnknown,
+	IN	ULONG		ClassContext,
+	IN	REFIID		RefIID,
+	OUT	PPVOID		Instance);
+
+KXCOMAPI HRESULT WINAPI Ext_CoCreateInstanceEx(
+	IN		REFCLSID		RefCLSID,
+	IN		LPUNKNOWN		OuterUnknown,
+	IN		ULONG			ClassContext,
+	IN		COSERVERINFO	*ServerInfo,
+	IN		ULONG			NumberOfInterfaces,
+	IN OUT	MULTI_QI		*Interfaces);
+
+KXCOMAPI HRESULT WINAPI Ext_CoGetClassObject(
+	IN	REFCLSID		RefCLSID,
+	IN	ULONG			ClassContext,
+	IN	COSERVERINFO	*ServerInfo	OPTIONAL,
+	IN	REFIID			RefIID,
+	OUT	PPVOID			ClassObject);
+
+typedef enum _OLE_TLS_FLAGS {
+	OLETLS_LOCALTID					= 0x01,		// This TID is in the current process.
+	OLETLS_UUIDINITIALIZED			= 0x02,		// This Logical thread is init'd.
+	OLETLS_INTHREADDETACH			= 0x04,		// This is in thread detach. Needed
+												// due to NT's special thread detach
+												// rules.
+	OLETLS_CHANNELTHREADINITIALZED	= 0x08,		// This channel has been init'd
+	OLETLS_WOWTHREAD				= 0x10,		// This thread is a 16-bit WOW thread.
+	OLETLS_THREADUNINITIALIZING		= 0x20,		// This thread is in CoUninitialize.
+	OLETLS_DISABLE_OLE1DDE			= 0x40,		// This thread can't use a DDE window.
+	OLETLS_APARTMENTTHREADED		= 0x80,		// This is an STA apartment thread
+	OLETLS_MULTITHREADED			= 0x100,	// This is an MTA apartment thread
+	OLETLS_IMPERSONATING			= 0x200,	// This thread is impersonating
+	OLETLS_DISABLE_EVENTLOGGER		= 0x400,	// Prevent recursion in event logger
+	OLETLS_INNEUTRALAPT				= 0x800,	// This thread is in the NTA
+	OLETLS_DISPATCHTHREAD			= 0x1000,	// This is a dispatch thread
+	OLETLS_HOSTTHREAD				= 0x2000,	// This is a host thread
+	OLETLS_ALLOWCOINIT				= 0x4000,	// This thread allows inits
+	OLETLS_PENDINGUNINIT			= 0x8000,	// This thread has pending uninit
+	OLETLS_FIRSTMTAINIT				= 0x10000,	// First thread to attempt an MTA init
+	OLETLS_FIRSTNTAINIT				= 0x20000,	// First thread to attempt an NTA init
+	OLETLS_APTINITIALIZING			= 0x40000	// Apartment Object is initializing
+} TYPEDEF_TYPE_NAME(OLE_TLS_FLAGS);
+
+typedef struct _SWindowData {
+	HWND				Window;
+	ULONG				FirstMessage;
+	ULONG				LastMessage;
+} TYPEDEF_TYPE_NAME(SWindowData);
+
+typedef struct _CAptCallCtrl {
+	IMessageFilter		*MessageFilter;
+	BOOL				InMessageFilter;
+	PVOID				TopCML;			// original datatype: CCliModalLoop
+	SWindowData			WindowData[2];
+} TYPEDEF_TYPE_NAME(CAptCallCtrl);
+
+// NtCurrentTeb()->ReservedForOle points to one of these structures.
+// See tagSOleTlsData in oletls.h (nt5src) for descriptions of values.
+// The full definition of this structure can be found in the public symbol
+// files for ole32.dll (this one is incomplete, I've replaced most of the
+// pointers with PVOIDs and there is stuff missing from the end)
+typedef struct _SOleTlsData {
+	PVOID			pvThreadBase;
+	PVOID			pSmAllocator;
+	ULONG			dwApartmentID;
+	ULONG			dwFlags; // OLETLS_*
+	LONG			TlsMapIndex;
+	PVOID			*ppTlsSlot;
+	ULONG			cComInits;
+	ULONG			cOleInits;
+	ULONG			cCalls;
+	PVOID			pCallInfo;
+	PVOID			pFreeAsyncCall;
+	PVOID			pFreeClientCall;
+	PVOID			pObjServer;
+	ULONG			dwTIDCaller;
+	PVOID			pCurrentCtx;
+	PVOID			pEmptyCtx;
+	PVOID			pNativeCtx;
+	ULONGLONG		ContextId; // This is 64-bit even on the 32-bit version of ole32.dll
+	PVOID			pNativeApt;
+	IUnknown		*pCallContext;
+	PVOID			pCtxCall;
+	PVOID			pPS;
+	PVOID			pvPendingCallsFront;
+	PVOID			pvPendingCallsBack;
+	CAptCallCtrl	*pCallCtrl; // Initialized by CAptCallCtrl::CAptCallCtrl in ole32.dll
+	PVOID			pTopSCS;
+	IMessageFilter	*pMsgFilter;
+	HWND			hwndSTA;
+	LONG			cORPCNestingLevel;
+	ULONG			cDebugData;
+	GUID			LogicalThreadId;
+	PVOID			hThread;
+	PVOID			hRevert;
+	IUnknown		*pAsyncRelease;
+	HWND			hwndDdeServer;
+	HWND			hwndDdeClient;
+	ULONG			cServeDdeObjects;
+	PVOID			pSTALSvrsFront;
+	HWND			hwndClip;
+	IDataObject		*pDataObjClip;
+	ULONG			dwClipSeqNum;
+	ULONG			fIsClipWrapper;
+	IUnknown		*punkState;
+	ULONG			cCallCancellation;
+	ULONG			cAsyncSends;
+	PVOID			pAsyncCallList;
+	PVOID			pSurrogateList;
+	PVOID			pRWLockTlsEntry;
+	//...
+} TYPEDEF_TYPE_NAME(SOleTlsData);

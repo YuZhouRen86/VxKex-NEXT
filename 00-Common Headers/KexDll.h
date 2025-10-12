@@ -111,6 +111,8 @@
 #define STATUS_DLL_NOT_IN_SYSTEM_ROOT			DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 11)
 #define STATUS_PATH_TOO_SHORT					DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 12)
 
+#define STATUS_NOT_SAME_OBJECT					0xC00001AC
+
 #define KEXDATA_FLAG_PROPAGATED				1	// Indicates that this process was spawned from a VxKex-enabled parent
 #define KEXDATA_FLAG_IFEO_OPTIONS_PRESENT	2	// Indicates that this process has VxKex options set in IFEO
 #define KEXDATA_FLAG_MSIEXEC				4	// Indicates that this process is %SystemRoot%\system32\msiexec.exe
@@ -322,6 +324,14 @@ typedef struct _KEX_PROCESS_DATA {
 } TYPEDEF_TYPE_NAME(KEX_PROCESS_DATA);
 
 typedef PVOID TYPEDEF_TYPE_NAME(DLL_DIRECTORY_COOKIE);
+
+#pragma endregion
+
+#pragma region Nt* functions
+
+KEXAPI NTSTATUS NTAPI NtCompareObjects(
+	IN	HANDLE	FirstObjectHandle,
+	IN	HANDLE	SecondObjectHandle);
 
 #pragma endregion
 
