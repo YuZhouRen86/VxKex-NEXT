@@ -16,4 +16,5 @@ EXPORTS
 	GetFileVersionInfoW							= Ext_GetFileVersionInfoW
 
 	;; wldp.c
+	WldpGetLockdownPolicy
 	WldpQueryWindowsLockdownMode

@@ -46,6 +46,7 @@ EXPORTS
 	KexRtlSubscribeWnfStateChangeNotification
 	KexRtlAddGrowableFunctionTable
 	KexRtlDeleteGrowableFunctionTable
+	KexRtlGetSystemTimePrecise
 
 	KexRtlWaitOnAddress
 	KexRtlWakeAddressSingle
@@ -116,3 +117,5 @@ EXPORTS
 	KexNtNotifyChangeMultipleKeys
 	KexNtCreateSection
 	KexNtAssignProcessToJobObject
+
+	NtCompareObjects

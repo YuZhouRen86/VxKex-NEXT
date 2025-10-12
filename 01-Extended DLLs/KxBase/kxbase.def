@@ -29,6 +29,7 @@ EXPORTS
 	GetProcessDefaultCpuSetMasks
 	SetProcessMitigationPolicy
 	GetProcessMitigationPolicy
+	IsProcessCritical
 
 	;; pssapi.c
 	PssCaptureSnapshot
@@ -57,6 +58,9 @@ EXPORTS
 	CopyFile2
 	GetOverlappedResultEx
 	GetFileInformationByName
+	DeviceIoControl						= Ext_DeviceIoControl
+	WriteFile							= Ext_WriteFile
+	ReadFile							= Ext_ReadFile
 
 	;; time.c
 	GetSystemTimePreciseAsFileTime
@@ -75,9 +79,11 @@ EXPORTS
 	GetCurrentPackageId
 	GetPackageFamilyName
 	GetPackageFullName
+	GetPackagePath
 	GetPackagePathByFullName
 	GetPackagesByPackageFamily
 	PackageFamilyNameFromFullName
+	PackageIdFromFullName
 
 	;; synch.c
 	WaitOnAddress
@@ -199,3 +205,6 @@ EXPORTS
 
 	;; heap.c
 	HeapCreate							= Ext_HeapCreate
+
+	;; handle.c
+	CompareObjectHandles

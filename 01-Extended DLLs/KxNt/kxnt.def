@@ -25,6 +25,7 @@ EXPORTS
 	RtlSubscribeWnfStateChangeNotification		= KexDll.KexRtlSubscribeWnfStateChangeNotification
 	RtlAddGrowableFunctionTable					= KexDll.KexRtlAddGrowableFunctionTable
 	RtlDeleteGrowableFunctionTable				= KexDll.KexRtlDeleteGrowableFunctionTable
+	RtlGetSystemTimePrecise						= KexDll.KexRtlGetSystemTimePrecise
 
 	ApiSetQueryApiSetPresence					= KexDll.ApiSetQueryApiSetPresence
 
@@ -37,6 +38,8 @@ EXPORTS
 	NtNotifyChangeMultipleKeys					= KexDll.Ext_NtNotifyChangeMultipleKeys
 	NtCreateSection								= KexDll.Ext_NtCreateSection
 	NtAssignProcessToJobObject					= KexDll.Ext_NtAssignProcessToJobObject
+
+	NtCompareObjects							= KexDll.NtCompareObjects
 
 	ZwQueryInformationThread					= KexDll.Ext_NtQueryInformationThread
 	ZwSetInformationThread						= KexDll.Ext_NtSetInformationThread

@@ -39,6 +39,7 @@
 // undocumented STARTUPINFO flag
 #define STARTF_HASSHELLDATA		0x400
 
+#define ERROR_NOT_SAME_OBJECT					1656L
 #define APPMODEL_ERROR_NO_PACKAGE				15700L
 #define APPMODEL_ERROR_NO_APPLICATION			15703L
 
@@ -577,6 +578,28 @@ typedef enum _FILE_INFO_BY_NAME_CLASS {
 	MaximumFileInfoByNameClass
 } TYPEDEF_TYPE_NAME(FILE_INFO_BY_NAME_CLASS);
 
+typedef struct PACKAGE_VERSION {
+	union {
+		UINT64		Version;
+		struct {
+			USHORT	Revision;
+			USHORT	Build;
+			USHORT	Minor;
+			USHORT	Major;
+		} DUMMYSTRUCTNAME;
+	} DUMMYUNIONNAME;
+} TYPEDEF_TYPE_NAME(PACKAGE_VERSION);
+
+typedef struct PACKAGE_ID {
+	UINT32			reserved;
+	UINT32			processorArchitecture;
+	PACKAGE_VERSION	version;
+	PWSTR			name;
+	PWSTR			publisher;
+	PWSTR			resourceId;
+	PWSTR			publisherId;
+} TYPEDEF_TYPE_NAME(PACKAGE_ID);
+
 #pragma endregion
 
 #if defined(KEX_ENV_WIN32)
@@ -698,6 +721,10 @@ KXBASEAPI BOOL WINAPI GetProcessMitigationPolicy(
 	IN	PROCESS_MITIGATION_POLICY	MitigationPolicy,
 	OUT	PVOID						Buffer,
 	IN	SIZE_T						BufferCb);
+
+KXBASEAPI BOOL WINAPI IsProcessCritical(
+	IN	HANDLE	ProcessHandle,
+	OUT	PBOOL	Critical);
 
 //
 // file.c

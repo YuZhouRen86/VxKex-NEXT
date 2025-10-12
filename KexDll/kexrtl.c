@@ -1052,3 +1052,11 @@ KEXAPI VOID NTAPI KexRtlDeleteGrowableFunctionTable(
 	return;
 #endif
 }
+
+KEXAPI LONGLONG NTAPI KexRtlGetSystemTimePrecise(
+	VOID)
+{
+	LONGLONG CurrentTime;
+	NtQuerySystemTime(&CurrentTime);
+	return CurrentTime;
+}

@@ -288,6 +288,7 @@
     <ClCompile Include="kexrtl.c" />
     <ClCompile Include="logging.c" />
     <ClCompile Include="ntjob.c" />
+    <ClCompile Include="ntobj.c" />
     <ClCompile Include="ntpriv.c" />
     <ClCompile Include="ntps.c" />
     <ClCompile Include="ntreg.c" />

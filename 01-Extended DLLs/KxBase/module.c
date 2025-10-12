@@ -6,7 +6,7 @@
 //
 // Abstract:
 //
-//     Thjs file contains functions related to DLL loading.
+//     This file contains functions related to DLL loading.
 //     The main purpose of the files in here is to rewrite the names of DLLs
 //     which the application requests to dynamically load.
 //

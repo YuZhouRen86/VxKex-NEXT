@@ -210,3 +210,36 @@ KXBASEAPI LONG WINAPI AppPolicyGetThreadInitializationType(
 	*InitializationType = AppPolicyThreadInitializationType_None;
 	return ERROR_SUCCESS;
 }
+
+KXBASEAPI LONG WINAPI PackageIdFromFullName(
+	IN		PCWSTR			PackageFullName,
+	IN		CONST ULONG		Flags,
+	IN OUT	PULONG			BufferLength,
+	OUT		BYTE			*Buffer OPTIONAL)
+{
+	if (!PackageFullName || !BufferLength || *BufferLength && !Buffer) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	*BufferLength = 0;
+
+	return ERROR_NOT_FOUND;
+}
+
+KXBASEAPI LONG WINAPI GetPackagePath(
+	IN		PCPACKAGE_ID	PackageID,
+	CONST ULONG				Reserved,
+	IN OUT	PULONG			PathLength,
+	OUT		PWSTR			Path OPTIONAL)
+{
+	if (!PackageID || Reserved != 0 || !PathLength || *PathLength != 0 && !Path) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (*PathLength != 0) {
+		Path[0] = '\0';
+	}
+
+	*PathLength = 0;
+	return ERROR_SUCCESS;
+}
