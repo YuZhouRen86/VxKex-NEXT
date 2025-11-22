@@ -11,20 +11,24 @@ To download and install, see the [releases page](https://github.com/YuZhouRen86/
 **安装前，建议执行以下操作。**
 
 - **Uninstall  卸载**  
+  
   - **0patch Agent**  
     It might cause Chromium-based browsers and JetBrains IDEs to crash after enabling VxKex NEXT and running it.  
     它可能导致基于 Chromium 的浏览器和 JetBrains IDE 在启用 VxKex NEXT 并运行后崩溃。
 
 - **Update  更新**  
+  
   - **MacType → 2025.6.9+**  
     An old version of MacType might cause all programs to fail to start after enabling VxKex NEXT.  
     旧版 MacType 可能导致所有程序在启用 VxKex NEXT 后无法启动。
 
 After installation, usage is easy. Here are the ways to enable VxKex NEXT:
+
 1. Just right click on a program, open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program.
 2. Find "VxKex NEXT Global Settings" from start menu and open it, click "Add" button, select a program, click "Open" button, and try to run the program.
 
 安装后，使用很简单。以下是启用 VxKex NEXT 的方法：
+
 1. 右键单击程序，打开属性对话框，选择“VxKex”选项卡。然后，选中“为此程序启用 VxKex NEXT”复选框，并尝试运行程序。
 2. 从开始菜单中找到“VxKex NEXT Global Settings”并打开，点击“添加”按钮，选择程序，点击“打开”按钮，并尝试运行程序。
 
@@ -113,8 +117,8 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **Q: Can I use this with Windows 8 or 8.1?**  
 **问：可以在 Windows 8 或 8.1 中使用吗？**  
 
-**A**: Currently, VxKex NEXT is designed for use only with Windows 7. If you use Windows 8 or 8.1, VxKex NEXT will do nothing useful.  
-**答**：目前，VxKex NEXT 只适用于 Windows 7。如果您使用的是 Windows 8 或 8.1，VxKex NEXT 将毫无用处。
+**A**: Currently, VxKex NEXT only provides official support for Windows 7. However, for certain programs, VxKex NEXT works on Windows 8 and 8.1. We plan to provide official support for Windows 8 and 8.1.  
+**答**：目前，VxKex NEXT 仅为 Windows 7 提供官方支持。但是，对于某些程序，VxKex NEXT 在 Windows 8 和 8.1 上起作用。我们计划为 Windows 8 和 8.1 提供官方支持。
 
 **Q: Can I remove VxKex or VxKex NEXT after upgrading to Windows 8/8.1/10/11?**  
 **问：升级到 Windows 8/8.1/10/11 后可以删除 VxKex 或 VxKex NEXT 吗？**
@@ -139,9 +143,10 @@ Donations  捐赠
 
 If you would like to support development, consider making a donation.  
 如果您想支持开发，请考虑捐款。
+
 - ERC20 (ETC/USDT) : 0xaF1AfBDE5F226FB229267D8591D757C3E6E0e1A0
 - Bitcoin (BTC/USDT) : 32XgoYcRVy3CTcga3DUBtua5QCToRtS78G
 - Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
 - TRC10/TRC20 (TRX/USDT) : TEyobAt82WMJN2sXvRTKNrXPf3sVHE2KQT
 - Alipay 支付宝 / WeChat Pay 微信支付
-![Scan the QR codes and donate](/donation.png)
+  ![Scan the QR codes and donate](/donation.png)
