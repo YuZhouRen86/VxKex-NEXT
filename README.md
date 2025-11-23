@@ -1,11 +1,13 @@
+# [GitHub](https://github.com/YuZhouRen86/VxKex-NEXT) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT)
+
 Introduction  介绍
 ============
 
 VxKex NEXT is a set of API extensions for Windows 7 that allow some Windows 8, 8.1 and 10-exclusive applications to run on Windows 7.  
 VxKex NEXT 是一套适用于 Windows 7 的 API 扩展，可让一些 Windows 8、8.1 和 10 独占应用程序在 Windows 7 上运行。
 
-To download and install, see the [releases page](https://github.com/YuZhouRen86/VxKex-NEXT/releases).  
-如需下载和安装，请参阅[版本页面](https://github.com/YuZhouRen86/VxKex-NEXT/releases)。
+To download and install, see the releases page ([GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)).  
+如需下载和安装，请参阅发行版页面（[GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)）。
 
 **Performing the following operations before installing is recommended.**  
 **安装前，建议执行以下操作。**
