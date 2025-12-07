@@ -21,7 +21,7 @@ VxKex NEXT — это набор расширений API для Windows 7, ко
 1. Просто щелкните правой кнопкой мыши на программе, откройте диалоговое окно «Свойства» и выберите вкладку «VxKex». Затем установите флажок «Включить VxKex NEXT для этой программы» и попробуйте запустить программу.
 2. Найдите «VxKex NEXT Global Settings» в меню «Пуск» и откройте его, нажмите кнопку «Добавить», выберите программу, нажмите кнопку «Открыть» и попробуйте запустить программу.
 
-![VxKex configuration GUI](/../example-screenshot.png)
+![VxKex configuration GUI](/example-screenshot.png)
 
 Некоторые программы требуют дополнительной настройки. В папке установки VxKex NEXT (по умолчанию C:\Program Files\VxKex) находится файл «**Application Compatibility List.docx**», в котором подробно описаны эти шаги, но в большинстве случаев все настройки понятны без дополнительных пояснений.
 
@@ -117,4 +117,4 @@ VxKex NEXT — это набор расширений API для Windows 7, ко
 - Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
 - TRC10/TRC20 (TRX/USDT) : TEyobAt82WMJN2sXvRTKNrXPf3sVHE2KQT
 - Alipay 支付宝 / WeChat Pay 微信支付
-  ![Scan the QR codes and donate](/../donation.png)
+  ![Scan the QR codes and donate](/donation.png)
