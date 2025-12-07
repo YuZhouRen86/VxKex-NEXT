@@ -21,7 +21,7 @@ Po instalaci je použití velmi jednoduché. Zde jsou způsoby, jak zapnout VxKe
 1. Jednoduše klikněte pravým tlačítkem myši na program, otevřete dialogové okno „Vlastnosti“ a vyberte záložku „VxKex“. Poté zaškrtněte políčko „Povolit VxKex NEXT pro tento program“ a zkuste program spustit.
 2. V nabídce Start vyhledejte „VxKex NEXT Global Settings“ a otevřete jej, klikněte na tlačítko „Přidat“, vyberte program, klikněte na tlačítko „Otevřít“ a zkuste program spustit.
 
-![Konfigurační rozhraní VxKex](/../example-screenshot.png)
+![VxKex configuration GUI](/example-screenshot.png)
 
 Některé programy vyžadují dodatečnou konfiguraci. V instalační složce VxKex NEXT (standardně C:\Program Files\VxKex) se nachází soubor „**Application Compatibility List.docx**“, který tyto kroky podrobně popisuje, ale ve většině případů je konfigurace srozumitelná bez dalších vysvětlení.
 
@@ -38,7 +38,7 @@ Pokud jste vývojář, zdrojový kód je poskytován jako soubor 7z na stránce 
 - Blender
 - Blockbench
 - Calibre
-- Chromium (včetně Ungoogled Chromium)
+- Chromium (including Ungoogled Chromium)
 - Citra
 - Commander Wars
 - Cygwin
@@ -70,9 +70,9 @@ Pokud jste vývojář, zdrojový kód je poskytován jako soubor 7z na stránce 
 - Steinberg SpectraLayers
 - TeamTalk
 - Universe Sandbox
-- VSCode a VSCodium
-- WinDbg (klasická z Windows 11 SDK a preview)
-- Yuzu (gameplay nebyl testován)
+- VSCode and VSCodium
+- WinDbg (classic from Windows 11 SDK, and preview)
+- Yuzu (gameplay was not tested)
 - Zig
 
 Další podrobnosti naleznete v souboru **Application Compatibility List.docx**, který se instaluje spolu s VxKex NEXT.
@@ -117,4 +117,4 @@ Pokud chcete podpořit vývoj, zvažte možnost přispět.
 - Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
 - TRC10/TRC20 (TRX/USDT) : TEyobAt82WMJN2sXvRTKNrXPf3sVHE2KQT
 - Alipay 支付宝 / WeChat Pay 微信支付
-  ![Naskenujte QR kódy a přispějte](/../donation.png)
+  ![Scan the QR codes and donate](/donation.png)
