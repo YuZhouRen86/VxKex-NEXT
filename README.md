@@ -1,7 +1,8 @@
 # [GitHub](https://github.com/YuZhouRen86/VxKex-NEXT) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT)
 
-**This article is also avaliable in the following languages:**  
-**[Русский](/README_IN_OTHER_LANGUAGES/README_RUS.md) | [Українська](/README_IN_OTHER_LANGUAGES/README_UKR.md) | [Český](/README_IN_OTHER_LANGUAGES/README_CZE.md)**
+**This article is also avaliable in the following languages**  
+**本文还提供以下语言版本**  
+**[繁體中文](/README_IN_OTHER_LANGUAGES/README_CHT.md) | [Русский](/README_IN_OTHER_LANGUAGES/README_RUS.md) | [Українська](/README_IN_OTHER_LANGUAGES/README_UKR.md) | [Český](/README_IN_OTHER_LANGUAGES/README_CZE.md)**
 
 Introduction  介绍
 ============
@@ -43,7 +44,7 @@ Some programs require additional configuration. There's a file called "**Applica
 有些程序需要额外配置。VxKex NEXT 安装文件夹（默认为 C:\Program Files\VxKex 文件夹）内有一个名为“**Application Compatibility List.docx**”的文件，其中详细说明了这些步骤，但大多数情况下，所有配置都是不言自明的。
 
 If you are a developer, source code is provided as a 7z file on the releases page.  
-如果您是开发人员，源代码将以 7z 文件的形式在版本页面上提供。
+如果您是开发人员，源代码将以 7z 文件的形式在发行版页面上提供。
 
 FAQ  常见问题
 ===
