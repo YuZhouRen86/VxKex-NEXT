@@ -2,7 +2,7 @@
 
 **This article is also avaliable in the following languages**  
 **本文还提供以下语言版本**  
-**[繁體中文](/README_IN_OTHER_LANGUAGES/README_CHT.md) | [Русский](/README_IN_OTHER_LANGUAGES/README_RUS.md) | [Українська](/README_IN_OTHER_LANGUAGES/README_UKR.md) | [Český](/README_IN_OTHER_LANGUAGES/README_CZE.md)**
+**[繁體中文](/README_IN_OTHER_LANGUAGES/README_CHT.md) | [Русский](/README_IN_OTHER_LANGUAGES/README_RUS.md) | [Українська](/README_IN_OTHER_LANGUAGES/README_UKR.md) | [Čeština](/README_IN_OTHER_LANGUAGES/README_CZE.md)**
 
 Introduction  介绍
 ============
