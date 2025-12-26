@@ -26,6 +26,9 @@
     <ClCompile Include="forwards.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="time.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="kxadvapi.rc">

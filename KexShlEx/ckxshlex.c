@@ -250,7 +250,10 @@ HRESULT STDMETHODCALLTYPE CKexShlEx_AddPages(
 	// enabling VxKex and doing so could cause serious problems.
 	//
 
-	if (PathIsPrefix(WinDir, This->ExeFullPath) || PathIsPrefix(KexDir, This->ExeFullPath)) {
+	if ((PathIsPrefix(WinDir, This->ExeFullPath)
+		&& !StringEqualI(PathFindFileName(This->ExeFullPath), L"py.exe")
+		&& !StringEqualI(PathFindFileName(This->ExeFullPath), L"pyw.exe"))
+		|| PathIsPrefix(KexDir, This->ExeFullPath)) {
 		return E_FAIL;
 	}
 

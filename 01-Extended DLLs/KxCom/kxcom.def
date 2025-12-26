@@ -6,6 +6,7 @@ EXPORTS
 	RoGetActivationFactory
 	RoActivateInstance
 	RoCaptureErrorContext
+	RoSetErrorReportingFlags
 	RoOriginateError
 	RoOriginateErrorW
 	RoTransformError

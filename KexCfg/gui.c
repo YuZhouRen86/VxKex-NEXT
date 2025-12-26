@@ -361,14 +361,6 @@ STATIC VOID AddProgram(
 	ASSERT (DirectoryNameCch != 0);
 	ASSERT (DirectoryNameCch < MAX_PATH);
 
-	if (StringBeginsWithI(DirectoryName, SharedUserData->NtSystemRoot)) {
-		// program(s) are in the Windows directory - do not allow
-		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法为 Windows 目录中的程序启用 VxKex NEXT。");
-		else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ErrorBoxF(L"無法為 Windows 目錄中的程式啟用 VxKex NEXT。");
-		else ErrorBoxF(L"You cannot enable VxKex NEXT for programs in the Windows directory.");
-		return;
-	}
-
 	KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir));
 
 	if (StringBeginsWithI(DirectoryName, KexDir)) {
@@ -394,6 +386,16 @@ STATIC VOID AddProgram(
 	}
 
 	ASSERT (FileName[0] != '\0');
+
+	if (StringBeginsWithI(DirectoryName, SharedUserData->NtSystemRoot)
+		&& !StringEqualI(PathFindFileName(FileName), L"py.exe")
+		&& !StringEqualI(PathFindFileName(FileName), L"pyw.exe")) {
+		// program(s) are in the Windows directory - do not allow
+		if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ErrorBoxF(L"无法为 Windows 目录中的程序启用 VxKex NEXT。");
+		else if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ErrorBoxF(L"無法為 Windows 目錄中的程式啟用 VxKex NEXT。");
+		else ErrorBoxF(L"You cannot enable VxKex NEXT for programs in the Windows directory.");
+		return;
+	}
 
 	RtlZeroMemory(&Configuration, sizeof(Configuration));
 	Configuration.Enabled = 1;
@@ -434,10 +436,16 @@ STATIC VOID AddProgram(
 			ARRAYSIZE(FileFullPath) - DirectoryNameCch,
 			FileName);
 
-		Success = KxCfgSetConfiguration(
-			FileFullPath,
-			&Configuration,
-			TransactionHandle);
+		if (StringBeginsWithI(FileFullPath, SharedUserData->NtSystemRoot)
+			&& !StringEqualI(PathFindFileName(FileFullPath), L"py.exe")
+			&& !StringEqualI(PathFindFileName(FileFullPath), L"pyw.exe")) {
+			Success = TRUE;
+		} else {
+			Success = KxCfgSetConfiguration(
+				FileFullPath,
+				&Configuration,
+				TransactionHandle);
+		}
 
 		if (!Success) {
 			if (CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) {

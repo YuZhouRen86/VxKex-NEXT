@@ -217,6 +217,12 @@ BOOL WINAPI DllMain(
 				AshApplyPythonEnvironmentVariableHacks();
 			}
 
+			// APPSPECIFICHACK: Environment variable hack for Node.js to skip
+			// platform check.
+			if (AshExeBaseNameIs(L"node.exe")) {
+				AshApplyNodeJSEnvironmentVariableHacks();
+			}
+
 			// APPSPECIFICHACK: Detect Chromium based on EXE exports.
 			AshPerformChromiumDetectionFromModuleExports(Peb->ImageBaseAddress);
 		}

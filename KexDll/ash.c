@@ -171,3 +171,19 @@ VOID AshApplyPythonEnvironmentVariableHacks(
 		RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
 	}
 }
+
+VOID AshApplyNodeJSEnvironmentVariableHacks(
+	VOID)
+{
+	UNICODE_STRING VariableName;
+	UNICODE_STRING VariableValue;
+
+	ASSERT (AshExeBaseNameIs(L"node.exe"));
+
+	if (OriginalMajorVersion < 10) {
+		KexLogInformationEvent(L"App-Specific Hack applied for Node.js");
+		RtlInitConstantUnicodeString(&VariableName, L"NODE_SKIP_PLATFORM_CHECK");
+		RtlInitConstantUnicodeString(&VariableValue, L"1");
+		RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
+	}
+}

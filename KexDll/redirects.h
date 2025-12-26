@@ -15,6 +15,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 
 	DLL_REDIRECT("bcrypt",										"kxcryp"			)
 	DLL_REDIRECT("bcryptprimitives",							"kxcryp"			)
+	DLL_REDIRECT("ncrypt",										"kxcryp"			)
 	DLL_REDIRECT("secur32",										"kxcryp"			)
 	
 	DLL_REDIRECT("BluetoothApis",								"kxuser"			)

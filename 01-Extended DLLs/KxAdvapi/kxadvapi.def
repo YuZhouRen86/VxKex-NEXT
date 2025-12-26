@@ -5,3 +5,7 @@ EXPORTS
 
 	;; Forwarders to KxBase
 	CreateWellKnownSid			= KxBase.CreateWellKnownSid
+
+	;; time.c
+	EnumDynamicTimeZoneInformation
+	GetDynamicTimeZoneInformationEffectiveYears
