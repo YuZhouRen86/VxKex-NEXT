@@ -110,6 +110,12 @@ BOOL WINAPI EnableMouseInPointer(
 	return FALSE;
 }
 
+BOOL WINAPI IsMouseInPointerEnabled(
+	VOID)
+{
+	return FALSE;
+}
+
 BOOL WINAPI RegisterPointerDeviceNotifications(
 	IN	HWND	window,
 	IN	BOOL	notifyRange)

@@ -162,7 +162,10 @@ VOID KexCfgHandleCommandLine(
 			GetWindowsDirectory(WinDir, ARRAYSIZE(WinDir));
 			KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir));
 
-			if (PathIsPrefix(WinDir, ExeFullPath) || PathIsPrefix(KexDir, ExeFullPath)) {
+			if ((PathIsPrefix(WinDir, ExeFullPath)
+				&& !StringEqualI(PathFindFileName(ExeFullPath), L"py.exe")
+				&& !StringEqualI(PathFindFileName(ExeFullPath), L"pyw.exe"))
+				|| PathIsPrefix(KexDir, ExeFullPath)) {
 				KexCfgMessageBox(
 					NULL,
 					L"The argument to /EXE cannot be in the Windows directory "

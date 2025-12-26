@@ -94,6 +94,9 @@ VOID AshApplyQBittorrentEnvironmentVariableHacks(
 VOID AshApplyPythonEnvironmentVariableHacks(
 	VOID);
 
+VOID AshApplyNodeJSEnvironmentVariableHacks(
+	VOID);
+
 //
 // ashcrsup.c
 //
