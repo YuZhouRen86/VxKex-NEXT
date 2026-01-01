@@ -451,3 +451,13 @@ KXBASEAPI PVOID WINAPI MapViewOfFile3FromApp(
 		ExtendedParameters,
 		ParameterCount);
 }
+
+KXBASEAPI LPVOID WINAPI Ext_VirtualAlloc(
+	IN	LPVOID	Address OPTIONAL,
+	IN	SIZE_T	Size,
+	IN	DWORD	AllocationType,
+	IN	DWORD	Protect)
+{
+	if (OriginalMajorVersion < 10) Protect &= ~0x40000000;
+	return VirtualAlloc(Address, Size, AllocationType, Protect);
+}
