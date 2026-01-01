@@ -8,7 +8,55 @@ HANDLE KexSetupTransactionHandle = NULL;
 BOOLEAN KexSetupOkToCommitTransaction = FALSE;
 ULONG InstalledSize;
 
-VOID CreateLinkToStartMenuForAllUsers(LPCWSTR LinkName, LPCWSTR PersistFilePath, LPCWSTR Description)  
+VOID CreateStartMenuFolderForAllUsers(
+	VOID)
+{
+	WCHAR FolderPath[MAX_PATH];
+	SHGetSpecialFolderPath(NULL, FolderPath, CSIDL_COMMON_PROGRAMS, 0);
+	StringCchCat(FolderPath, MAX_PATH, L"\\VxKex NEXT");
+	KexSetupCreateDirectory(FolderPath);
+}
+
+VOID DeleteStartMenuFolderForAllUsers(
+	VOID)
+{
+	WCHAR FolderPath[MAX_PATH];
+	SHGetSpecialFolderPath(NULL, FolderPath, CSIDL_COMMON_PROGRAMS, 0);
+	StringCchCat(FolderPath, MAX_PATH, L"\\VxKex NEXT");
+	KexSetupRemoveDirectoryRecursive(FolderPath);
+}
+
+VOID ConfigureStartMenuFolderDesktopIni(
+	VOID)
+{
+	DWORD NumberOfBytesWritten, Attributes;
+	WCHAR FolderPath[MAX_PATH], DesktopIniPath[MAX_PATH] = {0}, BOM = 0xFEFF;
+	HANDLE FileHandle = NULL;
+	SHGetSpecialFolderPath(NULL, FolderPath, CSIDL_COMMON_PROGRAMS, 0);
+	StringCchCat(FolderPath, MAX_PATH, L"\\VxKex NEXT");
+	StringCchCat(DesktopIniPath, MAX_PATH, FolderPath);;
+	StringCchCat(DesktopIniPath, MAX_PATH, L"\\desktop.ini");
+	FileHandle = CreateFile(DesktopIniPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM, NULL);
+	WriteFile(FileHandle, &BOM, sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"[LocalizedFileNames]", 20 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\r\n", 2 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"VxKex NEXT Loader.lnk=@", 23 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, KexDir, wcslen(KexDir) * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\\VxKexLdr.exe,-2000", 19 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\r\n", 2 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"VxKex NEXT Global Settings.lnk=@", 32 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, KexDir, wcslen(KexDir) * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\\KexCfg.exe,-2000", 17 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	CloseHandle(FileHandle);
+	Attributes = GetFileAttributes(FolderPath);
+	SetFileAttributes(FolderPath, Attributes | FILE_ATTRIBUTE_READONLY);
+	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+}
+
+VOID CreateLinkToStartMenuFolderForAllUsers(
+	LPCWSTR	LinkName,
+	LPCWSTR	PersistFilePath,
+	LPCWSTR	Description)
 {
 	IShellLink *pLink;
 	HRESULT Result;
@@ -23,7 +71,7 @@ VOID CreateLinkToStartMenuForAllUsers(LPCWSTR LinkName, LPCWSTR PersistFilePath,
 		if (SUCCEEDED(Result)) {
 			WCHAR LinkPath[MAX_PATH];
 			SHGetSpecialFolderPath(NULL, LinkPath, CSIDL_COMMON_PROGRAMS, 0);
-			StringCchCat(LinkPath, MAX_PATH, L"\\");
+			StringCchCat(LinkPath, MAX_PATH, L"\\VxKex NEXT\\");
 			StringCchCat(LinkPath, MAX_PATH, LinkName);
 			StringCchCat(LinkPath, MAX_PATH, L".LNK");
 			pPersistFile->lpVtbl->Save(pPersistFile, LinkPath, FALSE);
@@ -34,7 +82,8 @@ VOID CreateLinkToStartMenuForAllUsers(LPCWSTR LinkName, LPCWSTR PersistFilePath,
 	CoUninitialize();
 }
 
-VOID DeleteLinkFromStartMenuForAllUsers(LPCWSTR LinkName)
+VOID DeleteLinkFromStartMenuForAllUsers(
+	LPCWSTR LinkName)
 {
 	WCHAR LinkPath[MAX_PATH];
 	SHGetSpecialFolderPath(NULL, LinkPath, CSIDL_COMMON_PROGRAMS, 0);
@@ -47,16 +96,23 @@ VOID DeleteLinkFromStartMenuForAllUsers(LPCWSTR LinkName)
 VOID KexSetupCreateLinkToStartMenu(
 	VOID)
 {
-	WCHAR KexCfgExePath[MAX_PATH] = {0};
+	WCHAR KexCfgExePath[MAX_PATH] = {0}, VxKexLdrExePath[MAX_PATH] = {0};
 	StringCchCat(KexCfgExePath, MAX_PATH, KexDir);
 	StringCchCat(KexCfgExePath, MAX_PATH, L"\\KexCfg.exe");
-	CreateLinkToStartMenuForAllUsers(L"VxKex NEXT Global Settings", KexCfgExePath, NULL);
+	StringCchCat(VxKexLdrExePath, MAX_PATH, KexDir);
+	StringCchCat(VxKexLdrExePath, MAX_PATH, L"\\VxKexLdr.exe");
+	DeleteLinkFromStartMenuForAllUsers(L"VxKex NEXT Global Settings");
+	CreateStartMenuFolderForAllUsers();
+	CreateLinkToStartMenuFolderForAllUsers(L"VxKex NEXT Global Settings", KexCfgExePath, NULL);
+	CreateLinkToStartMenuFolderForAllUsers(L"VxKex NEXT Loader", VxKexLdrExePath, NULL);
+	ConfigureStartMenuFolderDesktopIni();
 }
 
 VOID KexSetupDeleteLinkFromStartMenu(
 	VOID)
 {
 	DeleteLinkFromStartMenuForAllUsers(L"VxKex NEXT Global Settings");
+	DeleteStartMenuFolderForAllUsers();
 }
 
 VOID KexSetupWriteUninstallEntry(
