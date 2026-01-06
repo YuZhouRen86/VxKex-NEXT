@@ -396,6 +396,7 @@ BOOLEAN KexShouldRewriteImportsOfDll(
 
 	if (RtlPrefixUnicodeString(&KexData->WinDir, FullDllName, TRUE)) {
 		UNICODE_STRING Kernel;
+		UNICODE_STRING Msvcp140;
 
 		//
 		// The DLL is in the Windows directory.
@@ -425,6 +426,16 @@ BOOLEAN KexShouldRewriteImportsOfDll(
 			// so that certain functions such as LoadLibrary and CreateFileMapping
 			// end up going through KxNt (LdrLoadDll/NtCreateSection).
 			//
+
+			return TRUE;
+		}
+
+		RtlInitConstantUnicodeString(&Msvcp140, L"msvcp140");
+
+		if (RtlPrefixUnicodeString(&Msvcp140, &BaseDllName, TRUE)) {
+			// New versions of the Microsoft Visual C++ v14 Redistributable
+			// are no longer compatible with Windows 7. These DLLs are installed
+			// into system32, so we need to add such an exception here.
 
 			return TRUE;
 		}

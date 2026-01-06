@@ -222,14 +222,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dcmpstub.c" />
+    <ClCompile Include="direct2d.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="dx11.c" />
     <ClCompile Include="dx12stub.c" />
     <ClCompile Include="debug.c" />
+    <ClCompile Include="dxgi.c" />
     <ClCompile Include="factory.c" />
     <ClCompile Include="forwards.c" />
     <ClCompile Include="iid.c" />
     <ClCompile Include="mfplat.c" />
+    <ClCompile Include="rptnoint.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kxdx.def" />

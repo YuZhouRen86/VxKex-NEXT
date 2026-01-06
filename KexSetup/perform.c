@@ -34,10 +34,16 @@ VOID ConfigureStartMenuFolderDesktopIni(
 	HANDLE FileHandle = NULL;
 	SHGetSpecialFolderPath(NULL, FolderPath, CSIDL_COMMON_PROGRAMS, 0);
 	StringCchCat(FolderPath, MAX_PATH, L"\\VxKex NEXT");
-	StringCchCat(DesktopIniPath, MAX_PATH, FolderPath);;
+	StringCchCat(DesktopIniPath, MAX_PATH, FolderPath);
 	StringCchCat(DesktopIniPath, MAX_PATH, L"\\desktop.ini");
 	FileHandle = CreateFile(DesktopIniPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM, NULL);
 	WriteFile(FileHandle, &BOM, sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"[.ShellClassInfo]", 17 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\r\n", 2 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"IconResource=", 13 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, KexDir, wcslen(KexDir) * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\\KexSetup.exe,1", 15 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
+	WriteFile(FileHandle, L"\r\n", 2 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
 	WriteFile(FileHandle, L"[LocalizedFileNames]", 20 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
 	WriteFile(FileHandle, L"\r\n", 2 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);
 	WriteFile(FileHandle, L"VxKex NEXT Loader.lnk=@", 23 * sizeof(WCHAR), &NumberOfBytesWritten, NULL);

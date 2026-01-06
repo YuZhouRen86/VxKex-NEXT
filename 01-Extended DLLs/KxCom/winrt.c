@@ -536,4 +536,4 @@ KXCOMAPI HRESULT WINAPI CreateDispatcherQueueController(
 	OUT	PVOID					*dispatcherQueueController)
 {
 	return E_NOTIMPL;
-};
+}
