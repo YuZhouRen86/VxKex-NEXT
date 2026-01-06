@@ -130,6 +130,10 @@ KEXAPI BOOLEAN NTAPI AshModuleIsWindowsModule(
 	//
 
 	if (RtlPrefixUnicodeString(&KexData->WinDir, &DllFullPath, TRUE)) {
+		UNICODE_STRING SlashTemp;
+		KexRtlAdvanceUnicodeString(&DllFullPath, KexData->WinDir.Length);
+		RtlInitConstantUnicodeString(&SlashTemp, L"\\Temp");
+		if (RtlPrefixUnicodeString(&SlashTemp, &DllFullPath, TRUE)) return FALSE;
 		return TRUE;
 	} else {
 		return FALSE;

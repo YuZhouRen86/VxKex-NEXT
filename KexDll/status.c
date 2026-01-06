@@ -48,7 +48,11 @@ PCWSTR NTAPI KexRtlNtStatusToString(
 	case STATUS_DLL_NOT_IN_SYSTEM_ROOT:			return L"STATUS_DLL_NOT_IN_SYSTEM_ROOT";
 	case STATUS_PATH_TOO_SHORT:					return L"STATUS_PATH_TOO_SHORT";
 
-	case STATUS_NOT_SAME_OBJECT:				return L"STATUS_NOT_SAME_OBJECT";
+	//
+	// New status codes which were added in later versions of Windows
+	//
+
+	case STATUS_NOT_SAME_OBJECT: return L"STATUS_NOT_SAME_OBJECT";
 
 	//
 	// All this other stuff is auto generated with a powershell script

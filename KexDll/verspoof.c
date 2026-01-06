@@ -140,7 +140,7 @@ STATIC NTSTATUS NTAPI Ext_RtlGetVersion(
 		default:
 			Version->dwMajorVersion		= 10;
 			Version->dwMinorVersion		= 0;
-			Version->dwBuildNumber		= 26100;
+			Version->dwBuildNumber		= 26200;
 			break;
 		}
 	}
@@ -275,7 +275,7 @@ VOID KexApplyVersionSpoof(
 	default: // default case should always be at the highest win version
 		MajorVersion = 10;
 		MinorVersion = 0;
-		BuildNumber = 26100; // Win11 24H2
+		BuildNumber = 26200; // Win11 25H2
 		break;
 	}
 

@@ -111,8 +111,20 @@ DEFINE_GUID(IID_IUIViewSettings, 0xC63657F6, 0x8850, 0x470D, 0x88, 0xF8, 0x45, 0
 // {85361600-1C63-4627-BCB1-3A89E0BC9C55}
 DEFINE_GUID(IID_IUISettings, 0x85361600, 0x1C63, 0x4627, 0xBC, 0xB1, 0x3A, 0x89, 0xE0, 0xBC, 0x9C, 0x55);
 
+// {BAD82401-2721-44F9-BB91-2BB228BE442F}
+DEFINE_GUID(IID_IUISettings2, 0xBAD82401, 0x2721, 0x44F9, 0xBB, 0x91, 0x2B, 0xB2, 0x28, 0xBE, 0x44, 0x2F);
+
 // {03021BE4-5254-4781-8194-5168F7D06D7B}
 DEFINE_GUID(IID_IUISettings3, 0x03021BE4, 0x5254, 0x4781, 0x81, 0x94, 0x51, 0x68, 0xF7, 0xD0, 0x6D, 0x7B);
+
+// {52BB3002-919B-4D6B-9B78-8DD66FF4B93B}
+DEFINE_GUID(IID_IUISettings4, 0x52BB3002, 0x919B, 0x4D6B, 0x9B, 0x78, 0x8D, 0xD6, 0x6F, 0xF4, 0xB9, 0x3B);
+
+// {5349D588-0CB5-5F05-BD34-706B3231F0BD}
+DEFINE_GUID(IID_IUISettings5, 0x5349D588, 0x0CB5, 0x5F05, 0xBD, 0x34, 0x70, 0x6B, 0x32, 0x31, 0xF0, 0xBD);
+
+// {AEF19BD7-FE31-5A04-ADA4-469AAEC6DFA9}
+DEFINE_GUID(IID_IUISettings6, 0xAEF19BD7, 0xFE31, 0x5A04, 0xAD, 0xA4, 0x46, 0x9A, 0xAE, 0xC6, 0xDF, 0xA9);
 
 // {44A9796F-723E-4FDF-A218-033E75B0C084}
 DEFINE_GUID(IID_IUriRuntimeClassFactory, 0x44A9796F, 0x723E, 0x4FDF, 0xA2, 0x18, 0x03, 0x3E, 0x75, 0xB0, 0xC0, 0x84);
@@ -362,6 +374,31 @@ typedef struct _IUISettings {
 
 extern IUISettings CUISettings;
 
+typedef struct _IUISettings2 IUISettings2;
+
+typedef struct _IUISettings2Vtbl {
+	// IUnknown
+	HRESULT (STDMETHODCALLTYPE *QueryInterface) (IUISettings2 *, REFIID, PPVOID);
+	ULONG (STDMETHODCALLTYPE *AddRef) (IUISettings2 *);
+	ULONG (STDMETHODCALLTYPE *Release) (IUISettings2 *);
+	
+	// IInspectable
+	HRESULT (STDMETHODCALLTYPE *GetIids) (IUISettings2 *, PULONG, IID **);
+	HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName) (IUISettings2 *, HSTRING *);
+	HRESULT (STDMETHODCALLTYPE *GetTrustLevel) (IUISettings2 *, TrustLevel *);
+
+	// IUISettings2
+	HRESULT (STDMETHODCALLTYPE *get_TextScaleFactor) (IUISettings2 *, DOUBLE *);
+	HRESULT (STDMETHODCALLTYPE *add_TextScaleFactorChanged) (IUISettings2 *, PVOID, PPVOID);
+	HRESULT (STDMETHODCALLTYPE *remove_TextScaleFactorChanged) (IUISettings2 *, PVOID);
+} IUISettings2Vtbl;
+
+typedef struct _IUISettings2 {
+	IUISettings2Vtbl *lpVtbl;
+} IUISettings2;
+
+extern IUISettings2 CUISettings2;
+
 typedef enum _UIColorType {
 	UIColorType_Background		= 0,
 	UIColorType_Foreground		= 1,
@@ -399,6 +436,82 @@ typedef struct _IUISettings3 {
 } IUISettings3;
 
 extern IUISettings3 CUISettings3;
+
+typedef struct _IUISettings4 IUISettings4;
+
+typedef struct _IUISettings4Vtbl {
+	// IUnknown
+	HRESULT (STDMETHODCALLTYPE *QueryInterface) (IUISettings4 *, REFIID, PPVOID);
+	ULONG (STDMETHODCALLTYPE *AddRef) (IUISettings4 *);
+	ULONG (STDMETHODCALLTYPE *Release) (IUISettings4 *);
+	
+	// IInspectable
+	HRESULT (STDMETHODCALLTYPE *GetIids) (IUISettings4 *, PULONG, IID **);
+	HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName) (IUISettings4 *, HSTRING *);
+	HRESULT (STDMETHODCALLTYPE *GetTrustLevel) (IUISettings4 *, TrustLevel *);
+
+	// IUISettings4
+	HRESULT (STDMETHODCALLTYPE *get_AdvancedEffectsEnabled) (IUISettings4 *, PBOOLEAN);
+	HRESULT (STDMETHODCALLTYPE *add_AdvancedEffectsEnabledChanged) (IUISettings4 *, PVOID, PPVOID);
+	HRESULT (STDMETHODCALLTYPE *remove_AdvancedEffectsEnabledChanged) (IUISettings4 *, PVOID);
+} IUISettings4Vtbl;
+
+typedef struct _IUISettings4 {
+	IUISettings4Vtbl *lpVtbl;
+} IUISettings4;
+
+extern IUISettings4 CUISettings4;
+
+typedef struct _IUISettings5 IUISettings5;
+
+typedef struct _IUISettings5Vtbl {
+	// IUnknown
+	HRESULT (STDMETHODCALLTYPE *QueryInterface) (IUISettings5 *, REFIID, PPVOID);
+	ULONG (STDMETHODCALLTYPE *AddRef) (IUISettings5 *);
+	ULONG (STDMETHODCALLTYPE *Release) (IUISettings5 *);
+	
+	// IInspectable
+	HRESULT (STDMETHODCALLTYPE *GetIids) (IUISettings5 *, PULONG, IID **);
+	HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName) (IUISettings5 *, HSTRING *);
+	HRESULT (STDMETHODCALLTYPE *GetTrustLevel) (IUISettings5 *, TrustLevel *);
+
+	// IUISettings5
+	HRESULT (STDMETHODCALLTYPE *get_AutoHideScrollBars) (IUISettings5 *, PBOOLEAN);
+	HRESULT (STDMETHODCALLTYPE *add_AutoHideScrollBarsChanged) (IUISettings5 *, PVOID, PPVOID);
+	HRESULT (STDMETHODCALLTYPE *remove_AutoHideScrollBarsChanged) (IUISettings5 *, PVOID);
+} IUISettings5Vtbl;
+
+typedef struct _IUISettings5 {
+	IUISettings5Vtbl *lpVtbl;
+} IUISettings5;
+
+extern IUISettings5 CUISettings5;
+
+typedef struct _IUISettings6 IUISettings6;
+
+typedef struct _IUISettings6Vtbl {
+	// IUnknown
+	HRESULT (STDMETHODCALLTYPE *QueryInterface) (IUISettings6 *, REFIID, PPVOID);
+	ULONG (STDMETHODCALLTYPE *AddRef) (IUISettings6 *);
+	ULONG (STDMETHODCALLTYPE *Release) (IUISettings6 *);
+	
+	// IInspectable
+	HRESULT (STDMETHODCALLTYPE *GetIids) (IUISettings6 *, PULONG, IID **);
+	HRESULT (STDMETHODCALLTYPE *GetRuntimeClassName) (IUISettings6 *, HSTRING *);
+	HRESULT (STDMETHODCALLTYPE *GetTrustLevel) (IUISettings6 *, TrustLevel *);
+
+	// IUISettings6
+	HRESULT (STDMETHODCALLTYPE *add_AnimationsEnabledChanged) (IUISettings6 *, PVOID, PPVOID);
+	HRESULT (STDMETHODCALLTYPE *remove_AnimationsEnabledChanged) (IUISettings6 *, PVOID);
+	HRESULT (STDMETHODCALLTYPE *add_MessageDurationChanged) (IUISettings6 *, PVOID, PPVOID);
+	HRESULT (STDMETHODCALLTYPE *remove_MessageDurationChanged) (IUISettings6 *, PVOID);
+} IUISettings6Vtbl;
+
+typedef struct _IUISettings6 {
+	IUISettings6Vtbl *lpVtbl;
+} IUISettings6;
+
+extern IUISettings6 CUISettings6;
 
 typedef struct _IRestrictedErrorInfo IRestrictedErrorInfo;
 

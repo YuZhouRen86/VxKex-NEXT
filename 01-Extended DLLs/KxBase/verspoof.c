@@ -54,7 +54,7 @@ KXBASEAPI BOOL WINAPI Ext_GetVersionExA(
 		default:
 			VersionInfo->dwMajorVersion		= 10;
 			VersionInfo->dwMinorVersion		= 0;
-			VersionInfo->dwBuildNumber		= 26100;
+			VersionInfo->dwBuildNumber		= 26200;
 			break;
 		}
 	}
@@ -101,7 +101,7 @@ KXBASEAPI BOOL WINAPI Ext_GetVersionExW(
 		default:
 			VersionInfo->dwMajorVersion		= 10;
 			VersionInfo->dwMinorVersion		= 0;
-			VersionInfo->dwBuildNumber		= 26100;
+			VersionInfo->dwBuildNumber		= 26200;
 			break;
 		}
 	}

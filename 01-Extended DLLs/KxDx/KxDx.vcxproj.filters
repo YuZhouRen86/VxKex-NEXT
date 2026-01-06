@@ -50,6 +50,15 @@
     <ClCompile Include="mfplat.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="direct2d.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dxgi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rptnoint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxdx.def">
