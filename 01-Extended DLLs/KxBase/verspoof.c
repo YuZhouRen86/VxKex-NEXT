@@ -18,7 +18,7 @@ KXBASEAPI BOOL WINAPI Ext_GetVersionExA(
 
 	Success = GetVersionExA(VersionInfo);
 
-	if (Success && AshModuleIsWindowsModule(ReturnAddress())) {
+	if (Success && (IsVMwareInstallationLauncher || AshModuleIsWindowsModule(ReturnAddress()))) {
 		VersionInfo->dwMajorVersion = OriginalMajorVersion ? OriginalMajorVersion : 6;
 		VersionInfo->dwMinorVersion = OriginalMinorVersion ? OriginalMinorVersion : 1;
 		VersionInfo->dwBuildNumber = OriginalBuildNumber ? LOWORD(OriginalBuildNumber) : 7601;
@@ -69,7 +69,11 @@ KXBASEAPI BOOL WINAPI Ext_GetVersionExW(
 
 	Success = GetVersionExW(VersionInfo);
 
-	if (KexData->IfeoParameters.WinVerSpoof != WinVerSpoofNone) {
+	if (Success && (IsVMwareInstallationLauncher || AshModuleIsWindowsModule(ReturnAddress()))) {
+		VersionInfo->dwMajorVersion = OriginalMajorVersion ? OriginalMajorVersion : 6;
+		VersionInfo->dwMinorVersion = OriginalMinorVersion ? OriginalMinorVersion : 1;
+		VersionInfo->dwBuildNumber = OriginalBuildNumber ? LOWORD(OriginalBuildNumber) : 7601;
+	} else if (KexData->IfeoParameters.WinVerSpoof != WinVerSpoofNone) {
 		switch (KexData->IfeoParameters.WinVerSpoof) {
 		case WinVerSpoofWin7:
 			VersionInfo->dwMajorVersion		= 6;

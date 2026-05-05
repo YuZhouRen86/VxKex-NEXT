@@ -560,6 +560,14 @@ VOID KexSetupInstallFiles(
 	// remove msvw10, which is no longer included
 	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\msvw10.dll", KexDir);
 	KexSetupDeleteFile(TargetPath);
+
+	// remove icu, which is no longer included
+	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\icu.dll", KexDir);
+	KexSetupDeleteFile(TargetPath);
+
+	// remove icuin, which is no longer included
+	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\icuin.dll", KexDir);
+	KexSetupDeleteFile(TargetPath);
 	
 	if (Is64BitOS) {
 		// remove old PDBs
@@ -578,6 +586,14 @@ VOID KexSetupInstallFiles(
 
 		// remove msvw10
 		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\msvw10.dll", KexDir);
+		KexSetupDeleteFile(TargetPath);
+
+		// remove icu
+		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\icu.dll", KexDir);
+		KexSetupDeleteFile(TargetPath);
+
+		// remove icuin
+		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\icuin.dll", KexDir);
 		KexSetupDeleteFile(TargetPath);
 	}
 }

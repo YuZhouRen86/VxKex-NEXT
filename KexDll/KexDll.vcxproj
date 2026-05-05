@@ -274,6 +274,7 @@
     <ClCompile Include="ashselec.c" />
     <ClCompile Include="avrf.c" />
     <ClCompile Include="cpiwbypa.c" />
+    <ClCompile Include="critsect.c" />
     <ClCompile Include="dload.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="dllnotif.c" />

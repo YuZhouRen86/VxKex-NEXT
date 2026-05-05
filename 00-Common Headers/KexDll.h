@@ -798,6 +798,11 @@ KEXAPI NTSTATUS NTAPI Ext_NtAssignProcessToJobObject(
 	IN	HANDLE	JobHandle,
 	IN	HANDLE	ProcessHandle);
 
+KEXAPI NTSTATUS NTAPI Ext_RtlInitializeCriticalSectionEx(
+	IN	PRTL_CRITICAL_SECTION	CriticalSection,
+	IN	ULONG					SpinCount,
+	IN	ULONG					Flags);
+
 #pragma endregion
 
 #pragma region KexNt* functions

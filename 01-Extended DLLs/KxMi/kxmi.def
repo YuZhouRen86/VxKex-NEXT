@@ -18,3 +18,7 @@ EXPORTS
 	;; wldp.c
 	WldpGetLockdownPolicy
 	WldpQueryWindowsLockdownMode
+
+	;; wtsapi.c
+	WTSQuerySessionInformationA					= Ext_WTSQuerySessionInformationA
+	WTSQuerySessionInformationW					= Ext_WTSQuerySessionInformationW

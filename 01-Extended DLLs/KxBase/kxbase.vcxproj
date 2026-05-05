@@ -223,6 +223,7 @@
   <ItemGroup>
     <ClCompile Include="appmodel.c" />
     <ClCompile Include="cfgmgr.c" />
+    <ClCompile Include="critsect.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="file.c" />
     <ClCompile Include="forwards.c" />
