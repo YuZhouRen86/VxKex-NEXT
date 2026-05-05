@@ -4,7 +4,7 @@ EXPORTS
 	;; VxKex New Functions
 	;;
 
-	ResolveDelayLoadedAPI				= KexDll.KexLdrResolveDelayLoadedAPI
+	ResolveDelayLoadedAPI					= KexDll.KexLdrResolveDelayLoadedAPI
 
 	;; thread.c
 	GetThreadDescription
@@ -18,7 +18,7 @@ EXPORTS
 	GetThreadSelectedCpuSetMasks
 	SetThreadpoolTimerEx
 	GetSystemCpuSetInformation
-	GetThreadPriority					= Ext_GetThreadPriority
+	GetThreadPriority						= Ext_GetThreadPriority
 
 	;; process.c
 	GetProcessInformation
@@ -58,9 +58,9 @@ EXPORTS
 	CopyFile2
 	GetOverlappedResultEx
 	GetFileInformationByName
-	DeviceIoControl						= Ext_DeviceIoControl
-	WriteFile							= Ext_WriteFile
-	ReadFile							= Ext_ReadFile
+	DeviceIoControl							= Ext_DeviceIoControl
+	WriteFile								= Ext_WriteFile
+	ReadFile								= Ext_ReadFile
 
 	;; time.c
 	GetSystemTimePreciseAsFileTime
@@ -87,8 +87,8 @@ EXPORTS
 
 	;; synch.c
 	WaitOnAddress
-	WakeByAddressSingle					= KexDll.KexRtlWakeAddressSingle
-	WakeByAddressAll					= KexDll.KexRtlWakeAddressAll
+	WakeByAddressSingle						= KexDll.KexRtlWakeAddressSingle
+	WakeByAddressAll						= KexDll.KexRtlWakeAddressAll
 	GetOverlappedResultEx
 
 	;; wow64.c
@@ -109,7 +109,7 @@ EXPORTS
 	UnmapViewOfFileEx
 	MapViewOfFile3
 	MapViewOfFile3FromApp
-	VirtualAlloc						= Ext_VirtualAlloc
+	VirtualAlloc							= Ext_VirtualAlloc
 
 	;; KexPathCch
 	PathAllocCanonicalize
@@ -139,73 +139,78 @@ EXPORTS
 	;; Forwarders to KxAdvapi
 	;;
 
-	RegCopyTreeW						= KxAdvapi.RegCopyTreeW
+	RegCopyTreeW							= KxAdvapi.RegCopyTreeW
 
 	;;
 	;; Forwarders to KxUser
 	;;
 	
-	CharLowerA							= KxUser.CharLowerA
-	CharLowerBuffA						= KxUser.CharLowerBuffA
-	CharLowerBuffW						= KxUser.CharLowerBuffW
-	CharLowerW							= KxUser.CharLowerW
-	CharNextA							= KxUser.CharNextA
-	CharNextExA							= KxUser.CharNextExA
-	CharNextW							= KxUser.CharNextW
-	CharPrevA							= KxUser.CharPrevA
-	CharPrevExA							= KxUser.CharPrevExA
-	CharPrevW							= KxUser.CharPrevW
-	CharToOemA							= KxUser.CharToOemA
-	CharToOemBuffA						= KxUser.CharToOemBuffA
-	CharToOemBuffW						= KxUser.CharToOemBuffW
-	CharToOemW							= KxUser.CharToOemW
-	CharUpperA							= KxUser.CharUpperA
-	CharUpperBuffA						= KxUser.CharUpperBuffA
-	CharUpperBuffW						= KxUser.CharUpperBuffW
-	CharUpperW							= KxUser.CharUpperW
-	IsCharAlphaA						= KxUser.IsCharAlphaA
-	IsCharAlphaNumericA					= KxUser.IsCharAlphaNumericA
-	IsCharAlphaNumericW					= KxUser.IsCharAlphaNumericW
-	IsCharAlphaW						= KxUser.IsCharAlphaW
-	IsCharLowerA						= KxUser.IsCharLowerA
-	IsCharLowerW						= KxUser.IsCharLowerW
-	IsCharUpperA						= KxUser.IsCharUpperA
-	IsCharUpperW						= KxUser.IsCharUpperW
+	CharLowerA								= KxUser.CharLowerA
+	CharLowerBuffA							= KxUser.CharLowerBuffA
+	CharLowerBuffW							= KxUser.CharLowerBuffW
+	CharLowerW								= KxUser.CharLowerW
+	CharNextA								= KxUser.CharNextA
+	CharNextExA								= KxUser.CharNextExA
+	CharNextW								= KxUser.CharNextW
+	CharPrevA								= KxUser.CharPrevA
+	CharPrevExA								= KxUser.CharPrevExA
+	CharPrevW								= KxUser.CharPrevW
+	CharToOemA								= KxUser.CharToOemA
+	CharToOemBuffA							= KxUser.CharToOemBuffA
+	CharToOemBuffW							= KxUser.CharToOemBuffW
+	CharToOemW								= KxUser.CharToOemW
+	CharUpperA								= KxUser.CharUpperA
+	CharUpperBuffA							= KxUser.CharUpperBuffA
+	CharUpperBuffW							= KxUser.CharUpperBuffW
+	CharUpperW								= KxUser.CharUpperW
+	IsCharAlphaA							= KxUser.IsCharAlphaA
+	IsCharAlphaNumericA						= KxUser.IsCharAlphaNumericA
+	IsCharAlphaNumericW						= KxUser.IsCharAlphaNumericW
+	IsCharAlphaW							= KxUser.IsCharAlphaW
+	IsCharLowerA							= KxUser.IsCharLowerA
+	IsCharLowerW							= KxUser.IsCharLowerW
+	IsCharUpperA							= KxUser.IsCharUpperA
+	IsCharUpperW							= KxUser.IsCharUpperW
 
 	;;
 	;; VxKex Extended Functions
 	;;
 
+	;; critsect.c
+	InitializeCriticalSection				= Ext_InitializeCriticalSection
+	InitializeCriticalSectionAndSpinCount	= Ext_InitializeCriticalSectionAndSpinCount
+	InitializeCriticalSectionEx				= Ext_InitializeCriticalSectionEx
+
 	;; process.c
-	IsProcessInJob						= Ext_IsProcessInJob
-	UpdateProcThreadAttribute			= Ext_UpdateProcThreadAttribute
+	IsProcessInJob							= Ext_IsProcessInJob
+	UpdateProcThreadAttribute				= Ext_UpdateProcThreadAttribute
 
 	;; module.c
-	GetModuleHandleA					= Ext_GetModuleHandleA
-	GetModuleHandleW					= Ext_GetModuleHandleW
-	GetModuleHandleExA					= Ext_GetModuleHandleExA
-	GetModuleHandleExW					= Ext_GetModuleHandleExW
-	LoadLibraryA						= Ext_LoadLibraryA
-	LoadLibraryW						= Ext_LoadLibraryW
-	LoadLibraryExA						= Ext_LoadLibraryExA
-	LoadLibraryExW						= Ext_LoadLibraryExW
-	AddDllDirectory						= Ext_AddDllDirectory
-	RemoveDllDirectory					= Ext_RemoveDllDirectory
-	SetDefaultDllDirectories			= Ext_SetDefaultDllDirectories
+	GetModuleHandleA						= Ext_GetModuleHandleA
+	GetModuleHandleW						= Ext_GetModuleHandleW
+	GetModuleHandleExA						= Ext_GetModuleHandleExA
+	GetModuleHandleExW						= Ext_GetModuleHandleExW
+	LoadLibraryA							= Ext_LoadLibraryA
+	LoadLibraryW							= Ext_LoadLibraryW
+	LoadLibraryExA							= Ext_LoadLibraryExA
+	LoadLibraryExW							= Ext_LoadLibraryExW
+	AddDllDirectory							= Ext_AddDllDirectory
+	RemoveDllDirectory						= Ext_RemoveDllDirectory
+	SetDefaultDllDirectories				= Ext_SetDefaultDllDirectories
 
 	;; security.c
-	CreateWellKnownSid					= Ext_CreateWellKnownSid
+	CreateWellKnownSid						= Ext_CreateWellKnownSid
 
 	;; verspoof.c
-	GetVersionExA						= Ext_GetVersionExA
-	GetVersionExW						= Ext_GetVersionExW
-	VerifyVersionInfoW					= Ext_VerifyVersionInfoW
+	GetVersionExA							= Ext_GetVersionExA
+	GetVersionExW							= Ext_GetVersionExW
+	VerifyVersionInfoW						= Ext_VerifyVersionInfoW
 
 	;; stubs.c
-	DuplicateHandle						= Ext_DuplicateHandle
+	DuplicateHandle							= Ext_DuplicateHandle
 
 	;; heap.c
-	HeapCreate							= Ext_HeapCreate
+	HeapCreate								= Ext_HeapCreate
 
 	;; handle.c
 	CompareObjectHandles

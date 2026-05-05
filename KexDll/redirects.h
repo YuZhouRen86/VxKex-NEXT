@@ -41,6 +41,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("userenv",										"kxmi"				)
 	DLL_REDIRECT("version",										"kxmi"				)
 	DLL_REDIRECT("wldp",										"kxmi"				)
+	DLL_REDIRECT("wtsapi32",									"kxmi"				)
 
 	DLL_REDIRECT("dnsapi",										"kxnet"				)
 	DLL_REDIRECT("winhttp",										"kxnet"				)

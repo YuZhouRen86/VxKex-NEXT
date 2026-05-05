@@ -39,6 +39,10 @@ EXPORTS
 	NtCreateSection								= KexDll.Ext_NtCreateSection
 	NtAssignProcessToJobObject					= KexDll.Ext_NtAssignProcessToJobObject
 
+	RtlInitializeCriticalSection				= KexDll.Ext_RtlInitializeCriticalSection
+	RtlInitializeCriticalSectionAndSpinCount	= KexDll.Ext_RtlInitializeCriticalSectionAndSpinCount
+	RtlInitializeCriticalSectionEx				= KexDll.Ext_RtlInitializeCriticalSectionEx
+
 	NtCompareObjects							= KexDll.NtCompareObjects
 	NtQueryWnfStateData							= KexDll.NtQueryWnfStateData
 

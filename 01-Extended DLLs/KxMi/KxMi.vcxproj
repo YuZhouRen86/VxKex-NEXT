@@ -225,6 +225,7 @@
     <ClCompile Include="userenv.c" />
     <ClCompile Include="verspoof.c" />
     <ClCompile Include="wldp.c" />
+    <ClCompile Include="wtsapi.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buildcfg.h" />

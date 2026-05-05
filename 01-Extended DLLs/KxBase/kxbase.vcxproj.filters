@@ -92,6 +92,9 @@
     <ClCompile Include="handle.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="critsect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxbase.def">

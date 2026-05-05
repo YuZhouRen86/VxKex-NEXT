@@ -54,7 +54,7 @@ STATIC ULONG_PTR Wow64NtOpenKeyRva;
 STATIC NT_WOW64_QUERY_INFORMATION_PROCESS64 NtWow64QueryInformationProcess64;
 STATIC NT_WOW64_WRITE_VIRTUAL_MEMORY64 NtWow64WriteVirtualMemory64;
 
-STATIC CONST BYTE KexpNtOpenKeyHook32[] = {
+STATIC CONST BYTE KexpNtOpenKeyHook32_Win7[] = {
 	0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x83, 0xC0, 0x06, 0xEB, 0x43, 0x00, 0x38, 0x00, 0x3A, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x7B, 0x00, 0x56, 0x00, 0x78, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x78, 0x00,
 	0x50, 0x00, 0x72, 0x00, 0x6F, 0x00, 0x70, 0x00, 0x61, 0x00, 0x67, 0x00, 0x61, 0x00, 0x74, 0x00,
@@ -119,7 +119,7 @@ STATIC CONST BYTE KexpNtOpenKeyHook32[] = {
 //		dw		'i', 'o', 'n', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'K', 'e', 'y', '}', 0
 //
 
-STATIC CONST BYTE KexpNtOpenKeyHook64[] = {
+STATIC CONST BYTE KexpNtOpenKeyHook64_Win7[] = {
 	0x80, 0x3D, 0x43, 0x00, 0x00, 0x00, 0x00, 0x75, 0x36, 0x65, 0x48, 0x8B, 0x04, 0x25, 0x60, 0x00,
 	0x00, 0x00, 0x48, 0x8B, 0x40, 0x20, 0x81, 0x60, 0x08, 0xFF, 0xBF, 0xFF, 0xFF, 0x49, 0x8B, 0x40,
 	0x08, 0x85, 0xC0, 0x74, 0x1A, 0xFE, 0x05, 0x1F, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x05, 0x1E, 0x00,
@@ -133,27 +133,6 @@ STATIC CONST BYTE KexpNtOpenKeyHook64[] = {
 };
 
 USHORT HookDataFlag = 0;
-
-//
-// DO NOT use this function.
-//
-NTSTATUS WINAPI UnstableHookedNtOpenKey(
-	OUT	PHANDLE				KeyHandle,
-	IN	ACCESS_MASK			DesiredAccess,
-	IN	POBJECT_ATTRIBUTES	ObjectAttributes)
-{
-	NTSTATUS Status;
-	if (HookDataFlag == 0) {
-		NtCurrentPeb()->ProcessParameters->Flags &= ~0x4000;
-		if (ObjectAttributes->RootDirectory != NULL) {
-			UNICODE_STRING VxKexPropagationVirtualKeyName;
-			RtlInitConstantUnicodeString(&VxKexPropagationVirtualKeyName, L"{VxKexPropagationVirtualKey}");
-			ObjectAttributes->ObjectName = &VxKexPropagationVirtualKeyName;
-		}
-	}
-	Status = NtOpenKey(KeyHandle, DesiredAccess, ObjectAttributes);
-	return Status;
-}
 
 //
 // This function unhooks NtOpenKey/NtOpenKeyEx and unmaps the
@@ -207,7 +186,7 @@ STATIC VOID KexpCleanupPropagationRemains(
 
 		BaseAddress = HookDestination;
 		RegionSize = 4096; // page size
-		ASSERT (max(sizeof(KexpNtOpenKeyHook32), sizeof(KexpNtOpenKeyHook64)) <= RegionSize);
+		ASSERT (max(sizeof(KexpNtOpenKeyHook32_Win7), sizeof(KexpNtOpenKeyHook64_Win7)) <= RegionSize);
 
 		Status = NtFreeVirtualMemory(
 			NtCurrentProcess(),
@@ -694,9 +673,9 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	RemoteHookBaseAddress = NULL;
 
 	if (ChildProcessBitness == 64) {
-		RemoteHookSize = sizeof(KexpNtOpenKeyHook64);
+		RemoteHookSize = sizeof(KexpNtOpenKeyHook64_Win7);
 	} else {
-		RemoteHookSize = sizeof(KexpNtOpenKeyHook32);
+		RemoteHookSize = sizeof(KexpNtOpenKeyHook32_Win7);
 	}
 
 	Status = NtAllocateVirtualMemory(
@@ -726,15 +705,15 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 		Status = NtWriteVirtualMemory(
 			*ProcessHandle,
 			RemoteHookBaseAddress,
-			KexpNtOpenKeyHook64,
-			sizeof(KexpNtOpenKeyHook64),
+			KexpNtOpenKeyHook64_Win7,
+			sizeof(KexpNtOpenKeyHook64_Win7),
 			NULL);
 	} else {
 		Status = NtWriteVirtualMemory(
 			*ProcessHandle,
 			RemoteHookBaseAddress,
-			KexpNtOpenKeyHook32,
-			sizeof(KexpNtOpenKeyHook32),
+			KexpNtOpenKeyHook32_Win7,
+			sizeof(KexpNtOpenKeyHook32_Win7),
 			NULL);
 	}
 

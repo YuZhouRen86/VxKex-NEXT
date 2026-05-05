@@ -38,6 +38,15 @@ EXTERN HANDLE KsecDD;
 EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
 EXTERN DLL_DIRECTORY_DATA DllDirectoryData;
 EXTERN ULONG DefaultDllDirectoryFlags;
+EXTERN BOOL IsVMwareInstallationLauncher;
+
+#if defined(KEX_TARGET_TYPE_EXE) || defined(KEX_TARGET_TYPE_DLL)
+#  if defined(KEX_ARCH_X64)
+#    pragma comment(lib, "version_x64.lib")
+#  elif defined(KEX_ARCH_X86)
+#    pragma comment(lib, "version_x86.lib")
+#  endif
+#endif
 
 //
 // module.c

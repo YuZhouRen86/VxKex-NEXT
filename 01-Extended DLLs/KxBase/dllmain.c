@@ -33,6 +33,40 @@ PKEX_PROCESS_DATA KexData = NULL;
 ULONG OriginalMajorVersion = 0, OriginalMinorVersion = 0, OriginalBuildNumber = 0;
 DLL_DIRECTORY_DATA DllDirectoryData = {DLL_DIRECTORY_DATA_VERIFICATION_CODE, NULL, NULL, NULL};
 ULONG DefaultDllDirectoryFlags = 0;
+BOOL IsVMwareInstallationLauncher = FALSE;
+
+BOOL DetectVMwareInstallationLauncher(
+	VOID)
+{
+	DWORD Handle = 0;
+	DWORD Size;
+	LPVOID Buffer = NULL;
+	PCWSTR SubBlock = L"\\StringFileInfo\\040904B0\\FileDescription";
+	LPVOID Info;
+	UINT InfoLen;
+	BOOL Result = FALSE;
+	CONST ULONG VMwareInstallationLauncherFileDescriptionLength = 28;
+	UNICODE_STRING ImagePathNameUnicodeString = NtCurrentPeb()->ProcessParameters->ImagePathName;
+	ULONG ImagePathNameLength = KexRtlUnicodeStringCch(&ImagePathNameUnicodeString);
+	LPWSTR ImagePathName = SafeAlloc(WCHAR, ImagePathNameLength + 1);
+	if (!ImagePathName) goto Exit;
+	CopyMemory(ImagePathName, ImagePathNameUnicodeString.Buffer, ImagePathNameUnicodeString.Length);
+	ImagePathName[ImagePathNameLength] = '\0';
+	Size = GetFileVersionInfoSize(ImagePathName, &Handle);
+	if (Size == 0) goto Exit;
+	Buffer = SafeAlloc(BYTE, Size);
+	if (Buffer == NULL) goto Exit;
+	if (!GetFileVersionInfo(ImagePathName, Handle, Size, Buffer)) goto Exit;
+	if (VerQueryValue(Buffer, SubBlock, &Info, &InfoLen)) {
+		if (Info != NULL && InfoLen == VMwareInstallationLauncherFileDescriptionLength + 1) {
+			Result = StringEqual((LPCWSTR)Info, L"VMware installation launcher");
+		}
+	}
+Exit:
+	SafeFree(ImagePathName);
+	SafeFree(Buffer);
+	return Result;
+}
 
 BOOL WINAPI DllMain(
 	IN	PVOID		DllBase,
@@ -77,6 +111,8 @@ BOOL WINAPI DllMain(
 			KexData->BaseNamedObjects = BaseGetNamedObjectDirectory();
 			KexData->UntrustedNamedObjects = BaseGetUntrustedNamedObjectDirectory();
 		}
+
+		IsVMwareInstallationLauncher = DetectVMwareInstallationLauncher();
 	}
 
 	return TRUE;
