@@ -134,3 +134,74 @@ VOID KxBaseAddKex3264ToBaseDefaultPath(
 
 NTSTATUS BaseInitializeCrypto(
 	VOID);
+
+//
+// conansi.c
+//
+
+BOOL IsConsoleHandle(
+	IN	HANDLE	Handle);
+
+BOOLEAN IsConsoleOutputHandle(
+	IN	HANDLE	Handle);
+
+BOOLEAN BaseIsConsoleAnsiSupportEnabled(
+	IN	HANDLE	ConsoleHandle);
+
+BOOLEAN BaseEnableConsoleAnsiSupport(
+	IN	HANDLE	ConsoleHandle);
+
+BOOLEAN BaseDisableConsoleAnsiSupport(
+	IN	HANDLE	ConsoleHandle);
+
+BOOL WriteConsoleWithEscapeSequencesAorW(
+	IN	HANDLE	ConsoleHandle,
+	IN	PCVOID	Buffer,
+	IN	ULONG	CchToWrite,
+	OUT	PULONG	CchWrittenOut OPTIONAL,
+	IN	PVOID	Reserved OPTIONAL,
+	IN	BOOLEAN	Unicode);
+
+//
+// consup.c
+//
+
+BOOL WriteConsoleAorW(
+	IN	HANDLE	ConsoleHandle,
+	IN	PCVOID	Buffer,
+	IN	ULONG	CchToWrite,
+	OUT	PULONG	CchWritten OPTIONAL,
+	IN	PVOID	Reserved OPTIONAL,
+	IN	BOOLEAN	Unicode);
+
+BOOLEAN VTGetCursorPosition(
+	IN	HANDLE	ConsoleHandle,
+	OUT	PCOORD	Position);
+
+BOOLEAN GetConsoleTextAttribute(
+	IN	HANDLE	ConsoleHandle,
+	OUT	PWORD	Attribute);
+
+BOOLEAN VTMoveCursorRelative(
+	IN	HANDLE	ConsoleHandle,
+	IN	COORD	RelativeMovement);
+
+BOOLEAN VTMoveCursorVerticalRelativeWithHorizontalReset(
+	IN	HANDLE	ConsoleHandle,
+	IN	SHORT	RelativeMovement);
+
+BOOLEAN VTSetCursorHorizontalPosition(
+	IN	HANDLE	ConsoleHandle,
+	IN	SHORT	HorizontalPosition);
+
+BOOLEAN VTSetCursorVerticalPosition(
+	IN	HANDLE	ConsoleHandle,
+	IN	SHORT	VerticalPosition);
+
+BOOLEAN VTSetCursorPosition(
+	IN	HANDLE	ConsoleHandle,
+	IN	COORD	AbsolutePosition);
+
+BOOLEAN InjectStringToConsoleInput(
+	IN	HANDLE	ConsoleHandle,
+	IN	PCWSTR	String);

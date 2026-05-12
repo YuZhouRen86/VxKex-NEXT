@@ -85,6 +85,10 @@ EXPORTS
 	PackageFamilyNameFromFullName
 	PackageIdFromFullName
 
+	;; appstate.c
+	RegisterAppStateChangeNotification
+	UnregisterAppStateChangeNotification
+
 	;; synch.c
 	WaitOnAddress
 	WakeByAddressSingle						= KexDll.KexRtlWakeAddressSingle
@@ -207,10 +211,23 @@ EXPORTS
 	VerifyVersionInfoW						= Ext_VerifyVersionInfoW
 
 	;; stubs.c
-	DuplicateHandle							= Ext_DuplicateHandle
+	DuplicateHandle							= Stub_DuplicateHandle
+	GetProcAddress							= Stub_GetProcAddress
 
 	;; heap.c
 	HeapCreate								= Ext_HeapCreate
 
 	;; handle.c
 	CompareObjectHandles
+	SetHandleInformation					= Ext_SetHandleInformation
+
+	;; console.c
+	WriteConsoleA							= Ext_WriteConsoleA
+	WriteConsoleW							= Ext_WriteConsoleW
+	GetConsoleMode							= Ext_GetConsoleMode
+	SetConsoleMode							= Ext_SetConsoleMode
+	FreeConsole								= Ext_FreeConsole
+	GetConsoleTitleA						= Ext_GetConsoleTitleA
+	GetConsoleTitleW						= Ext_GetConsoleTitleW
+	GetConsoleOriginalTitleA				= Ext_GetConsoleOriginalTitleA
+	GetConsoleOriginalTitleW				= Ext_GetConsoleOriginalTitleW

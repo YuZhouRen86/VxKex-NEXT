@@ -2,7 +2,7 @@
 //
 // Module Name:
 //
-//     file.ext
+//     stubs.c
 //
 // Abstract:
 //
@@ -27,7 +27,7 @@
 #include "buildcfg.h"
 #include "kxbasep.h"
 
-KXBASEAPI BOOL WINAPI Ext_DuplicateHandle(
+KXBASEAPI BOOL WINAPI Stub_DuplicateHandle(
 	IN	HANDLE		SourceProcessHandle,
 	IN	HANDLE		SourceHandle,
 	IN	HANDLE		TargetProcessHandle,
@@ -44,4 +44,13 @@ KXBASEAPI BOOL WINAPI Ext_DuplicateHandle(
 		DesiredAccess,
 		Inherit,
 		Options);
+}
+
+KXBASEAPI FARPROC WINAPI Stub_GetProcAddress(
+	IN	HMODULE		ModuleHandle,
+	IN	PCSTR		ProcedureName)
+{
+	return GetProcAddress(
+		ModuleHandle,
+		ProcedureName);
 }

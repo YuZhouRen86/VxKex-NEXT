@@ -32,14 +32,14 @@ EXPORTS
 	EtwEventSetInformation						= KexDll.KexEtwEventSetInformation
 
 	NtQueryInformationThread					= KexDll.Ext_NtQueryInformationThread
-	NtSetInformationThread						= KexDll.Ext_NtSetInformationThread
-	NtQueryInformationProcess					= KexDll.Ext_NtQueryInformationProcess
+	NtSetInformationThread						= Stub_Ext_NtSetInformationThread
+	NtQueryInformationProcess					= Stub_Ext_NtQueryInformationProcess
 	NtNotifyChangeKey							= KexDll.Ext_NtNotifyChangeKey
 	NtNotifyChangeMultipleKeys					= KexDll.Ext_NtNotifyChangeMultipleKeys
 	NtCreateSection								= KexDll.Ext_NtCreateSection
 	NtAssignProcessToJobObject					= KexDll.Ext_NtAssignProcessToJobObject
 
-	RtlInitializeCriticalSection				= KexDll.Ext_RtlInitializeCriticalSection
+	RtlInitializeCriticalSection				= Stub_Ext_RtlInitializeCriticalSection
 	RtlInitializeCriticalSectionAndSpinCount	= KexDll.Ext_RtlInitializeCriticalSectionAndSpinCount
 	RtlInitializeCriticalSectionEx				= KexDll.Ext_RtlInitializeCriticalSectionEx
 
@@ -47,8 +47,8 @@ EXPORTS
 	NtQueryWnfStateData							= KexDll.NtQueryWnfStateData
 
 	ZwQueryInformationThread					= KexDll.Ext_NtQueryInformationThread
-	ZwSetInformationThread						= KexDll.Ext_NtSetInformationThread
-	ZwQueryInformationProcess					= KexDll.Ext_NtQueryInformationProcess
+	ZwSetInformationThread						= Stub_Ext_NtSetInformationThread
+	ZwQueryInformationProcess					= Stub_Ext_NtQueryInformationProcess
 	ZwNotifyChangeKey							= KexDll.Ext_NtNotifyChangeKey
 	ZwNotifyChangeMultipleKeys					= KexDll.Ext_NtNotifyChangeMultipleKeys
 	ZwCreateSection								= KexDll.Ext_NtCreateSection
