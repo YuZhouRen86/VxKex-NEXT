@@ -222,7 +222,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="appmodel.c" />
+    <ClCompile Include="appstate.c" />
     <ClCompile Include="cfgmgr.c" />
+    <ClCompile Include="conansi.c" />
+    <ClCompile Include="console.c" />
+    <ClCompile Include="consup.c" />
     <ClCompile Include="critsect.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="file.c" />

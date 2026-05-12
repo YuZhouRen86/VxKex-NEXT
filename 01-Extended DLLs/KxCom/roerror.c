@@ -175,3 +175,21 @@ KXCOMAPI HRESULT WINAPI RoSetErrorReportingFlags(
 {
 	return S_OK;
 }
+
+KXCOMAPI VOID NORETURN WINAPI RoFailFastWithErrorContext(
+	IN	HRESULT	HResult)
+{
+	EXCEPTION_RECORD ExceptionRecord;
+	CONTEXT Context;
+
+	GetThreadContext(NtCurrentThread(), &Context);
+
+	RtlZeroMemory(&ExceptionRecord, sizeof(ExceptionRecord));
+	ExceptionRecord.ExceptionAddress = ReturnAddress();
+	ExceptionRecord.ExceptionCode = HResult;
+	ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+
+	RaiseFailFastException(&ExceptionRecord, &Context, 0);
+
+	NOT_REACHED;
+}

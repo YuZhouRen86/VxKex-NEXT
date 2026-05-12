@@ -803,6 +803,9 @@ KEXAPI NTSTATUS NTAPI Ext_RtlInitializeCriticalSectionEx(
 	IN	ULONG					SpinCount,
 	IN	ULONG					Flags);
 
+KEXAPI NTSTATUS NTAPI Ext_RtlInitializeCriticalSection(
+	IN	PRTL_CRITICAL_SECTION	CriticalSection);
+
 #pragma endregion
 
 #pragma region KexNt* functions

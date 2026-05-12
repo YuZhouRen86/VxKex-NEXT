@@ -20,3 +20,20 @@ KXBASEAPI BOOL WINAPI CompareObjectHandles(
 
 	return FALSE;
 }
+
+KXBASEAPI BOOL WINAPI Ext_SetHandleInformation(
+	HANDLE	Object,
+	DWORD	Mask,
+	DWORD	Flags)
+{
+	BOOL Result = SetHandleInformation(Object, Mask, Flags);
+	if (!Result) {
+		DWORD Error = GetLastError();
+		if (Error == ERROR_INVALID_PARAMETER) {
+			DWORD FileType = GetFileType(Object);
+			if (FileType == FILE_TYPE_CHAR && Mask == HANDLE_FLAG_INHERIT && Flags == 0) return TRUE;
+		}
+		SetLastError(Error);
+	}
+	return Result;
+}

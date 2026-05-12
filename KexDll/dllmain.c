@@ -213,9 +213,9 @@ BOOL WINAPI DllMain(
 
 			// APPSPECIFICHACK: Environment variable hack for Python to disable
 			// PyREPL.
-			if (StringBeginsWithI(KexData->ImageBaseName.Buffer, L"python")) {
+			/*if (StringBeginsWithI(KexData->ImageBaseName.Buffer, L"python")) {
 				AshApplyPythonEnvironmentVariableHacks();
-			}
+			}*/
 
 			// APPSPECIFICHACK: Environment variable hack for Node.js to skip
 			// platform check.
