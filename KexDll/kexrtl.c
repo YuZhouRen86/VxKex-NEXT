@@ -838,6 +838,62 @@ KEXAPI PIMAGE_SECTION_HEADER NTAPI KexRtlSectionTableFromRva(
 	return NULL;
 }
 
+//
+// Find a section header from the name of the section, e.g. .qtmimed or .text
+// The section name is case sensitive.
+//
+KEXAPI PIMAGE_SECTION_HEADER NTAPI KexRtlSectionTableFromName(
+	IN	PIMAGE_NT_HEADERS	NtHeaders,
+	IN	PCANSI_STRING		SectionName)
+{
+	PIMAGE_SECTION_HEADER SectionHeader;
+	BYTE DesiredName[IMAGE_SIZEOF_SHORT_NAME];
+	ULONG NumberOfSections;
+	ULONG SectionIndex;
+
+	SectionIndex = 0;
+	NumberOfSections = NtHeaders->FileHeader.NumberOfSections;
+
+	if (NumberOfSections == 0) {
+		// No sections in this image.
+		return NULL;
+	}
+
+	if (SectionName->Length > IMAGE_SIZEOF_SHORT_NAME) {
+		// There will never be a section which matches this name, since section
+		// names are limited to 8 ASCII characters.
+		return NULL;
+	}
+
+	//
+	// Form the DesiredName array by zero-padding the input SectionName string.
+	// Section names are zero-padded.
+	//
+
+	KexRtlZeroMemory(DesiredName, sizeof(DesiredName));
+	KexRtlCopyMemory(DesiredName, SectionName->Buffer, SectionName->Length);
+
+	//
+	// Scan each section and check if the name matches.
+	//
+
+	SectionHeader = IMAGE_FIRST_SECTION(NtHeaders);
+
+	while (SectionIndex < NumberOfSections) {
+		STATIC_ASSERT (sizeof(DesiredName) == RTL_FIELD_SIZE(IMAGE_SECTION_HEADER, Name));
+
+		if (RtlEqualMemory(SectionHeader->Name, DesiredName, sizeof(DesiredName))) {
+			// Found it.
+			return SectionHeader;
+		}
+
+		++SectionIndex;
+		++SectionHeader;
+	}
+
+	return NULL;
+}
+
 // This function ensures that String->Buffer member is suitable for passing to
 // functions that expect C-strings.
 KEXAPI NTSTATUS NTAPI KexRtlNullTerminateUnicodeString(

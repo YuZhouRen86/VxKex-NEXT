@@ -2,18 +2,122 @@
 #include <KexComm.h>
 #include <KexW32ML.h>
 
+KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI FileExists(
+	IN	PCWSTR	Path)
+{
+	HANDLE FindHandle;
+	WIN32_FIND_DATA FindData;
+
+	FindHandle = FindFirstFile(Path, &FindData);
+
+	if (FindHandle == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
+
+	FindClose(FindHandle);
+	return TRUE;
+}
+
 KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 	IN	PCWSTR	SourceFile,
 	IN	PCWSTR	TargetFile,
 	IN	HANDLE	TransactionHandle OPTIONAL)
 {
 	BOOLEAN Success;
-	HANDLE ExistingTransaction;
 
-	ExistingTransaction = RtlGetCurrentTransaction();
+	if (PathIsDirectory(SourceFile) && PathIsDirectory(TargetFile) && FileExists(TargetFile)) {
+		HANDLE FindHandle;
+		WCHAR FindPath[MAX_PATH];
+		WIN32_FIND_DATA FindData;
+		ULONG LastError;
 
-	if (ExistingTransaction) {
-		RtlSetCurrentTransaction(NULL);
+		//
+		// This code was added to work around what I believe is a bug or deficiency
+		// in Transactional NTFS.
+		//
+		// 1. KexSetup creates a file somewhere under a transaction.
+		// 2. The transaction gets either committed or rolled back and KexSetup exits.
+		// 3. Everything is OK.
+		// 4. Some app memory-maps one of the files that USED to be transacted, for
+		//    example, a DLL or BDI.
+		// 5. For some reason this causes the TxF behavior to resurface and all the
+		//    directory components leading up to that file become non-renameable.
+		//
+		// Even though as far as I can tell the transaction is no longer active, some
+		// remnant of the transaction remains until the computer is restarted.
+		//
+		// I weighed up whether to do this or to just remove transaction support from
+		// KexSetup altogether but ended up doing this. Basically, transactions are
+		// important so that VxKex is either "fully installed" or "not installed"
+		// without any weird half-measures that can break the user's system due to
+		// e.g. IFEO entries remaining while VxKex is in an unusable state.
+		//
+		// What we'll do instead of renaming directories is we'll just recurse into
+		// the source directory and call SupersedeFile on all the child items.
+		//
+
+		// create a path that is %SourceFile%\*
+		StringCchCopy(FindPath, ARRAYSIZE(FindPath), SourceFile);
+		PathCchAppend(FindPath, ARRAYSIZE(FindPath), L"*");
+
+		if (TransactionHandle) {
+			FindHandle = FindFirstFileTransacted(
+				FindPath,
+				FindExInfoBasic,
+				&FindData,
+				FindExSearchNameMatch,
+				NULL,
+				0,
+				TransactionHandle);
+		} else {
+			FindHandle = FindFirstFileEx(
+				FindPath,
+				FindExInfoBasic,
+				&FindData,
+				FindExSearchNameMatch,
+				NULL,
+				0);
+		}
+
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+				// No files in the directory, so everything is OK
+				return TRUE;
+			}
+
+			return FALSE;
+		}
+
+		do {
+			WCHAR SourcePath[MAX_PATH];
+			WCHAR TargetPath[MAX_PATH];
+
+			if (StringEqual(FindData.cFileName, L".") || StringEqual(FindData.cFileName, L"..")) {
+				continue;
+			}
+
+			StringCchCopy(SourcePath, ARRAYSIZE(SourcePath), SourceFile);
+			PathCchAppend(SourcePath, ARRAYSIZE(SourcePath), FindData.cFileName);
+
+			StringCchCopy(TargetPath, ARRAYSIZE(TargetPath), TargetFile);
+			PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), FindData.cFileName);
+			
+			Success = SupersedeFile(SourcePath, TargetPath, TransactionHandle);
+
+			if (!Success) {
+				break;
+			}
+		} until (!FindNextFile(FindHandle, &FindData));
+
+		LastError = GetLastError();
+		FindClose(FindHandle);
+		SetLastError(LastError);
+
+		if (LastError != ERROR_NO_MORE_FILES) {
+			return FALSE;
+		}
+
+		return TRUE;
 	}
 
 	if (TransactionHandle) {
@@ -89,10 +193,6 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 					MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
 			}
 		}
-	}
-
-	if (ExistingTransaction) {
-		RtlSetCurrentTransaction(ExistingTransaction);
 	}
 
 	return Success;

@@ -193,6 +193,6 @@ VOID KexMessageBoxF(
 NORETURN VOID KexHeErrorBox(
 	IN	PCWSTR	ErrorMessage)
 {
-	KexMessageBox(MB_ICONERROR, L"Application Error (VxKex)", ErrorMessage);
+	KexMessageBox(MB_ICONERROR, L"Application Error (VxKex NEXT)", ErrorMessage);
 	NtTerminateProcess(NtCurrentProcess(), STATUS_KEXDLL_INITIALIZATION_FAILURE);
 }

@@ -2,9 +2,68 @@
 #include "kxcomp.h"
 #include <KexW32ML.h>
 
-BOOL WINAPI RoOriginateErrorW(
+STATIC ULONG WinRTErrorFlags = RO_ERROR_REPORTING_NONE;
+
+STATIC BOOLEAN ShouldRaiseExceptionOnError(
+	VOID)
+{
+	if (WinRTErrorFlags & RO_ERROR_REPORTING_SUPPRESSEXCEPTIONS) {
+		return FALSE;
+	}
+
+	if (WinRTErrorFlags & RO_ERROR_REPORTING_FORCEEXCEPTIONS) {
+		return TRUE;
+	}
+
+	return IsDebuggerPresent();
+}
+
+STATIC VOID RaiseTransformExceptionIfAppropriate(
+	IN	HRESULT	OldError,
+	IN	HRESULT	NewError,
+	IN	PCWSTR	Message OPTIONAL)
+{
+	ULONG_PTR ExceptionInformation[4];
+
+	if (!ShouldRaiseExceptionOnError()) {
+		return;
+	}
+
+	ExceptionInformation[0] = OldError;
+	ExceptionInformation[1] = NewError;
+	ExceptionInformation[2] = Message ? wcslen(Message) : 0;
+	ExceptionInformation[3] = (ULONG_PTR) Message;
+
+	RaiseException(
+		EXCEPTION_RO_TRANSFORMERROR,
+		0,
+		ARRAYSIZE(ExceptionInformation),
+		ExceptionInformation);
+}
+
+STATIC VOID RaiseOriginateExceptionIfAppropriate(
+	IN	HRESULT	Error,
+	IN	PCWSTR	Message OPTIONAL)
+{
+	ULONG_PTR ExceptionInformation[3];
+
+	if (!ShouldRaiseExceptionOnError()) {
+		return;
+	}
+
+	ExceptionInformation[0] = Error;
+	ExceptionInformation[1] = Message ? wcslen(Message) : 0;
+	ExceptionInformation[2] = (ULONG_PTR) Message;
+
+	RaiseException(
+		EXCEPTION_RO_ORIGINATEERROR,
+		0,
+		ARRAYSIZE(ExceptionInformation),
+		ExceptionInformation);
+}
+
+STATIC BOOL LogWinRTError(
 	IN	HRESULT	Result,
-	IN	ULONG	Length,
 	IN	PCWSTR	Message OPTIONAL)
 {
 	NTSTATUS Status;
@@ -23,6 +82,19 @@ BOOL WINAPI RoOriginateErrorW(
 		L"WINRT: %s: %s", Win32ErrorAsString(Result), Message);
 
 	return NT_SUCCESS(Status);
+}
+
+BOOL WINAPI RoOriginateErrorW(
+	IN	HRESULT	Result,
+	IN	ULONG	Length,
+	IN	PCWSTR	Message OPTIONAL)
+{
+	BOOL Success;
+
+	Success = LogWinRTError(Result, Message);
+	RaiseOriginateExceptionIfAppropriate(Result, Message);
+
+	return Success;
 }
 
 BOOL WINAPI RoOriginateError(
@@ -51,7 +123,7 @@ KXCOMAPI BOOL WINAPI RoOriginateLanguageException(
 	Status = KexLdrGetDllFullNameFromAddress(ReturnAddress(), &FaultingModuleName);
 
 	if (!NT_SUCCESS(Status)) {
-		RtlInitConstantUnicodeString(&FaultingModuleName, L"");
+		RtlInitConstantUnicodeString(&FaultingModuleName, L"(unknown)");
 	}
 
 	KexLogWarningEvent(
@@ -137,6 +209,8 @@ KXCOMAPI BOOL WINAPI RoTransformErrorW(
 	IN	ULONG	MessageLength,
 	IN	PCWSTR	Message OPTIONAL)
 {
+	BOOL Success;
+
 	if (OldError == NewError) {
 		return FALSE;
 	}
@@ -145,7 +219,10 @@ KXCOMAPI BOOL WINAPI RoTransformErrorW(
 		return FALSE;
 	}
 
-	return RoOriginateErrorW(NewError, MessageLength, Message);
+	Success = LogWinRTError(NewError, Message);
+	RaiseTransformExceptionIfAppropriate(OldError, NewError, Message);
+
+	return Success;
 }
 
 KXCOMAPI BOOL WINAPI RoTransformError(
@@ -153,15 +230,11 @@ KXCOMAPI BOOL WINAPI RoTransformError(
 	IN	HRESULT	NewError,
 	IN	HSTRING	Message)
 {
-	if (OldError == NewError) {
-		return FALSE;
-	}
-
-	if (SUCCEEDED(OldError) && SUCCEEDED(NewError)) {
-		return FALSE;
-	}
-
-	return RoOriginateError(NewError, Message);
+	return RoTransformErrorW(
+		OldError,
+		NewError,
+		WindowsGetStringLen(Message),
+		WindowsGetStringRawBuffer(Message, NULL));
 }
 
 KXCOMAPI HRESULT WINAPI RoCaptureErrorContext(
@@ -171,8 +244,26 @@ KXCOMAPI HRESULT WINAPI RoCaptureErrorContext(
 }
 
 KXCOMAPI HRESULT WINAPI RoSetErrorReportingFlags(
-	UINT32	Flags)
+	IN	ULONG	Flags)
 {
+	if (Flags & ~0xF) {
+		return E_INVALIDARG;
+	}
+
+	KexLogDebugEvent(L"WinRT error reporting flags set: 0x%08lx", Flags);
+
+	WinRTErrorFlags = Flags;
+	return S_OK;
+}
+
+KXCOMAPI HRESULT WINAPI RoGetErrorReportingFlags(
+	OUT	PULONG	Flags)
+{
+	if (Flags == NULL) {
+		return E_POINTER;
+	}
+
+	*Flags = WinRTErrorFlags;
 	return S_OK;
 }
 

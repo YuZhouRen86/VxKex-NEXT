@@ -21,11 +21,16 @@
 
 #pragma once
 #include <KexComm.h>
+#include <KexSmp.h>
 
 #ifndef KEXAPI
-#  pragma comment(lib, "KexDll.lib")
+#  ifndef NO_KEXDLL_LIB
+#    pragma comment(lib, "KexDll.lib")
+#  endif
 #  define KEXAPI DECLSPEC_IMPORT
 #endif
+
+#include <KexMls.h>
 
 #ifndef KEX_COMPONENT
 #  error You must define a Unicode component name as the KEX_COMPONENT macro.
@@ -76,43 +81,6 @@
 #define QUERY_KEY_MULTIPLE_VALUE_VALID_MASK \
 	(QUERY_KEY_MULTIPLE_VALUE_FAIL_FAST)
 
-#define KEX_RTL_STRING_MAPPER_CASE_INSENSITIVE_KEYS 1
-#define KEX_RTL_STRING_MAPPER_FLAGS_VALID_MASK (KEX_RTL_STRING_MAPPER_CASE_INSENSITIVE_KEYS)
-
-//
-// When you define new custom NTSTATUS values, make sure to update the code
-// in status.c to convert it into a string.
-//
-
-#define NTSTATUS_SUCCESS			(0x00000000L)
-#define NTSTATUS_INFORMATIONAL		(0x40000000L)
-#define NTSTATUS_WARNING			(0x80000000L)
-#define NTSTATUS_ERROR				(0xC0000000L)
-#define NTSTATUS_CUSTOMER			(0x20000000L)
-#define DEFINE_KEX_NTSTATUS(Severity, Number) ((NTSTATUS) (NTSTATUS_CUSTOMER | Severity | Number))
-
-// Remember to add entries to KexDll\status.c if you add more values.
-
-#define STATUS_USER_DISABLED					DEFINE_KEX_NTSTATUS(NTSTATUS_INFORMATIONAL, 0)
-#define STATUS_ALREADY_INITIALIZED				DEFINE_KEX_NTSTATUS(NTSTATUS_INFORMATIONAL, 1)
-#define STATUS_ALREADY_CONNECTED				DEFINE_KEX_NTSTATUS(NTSTATUS_INFORMATIONAL, 2)
-
-#define STATUS_IMAGE_NO_IMPORT_DIRECTORY		DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 0)
-#define STATUS_STRING_MAPPER_ENTRY_NOT_FOUND	DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 1)
-#define STATUS_REG_DATA_TYPE_MISMATCH			DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 2)
-#define STATUS_KEXDLL_INITIALIZATION_FAILURE	DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 3)
-#define STATUS_VERSION_MISMATCH					DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 4)
-#define STATUS_SOURCE_APPLICATION_MISMATCH		DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 5)
-#define STATUS_TOO_MANY_INDICES					DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 6)
-#define STATUS_INVALID_OPEN_MODE				DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 7)
-#define STATUS_KEXDATA_NOT_INITIALIZED			DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 8)
-#define STATUS_KEXSETUP_FAILURE					DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 9)
-#define STATUS_IMAGE_SECTION_NOT_FOUND			DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 10)
-#define STATUS_DLL_NOT_IN_SYSTEM_ROOT			DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 11)
-#define STATUS_PATH_TOO_SHORT					DEFINE_KEX_NTSTATUS(NTSTATUS_ERROR, 12)
-
-#define STATUS_NOT_SAME_OBJECT					0xC00001AC
-
 #define KEXDATA_FLAG_PROPAGATED				1	// Indicates that this process was spawned from a VxKex-enabled parent
 #define KEXDATA_FLAG_IFEO_OPTIONS_PRESENT	2	// Indicates that this process has VxKex options set in IFEO
 #define KEXDATA_FLAG_MSIEXEC				4	// Indicates that this process is %SystemRoot%\system32\msiexec.exe
@@ -121,6 +89,7 @@
 #define KEXDATA_FLAG_CHROMIUM				32	// This is a Chromium-based application (Chrome, Edge, Electron, QtWebEngine, etc.)
 #define KEXDATA_FLAG_KB2533623_PRESENT		64	// Indicates the DllDirectory APIs are available
 #define KEXDATA_FLAG_FIREFOX				128	// This is a Firefox-based application (Firefox, Thunderbird, etc.)
+#define KEXDATA_FLAG_DOTNET					256	// Indicates a .NET application.
 
 #define KEX_STRONGSPOOF_SHAREDUSERDATA	1
 #define KEX_STRONGSPOOF_REGISTRY		2
@@ -161,22 +130,6 @@ typedef struct _KEX_RTL_QUERY_KEY_MULTIPLE_VARIABLE_TABLE_ENTRY {
 	IN		ULONG							ValueDataTypeRestrict;
 	OUT		ULONG							ValueDataType;
 } TYPEDEF_TYPE_NAME(KEX_RTL_QUERY_KEY_MULTIPLE_VARIABLE_TABLE_ENTRY);
-
-typedef struct _KEX_RTL_STRING_MAPPER {
-	RTL_DYNAMIC_HASH_TABLE	HashTable;
-	ULONG					Flags;
-} TYPEDEF_TYPE_NAME(KEX_RTL_STRING_MAPPER);
-
-typedef struct _KEX_RTL_STRING_MAPPER_ENTRY {
-	UNICODE_STRING	Key;
-	UNICODE_STRING	Value;
-} TYPEDEF_TYPE_NAME(KEX_RTL_STRING_MAPPER_ENTRY);
-
-typedef struct _KEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY {
-	RTL_DYNAMIC_HASH_TABLE_ENTRY	HashTableEntry;
-	UNICODE_STRING					Key;
-	UNICODE_STRING					Value;
-} TYPEDEF_TYPE_NAME(KEX_RTL_STRING_MAPPER_HASH_TABLE_ENTRY);
 
 #define VXLL_VERSION 1
 
@@ -298,6 +251,9 @@ typedef struct _KEX_IFEO_PARAMETERS {
 	ULONG						DisableAppSpecific;
 	KEX_WIN_VER_SPOOF			WinVerSpoof;
 	ULONG						StrongVersionSpoof;				// KEX_STRONGSPOOF_*
+	ULONG						DisableConsoleEnhancements;		// boolean
+	ULONG						TlsForceEnabledProtocols;		// SP_PROT_*
+	ULONG						TlsForceDisabledProtocols;		// SP_PROT_*
 } TYPEDEF_TYPE_NAME(KEX_IFEO_PARAMETERS);
 
 //
@@ -430,49 +386,13 @@ KEXAPI NTSTATUS NTAPI KexRtlCreateDirectoryRecursive(
 KEXAPI PCWSTR NTAPI KexRtlNtStatusToString(
 	IN	NTSTATUS	Status);
 
-KEXAPI NTSTATUS NTAPI KexRtlCreateStringMapper(
-	OUT		PPKEX_RTL_STRING_MAPPER		StringMapper,
-	IN		ULONG						Flags OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexRtlDeleteStringMapper(
-	IN		PPKEX_RTL_STRING_MAPPER		StringMapper);
-
-KEXAPI NTSTATUS NTAPI KexRtlInsertEntryStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER		StringMapper,
-	IN		PCUNICODE_STRING			Key,
-	IN		PCUNICODE_STRING			Value);
-
-KEXAPI NTSTATUS NTAPI KexRtlLookupEntryStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER			StringMapper,
-	IN		PCUNICODE_STRING				Key,
-	OUT		PUNICODE_STRING					Value OPTIONAL);
-
-KEXAPI NTSTATUS NTAPI KexRtlRemoveEntryStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER			StringMapper,
-	IN		PCUNICODE_STRING				Key);
-
-KEXAPI NTSTATUS NTAPI KexRtlApplyStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER			StringMapper,
-	IN OUT	PUNICODE_STRING					KeyToValue);
-
-KEXAPI NTSTATUS NTAPI KexRtlInsertMultipleEntriesStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER				StringMapper,
-	IN		CONST KEX_RTL_STRING_MAPPER_ENTRY	Entries[],
-	IN		ULONG								EntryCount);
-
-KEXAPI NTSTATUS NTAPI KexRtlLookupMultipleEntriesStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER			StringMapper,
-	IN OUT	KEX_RTL_STRING_MAPPER_ENTRY		Entries[],
-	IN		ULONG							EntryCount);
-
-KEXAPI NTSTATUS NTAPI KexRtlBatchApplyStringMapper(
-	IN		PKEX_RTL_STRING_MAPPER			StringMapper,
-	IN OUT	UNICODE_STRING					KeyToValue[],
-	IN		ULONG							KeyToValueCount);
-
 KEXAPI PIMAGE_SECTION_HEADER NTAPI KexRtlSectionTableFromRva(
 	IN	PIMAGE_NT_HEADERS	NtHeaders,
 	IN	ULONG				ImageRva);
+
+KEXAPI PIMAGE_SECTION_HEADER NTAPI KexRtlSectionTableFromName(
+	IN	PIMAGE_NT_HEADERS	NtHeaders,
+	IN	PCANSI_STRING		SectionName);
 
 KEXAPI NTSTATUS NTAPI KexRtlNullTerminateUnicodeString(
 	IN	PUNICODE_STRING	String);
@@ -514,6 +434,16 @@ KEXAPI NTSTATUS NTAPI KexRtlGenerateRandomData(
 	OUT	PVOID	RandomBuffer,
 	IN	ULONG	NumberOfBytesToGenerate);
 
+KEXAPI NTSTATUS NTAPI KexRtlDecryptMemory(
+	IN OUT	PVOID	Memory,
+	IN		ULONG	MemoryCb,
+	IN		ULONG	Flags);
+
+KEXAPI NTSTATUS NTAPI KexRtlEncryptMemory(
+	IN OUT	PVOID	Memory,
+	IN		ULONG	MemoryCb,
+	IN		ULONG	Flags);
+
 #ifdef KEX_ARCH_X64
 #  define KexRtlCurrentProcessBitness() (64)
 #else
@@ -528,6 +458,8 @@ KEXAPI NTSTATUS NTAPI KexRtlGenerateRandomData(
 #define KexRtlAnsiStringBufferCch(AnsiString) ((AnsiString)->MaximumLength)
 #define KexRtlEndOfUnicodeString(UnicodeString) ((UnicodeString)->Buffer + KexRtlUnicodeStringCch(UnicodeString))
 #define KexRtlCopyMemory(Destination, Source, Cb) __movsb((PUCHAR) (Destination), (PUCHAR) (Source), (Cb))
+#define KexRtlFillMemory(Destination, Length, Fill) __stosb((PUCHAR) (Destination), (Fill), (Length))
+#define KexRtlZeroMemory(Destination, Length) KexRtlFillMemory((Destination), (Length), 0)
 
 #define ForEachArrayItem(Array, Index) for (Index = 0; Index < ARRAYSIZE(Array); ++Index)
 
@@ -609,7 +541,7 @@ KEXAPI BOOLEAN NTAPI AshExeBaseNameIs(
 	IN	PCWSTR	ExeName);
 
 KEXAPI BOOLEAN NTAPI AshModuleBaseNameIs(
-	IN	PVOID	AddressInsideModule,
+	IN	PCVOID	AddressInsideModule,
 	IN	PCWSTR	ModuleName);
 
 KEXAPI BOOLEAN NTAPI AshModuleIsWindowsModule(

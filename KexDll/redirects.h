@@ -17,6 +17,13 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("bcryptprimitives",							"kxcryp"			)
 	DLL_REDIRECT("ncrypt",										"kxcryp"			)
 	DLL_REDIRECT("secur32",										"kxcryp"			)
+	DLL_REDIRECT("security",									"kxcryp"			)
+	DLL_REDIRECT("sspicli",										"kxcryp"			)
+
+	// wininet.dll loads schannel directly but what it's really looking for is
+	// secur32 functions. Loading kxschanl is not appropriate and will result
+	// in error messages.
+	DLL_REDIRECT("schannel",									"kxcryp"			)
 	
 	DLL_REDIRECT("BluetoothApis",								"kxuser"			)
 	DLL_REDIRECT("shcore",										"kxuser"			)

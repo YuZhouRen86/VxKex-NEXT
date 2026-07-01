@@ -17,4 +17,10 @@ for /R /D %%f in (Release) do (
     rmdir /S /Q "%%f"
 )
 
+del /A /F /S /Q "02-Prebuilt Data\*.pdb"
+del /A /F /S /Q "02-Prebuilt Data\KexDir\Globalization\Dictionaries\*"
+del /A /F /Q "01-Development Utilities\moz2sst\moz2sst.exe"
+del /A /F /Q "01-Development Utilities\moz2sst\moz2sst.pdb"
+del /A /F /Q "01-Development Utilities\moz2sst\ROOT.sst"
+
 pause

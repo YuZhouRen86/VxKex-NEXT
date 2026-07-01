@@ -20,19 +20,12 @@ EXPORTS
 	KexRtlWriteProcessMemory
 	KexRtlCreateDirectoryRecursive
 	KexRtlNtStatusToString
-	KexRtlCreateStringMapper
-	KexRtlDeleteStringMapper
-	KexRtlInsertEntryStringMapper
-	KexRtlLookupEntryStringMapper
-	KexRtlRemoveEntryStringMapper
-	KexRtlApplyStringMapper
-	KexRtlInsertMultipleEntriesStringMapper
-	KexRtlLookupMultipleEntriesStringMapper
-	KexRtlBatchApplyStringMapper
 	KexRtlSectionTableFromRva
 	KexRtlNullTerminateUnicodeString
 	KexRtlCreateUntrustedDirectoryObject
 	KexRtlGenerateRandomData
+	KexRtlDecryptMemory
+	KexRtlEncryptMemory
 
 	KexRtlWow64GetProcessMachines
 	KexRtlSetBit

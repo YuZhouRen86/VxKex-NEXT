@@ -7,9 +7,6 @@
 // Use KexCfgMessageBox instead
 #undef MessageBox
 
-EXTERN LANGID CURRENTLANG;
-EXTERN PWSTR FRIENDLYAPPNAME;
-
 //
 // cmdline.c
 //
@@ -40,8 +37,8 @@ BOOLEAN RunningInInteractiveWindowStation(
 
 INT KexCfgMessageBox(
 	IN	HWND	ParentWindow OPTIONAL,
-	IN	PWSTR	Message,
-	IN	PWSTR	Title,
+	IN	PCWSTR	Message,
+	IN	PCWSTR	Title,
 	IN	ULONG	Flags);
 
 BOOLEAN KexCfgParseBooleanParameter(

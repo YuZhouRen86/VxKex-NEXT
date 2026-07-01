@@ -43,7 +43,7 @@ VOID DisplayHelpMessage(
 		L"The following flag may be useful in silent unattend mode:\r\n\r\n"
 		L"/KEXDIR:\"<directory path>\" - Specifies the path to which VxKex will be installed. "
 		L"You must use quotes around the directory path if it contains space characters.",
-		FRIENDLYAPPNAME,
+		_(FRIENDLYAPPNAME_ENG),
 		MB_OK);
 }
 
@@ -111,9 +111,9 @@ VOID ProcessCommandLineOptions(
 	if (StringSearchI(CommandLine, L"/UNINSTALL")) {
 		if (ExistingVxKexVersion > InstallerVxKexVersion) {
 			InfoBoxF(
-				L"A version of VxKex NEXT is installed on your computer that is "
+				_(L"A version of VxKex NEXT is installed on your computer that is "
 				L"newer than the version inside this installer. If you would like "
-				L"to uninstall, use a newer version of the setup application.");
+				L"to uninstall, use a newer version of the setup application."));
 			ExitProcess(STATUS_VERSION_MISMATCH);
 		}
 
@@ -129,18 +129,13 @@ VOID ProcessCommandLineOptions(
 		} else if (InstallerVxKexVersion > ExistingVxKexVersion) {
 			OperationMode = OperationModeUpgrade;
 		} else if (InstallerVxKexVersion == ExistingVxKexVersion) {
-			InfoBoxF(
-					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"VxKex NEXT 已安装。如需卸载，请使用控制面板中的“卸载程序”选项。" :
-					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"VxKex NEXT 已安裝。如需解除安裝，請使用控制面板中的「解除安裝程式」選項。" :
-					L"VxKex NEXT is already installed. To uninstall, use \"Remove Programs\" option in Control Panel.");
+			InfoBoxF(_(L"VxKex NEXT is already installed. To uninstall, use \"Remove Programs\" option in Control Panel."));
 			ExitProcess(STATUS_ALREADY_REGISTERED);
 		} else if (ExistingVxKexVersion > InstallerVxKexVersion) {
 			InfoBoxF(
-					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)) ? L"您的计算机上安装的 VxKex NEXT 版本比此安装程序中的版本更新。如需降级，请先卸载现有版本。" :
-					(CURRENTLANG == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL)) ? L"您的電腦上安裝的 VxKex NEXT 版本比此安裝程式中的版本更新。如需降級，請先解除安裝現有版本。" :
-					(L"A version of VxKex NEXT is installed on your computer that is "
-					L"newer than the version inside this installer. If you would "
-					L"like to downgrade, please uninstall the existing version first."));
+				_(L"A version of VxKex NEXT is installed on your computer that is "
+				L"newer than the version inside this installer. If you would "
+				L"like to downgrade, please uninstall the existing version first."));
 			ExitProcess(STATUS_VERSION_MISMATCH);
 		} else {
 			NOT_REACHED;

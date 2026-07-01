@@ -640,6 +640,9 @@ typedef struct _MEM_ADDRESS_REQUIREMENTS {
 #define DOMAIN_GROUP_RID_KEY_ADMINS				(0x0000020EL)
 #define DOMAIN_GROUP_RID_ENTERPRISE_KEY_ADMINS	(0x0000020FL)
 
+// extra NTSTATUS values - not in Windows 7
+#define STATUS_NOT_SAME_OBJECT ((NTSTATUS) 0xC00001AC)
+
 #pragma endregion
 
 #pragma region Data Type Definitions
@@ -4472,6 +4475,20 @@ NTSYSAPI BOOLEAN NTAPI RtlDeleteFunctionTable(
 	IN		PRUNTIME_FUNCTION		FunctionTable);
 #endif
 
+NTSYSAPI NTSTATUS NTAPI RtlIdnToAscii(
+	IN		ULONG	Flags,
+	IN		PCWSTR	SourceString,
+	IN		LONG	SourceStringLength,
+	OUT		PWSTR	DestinationString,
+	IN OUT	PULONG	DestinationStringLength);
+
+NTSYSAPI NTSTATUS NTAPI RtlIdnToUnicode(
+	IN		ULONG	Flags,
+	IN		PCWSTR	SourceString,
+	IN		LONG	SourceStringLength,
+	OUT		PWSTR	DestinationString,
+	IN OUT	PULONG	DestinationStringLength);
+
 #pragma endregion
 
 #pragma region Ldr* function declarations
@@ -4749,6 +4766,39 @@ FORCEINLINE VOID InitializeObjectAttributes(
 	ObjectAttributes->ObjectName = ObjectName;
 	ObjectAttributes->SecurityDescriptor = SecurityDescriptor;
 	ObjectAttributes->SecurityQualityOfService = NULL;
+}
+
+// Buffers must not overlap
+INLINE VOID KexRtlReverseCopyMemory(
+	OUT	PBYTE	Destination,
+	IN	PCBYTE	Source,
+	IN	ULONG	Cb)
+{
+	while (Cb > 0) {
+		*Destination++ = Source[--Cb];
+	}
+}
+
+INLINE VOID KexRtlReverseCopyMemoryInPlace(
+	IN OUT	PBYTE	Memory,
+	IN		ULONG	Cb)
+{
+	PBYTE Start;
+	PBYTE End;
+
+	Start = Memory;
+	End = &Memory[Cb - 1];
+
+	while (Start < End) {
+		BYTE Temp;
+
+		Temp = *Start;
+		*Start = *End;
+		*End = Temp;
+
+		++Start;
+		--End;
+	}
 }
 
 // doubly linked list functions

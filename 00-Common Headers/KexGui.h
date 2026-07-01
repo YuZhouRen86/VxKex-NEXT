@@ -112,6 +112,16 @@ KEXGDECLSPEC extern PCWSTR KexgApplicationFriendlyName;
 KEXGDECLSPEC extern HWND KexgApplicationMainWindow;
 
 //
+// mls.c
+//
+
+KEXGDECLSPEC BOOLEAN KEXGAPI MlsgTranslateWindow(
+	IN	HWND	Window);
+
+KEXGDECLSPEC BOOLEAN KEXGAPI MlsgTranslateWindowNoRecursion(
+	IN	HWND	Window);
+
+//
 // msgbox.c
 //
 
