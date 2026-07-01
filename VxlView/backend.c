@@ -220,7 +220,7 @@ BOOLEAN OpenLogFile(
 						   State->NumberOfLogEntries);
 	}
 	
-	SetWindowTextF(MainWindow, L"%s - %s", FRIENDLYAPPNAME, LogFileNameWin32);
+	SetWindowTextF(MainWindow, L"%s - %s", _(FRIENDLYAPPNAME_ENG), LogFileNameWin32);
 	PopulateSourceComponents(State->LogHandle);
 	ResetFilterControls();
 

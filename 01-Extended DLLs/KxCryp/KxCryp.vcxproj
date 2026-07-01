@@ -220,10 +220,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bcrypt.c" />
+    <ClCompile Include="credhndl.c" />
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="forwards.c" />
+    <ClCompile Include="isi.c" />
     <ClCompile Include="rng.c" />
-    <ClCompile Include="schannel.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buildcfg.h" />

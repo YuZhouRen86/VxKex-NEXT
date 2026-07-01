@@ -59,7 +59,7 @@ STATIC NTSTATUS AshpSetIsChromiumProcess(
 	// Once Chromium locks down the sandbox this call will fail.
 	//
 
-	Status = KexRtlInitializeRandomNumberGenerator();
+	Status = KexRtlInitializeKsec();
 	ASSERT (NT_SUCCESS(Status));
 
 	return Status;
@@ -98,56 +98,108 @@ STATIC NTSTATUS AshpSetIsFirefoxProcess(
 	// Once Chromium locks down the sandbox this call will fail.
 	//
 
-	Status = KexRtlInitializeRandomNumberGenerator();
+	Status = KexRtlInitializeKsec();
 	ASSERT (NT_SUCCESS(Status));
 
 	return Status;
 }
 
+NTSTATUS AshpSetIsDotnetProcess(
+	VOID)
+{
+	NTSTATUS Status;
+	UNICODE_STRING Variable;
+	UNICODE_STRING Value;
+
+	RtlInitConstantUnicodeString(&Variable, L"DOTNET_EnableWriteXorExecute");
+	RtlInitConstantUnicodeString(&Value, L"0");
+
+	Status = RtlSetEnvironmentVariable(NULL, &Variable, &Value);
+	ASSERT (NT_SUCCESS(Status));
+
+	KexData->Flags |= KEXDATA_FLAG_DOTNET;
+	return STATUS_SUCCESS;
+}
+
 //
-// This function is called from within the DLL notification routine (dllnotif.c)
-// and we're supposed to infer from the loaded DLL whether it's some kind of
-// Chromium DLL.
+// Call this function to inform the App-Specific Hack subsystem of a new
+// loaded DLL.
 //
-// Here, we detect CEF and qtwebengine because those are the main Chromium-
-// based frameworks which get loaded in external DLLs. Electron can be detected
-// through module exports of the main EXE, and actual Chrome/Opera/Firefox
-// browsers can be detected through the same method.
-//
-// TODO: Get rid of this somehow. It's extra crap that gets called for every
-// loaded DLL, although we have somewhat mitigated this penalty in the DLL
-// notification function by only calling this function when a non-Windows DLL
-// is loaded.
-//
-NTSTATUS AshPerformChromiumDetectionFromLoadedDll(
+
+VOID AshDllLoadNotification(
 	IN	PCLDR_DLL_NOTIFICATION_DATA	NotificationData)
 {
 	NTSTATUS Status;
-	UNICODE_STRING LibCef;
-	UNICODE_STRING Qt6WebEngineCore;
 	UNICODE_STRING BaseName;
 
-	ASSUME (!(KexData->Flags & KEXDATA_FLAG_CHROMIUM));
+	ASSERT (NotificationData != NULL);
+	ASSERT (!KexData->IfeoParameters.DisableAppSpecific);
 
-	Status = KexRtlPathFindFileName(NotificationData->FullDllName, &BaseName);
+	//
+	// Figure out the base name of the DLL.
+	// We do this instead of using the BaseDllName member of the notification
+	// data struct because the BaseDllName there may or may not include the
+	// .DLL extension.
+	//
+
+	Status = KexRtlPathFindFileName(
+		NotificationData->FullDllName,
+		&BaseName);
+
 	ASSERT (NT_SUCCESS(Status));
 
 	if (!NT_SUCCESS(Status)) {
-		return Status;
+		return;
 	}
 
-	RtlInitConstantUnicodeString(&LibCef, L"libcef.dll");
-	RtlInitConstantUnicodeString(&Qt6WebEngineCore, L"Qt6WebEngineCore.dll");
+	unless (KexData->Flags & KEXDATA_FLAG_CHROMIUM) {
+		UNICODE_STRING LibCef;
+		UNICODE_STRING Qt6WebEngineCore;
 
-	if (RtlEqualUnicodeString(&BaseName, &LibCef, TRUE) ||
-		RtlEqualUnicodeString(&BaseName, &Qt6WebEngineCore, TRUE)) {
+		//
+		// APPSPECIFICHACK: Here, we detect CEF and qtwebengine because those are the
+		// main Chromium- based frameworks which get loaded in external DLLs. Electron
+		// can be detected through module exports of the main EXE, and actual Chrome/
+		// Opera/Firefox browsers can be detected through the same method.
+		//
+		// TODO: Get rid of this somehow. It's extra crap that gets called for every
+		// loaded DLL, although we have somewhat mitigated this penalty in the DLL
+		// notification function by only calling this function when a non-Windows DLL
+		// is loaded.
+		//
 
-		Status = AshpSetIsChromiumProcess();
-		ASSERT (NT_SUCCESS(Status));
+		RtlInitConstantUnicodeString(&LibCef, L"libcef.dll");
+		RtlInitConstantUnicodeString(&Qt6WebEngineCore, L"Qt6WebEngineCore.dll");
+
+		if (RtlEqualUnicodeString(&BaseName, &LibCef, TRUE) ||
+			RtlEqualUnicodeString(&BaseName, &Qt6WebEngineCore, TRUE)) {
+
+			Status = AshpSetIsChromiumProcess();
+			ASSERT (NT_SUCCESS(Status));
+			return;
+		}
 	}
 
-	return Status;
+	unless (KexData->Flags & KEXDATA_FLAG_DOTNET) {
+		UNICODE_STRING CoreClr;
+
+		//
+		// APPSPECIFICHACK: New versions of .NET (at least 7.0 and up) will
+		// consume large amounts of kernel-mode memory due to them assuming Windows
+		// 8.1 or higher. We can set DOTNET_EnableWriteXorExecute=0 in the environment
+		// variables to work around this.
+		//
+
+		RtlInitConstantUnicodeString(&CoreClr, L"coreclr.dll");
+
+		if (RtlEqualUnicodeString(&BaseName, &CoreClr, TRUE)) {
+			Status = AshpSetIsDotnetProcess();
+			ASSERT (NT_SUCCESS(Status));
+			return;
+		}
+	}
 }
+
 
 NTSTATUS AshPerformChromiumDetectionFromModuleExports(
 	IN	PVOID	ModuleBase)
@@ -156,6 +208,7 @@ NTSTATUS AshPerformChromiumDetectionFromModuleExports(
 	ANSI_STRING GetHandleVerifier;
 	ANSI_STRING IsSandboxedProcess;
 	ANSI_STRING g_nt;
+	ANSI_STRING NapiGetVersion;
 	PVOID ProcedureAddress;
 
 	ASSUME (ModuleBase != NULL);
@@ -163,6 +216,29 @@ NTSTATUS AshPerformChromiumDetectionFromModuleExports(
 	RtlInitConstantAnsiString(&GetHandleVerifier, "GetHandleVerifier");
 	RtlInitConstantAnsiString(&IsSandboxedProcess, "IsSandboxedProcess");
 	RtlInitConstantAnsiString(&g_nt, "g_nt");
+	RtlInitConstantAnsiString(&NapiGetVersion, "napi_get_version");
+	
+	//
+	// napi_get_version is exported from the NodeJS and Deno JavaScript
+	// runtimes, which are based on the Chromium V8 javascript engine.
+	// They require the same compatibility fixes as Chromium, so we'll
+	// treat them identically.
+	//
+
+	Status = LdrGetProcedureAddress(
+		ModuleBase,
+		&NapiGetVersion,
+		0,
+		&ProcedureAddress);
+
+	ASSERT (
+		NT_SUCCESS(Status) ||
+		Status == STATUS_PROCEDURE_NOT_FOUND ||
+		Status == STATUS_ENTRYPOINT_NOT_FOUND);
+
+	if (NT_SUCCESS(Status)) {
+		return AshpSetIsChromiumProcess();
+	}
 
 	//
 	// These two function names are exported from Chrome and Electron

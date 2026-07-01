@@ -101,7 +101,7 @@ VOID AshApplyNodeJSEnvironmentVariableHacks(
 // ashcrsup.c
 //
 
-NTSTATUS AshPerformChromiumDetectionFromLoadedDll(
+VOID AshDllLoadNotification(
 	IN	PCLDR_DLL_NOTIFICATION_DATA	NotificationData);
 
 NTSTATUS AshPerformChromiumDetectionFromModuleExports(
@@ -192,10 +192,10 @@ NTSTATUS KexOpenVxlLogForCurrentApplication(
 	OUT	PVXLHANDLE	LogHandle);
 
 //
-// rtlrng.c
+// rtlsec.c
 //
 
-NTSTATUS KexRtlInitializeRandomNumberGenerator(
+NTSTATUS KexRtlInitializeKsec(
 	VOID);
 
 //

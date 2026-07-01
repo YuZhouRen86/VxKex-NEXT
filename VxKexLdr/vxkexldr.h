@@ -3,9 +3,6 @@
 #include <KexComm.h>
 #include "resource.h"
 
-EXTERN LANGID CURRENTLANG;
-EXTERN PWSTR FRIENDLYAPPNAME;
-
 BOOLEAN VklCreateProcess(
 	IN	PCWSTR	Path,
 	IN	PCWSTR	Arguments OPTIONAL);

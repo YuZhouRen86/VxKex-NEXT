@@ -48,6 +48,7 @@
 // headers.
 #define CONCAT(a,b) a##b
 #define _L(str) CONCAT(L,str)
+#define _STR(identifier) #identifier
 #define __DATEW__ _L(__DATE__)
 #define __TIMEW__ _L(__TIME__)
 #define __TIMESTAMPW__ _L(__TIMESTAMP__)
@@ -181,10 +182,11 @@
 #    include <Intrin.h>
 #  pragma warning(pop)
 
+#  include <KexStatus.h>
 #  include <KexTypes.h>
 #  include <KexVer.h>
 
-#  if defined(KEX_ENV_WIN32) && !defined(KEX_TARGET_TYPE_LIB)
+#  if defined(KEX_ENV_WIN32) && !defined(KEX_TARGET_TYPE_LIB) && !defined(KEX_NO_EXTRA_LIBS)
 #    include <KexGui.h>
 #    include <KexW32ML.h>
 #    include <KxCfgHlp.h>
@@ -215,6 +217,11 @@
 
 #  define unless(Condition) if (!(Condition))
 #  define ReturnAddress _ReturnAddress
+
+#  define ByteSwap16 _byteswap_ushort
+#  define ByteSwap32 _byteswap_ulong
+#  define ByteSwap64 _byteswap_uint64
+#  define ByteSwap24(x) (ByteSwap32((ULONG)(x)) >> 8)
 
 #  define PopulationCount16 __popcnt16
 #  define PopulationCount __popcnt
@@ -291,6 +298,13 @@
 //
 #  define CB_TO_CCH(Cb) ((Cb) >> 1)
 #  define CCH_TO_CB(Cch) ((Cch) << 1)
+
+//
+// Converts a bit count to the minimum number of whole bytes needed
+// to contain that many bits (rounds up). For example, BITS_TO_BYTES(521)
+// returns 66, not 65.
+//
+#  define BITS_TO_BYTES(Bits) (((ULONG)(Bits) + 7) / 8)
 
 //
 // Check that a kernel handle is not NULL or INVALID_HANDLE_VALUE.

@@ -162,3 +162,55 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableExplorerCpiwBypass(
 
 	return TRUE;
 }
+
+STATIC HRESULT KxCfgpGetExplorerFullPath(
+	OUT	PWSTR	Buffer,
+	IN	ULONG	BufferCch)
+{
+	HRESULT Result;
+
+	Result = StringCchCopy(
+		Buffer,
+		BufferCch,
+		SharedUserData->NtSystemRoot);
+
+	if (FAILED(Result)) {
+		return Result;
+	}
+
+	Result = PathCchAppend(
+		Buffer,
+		BufferCch,
+		L"explorer.exe");
+	
+	return Result;
+}
+
+KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgQueryUnstableExplorerCpiwBypass(
+	VOID)
+{
+	HRESULT Result;
+	WCHAR ExplorerFullPath[MAX_PATH];
+
+	Result = KxCfgpGetExplorerFullPath(ExplorerFullPath, ARRAYSIZE(ExplorerFullPath));
+	ASSERT (SUCCEEDED(Result));
+
+	return KxCfgGetConfiguration(ExplorerFullPath, NULL);
+}
+
+KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableUnstableExplorerCpiwBypass(
+	IN	BOOLEAN	Enable,
+	IN	HANDLE	TransactionHandle OPTIONAL)
+{
+	HRESULT Result;
+	WCHAR ExplorerFullPath[MAX_PATH];
+	KXCFG_PROGRAM_CONFIGURATION Configuration;
+
+	Result = KxCfgpGetExplorerFullPath(ExplorerFullPath, ARRAYSIZE(ExplorerFullPath));
+	ASSERT (SUCCEEDED(Result));
+
+	KexRtlZeroMemory(&Configuration, sizeof(Configuration));
+	Configuration.Enabled = Enable;
+
+	return KxCfgSetConfiguration(ExplorerFullPath, &Configuration, TransactionHandle);
+}

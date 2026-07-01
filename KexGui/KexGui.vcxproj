@@ -262,6 +262,7 @@
     <ClCompile Include="fldrpkr.c" />
     <ClCompile Include="kexgui.c" />
     <ClCompile Include="locale.c" />
+    <ClCompile Include="mls.c" />
     <ClCompile Include="msgbox.c" />
     <ClCompile Include="shprops.c" />
     <ClCompile Include="window.c" />

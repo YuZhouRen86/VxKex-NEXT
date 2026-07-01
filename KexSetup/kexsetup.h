@@ -28,9 +28,6 @@
 #include "resource.h"
 #include <KexComm.h>
 
-EXTERN LANGID CURRENTLANG;
-EXTERN PWSTR FRIENDLYAPPNAME;
-
 typedef enum {
 	OperationModeInstall,
 	OperationModeUninstall,
@@ -129,6 +126,18 @@ VOID KexSetupRegReadString(
 	IN	PCWSTR	ValueName,
 	OUT	PWSTR	Buffer,
 	IN	ULONG	BufferCch);
+
+BOOLEAN KexSetupFilesAreIdentical(
+	IN	PCWSTR	File1,
+	IN	PCWSTR	File2);
+
+BOOLEAN KexSetupDirectoriesAreIdentical(
+	IN	PCWSTR	Directory1,
+	IN	PCWSTR	Directory2);
+
+BOOLEAN KexSetupFilesOrDirectoriesAreIdentical(
+	IN	PCWSTR	File1,
+	IN	PCWSTR	File2);
 
 VOID KexSetupSupersedeFile(
 	IN	PCWSTR	SourceFile,

@@ -116,7 +116,7 @@ VOID NTAPI KexDllNotificationCallback(
 			PCWSTR FormattingMessage_CHS = L"检测到旧版 MacType 正在运行。此程序（%s）已启用 VxKex NEXT 兼容层，VxKex NEXT 与旧版 MacType（2019.1 和 2025.4.11 之间的版本）同时启用可能导致程序崩溃，更新 MacType 至 2025.6.9 及以上版本即可解决此问题。"
 				L"\n\n"
 				L"建议结束此进程，以防止程序进一步的错误。是否想要立即结束此进程？";
-			PCWSTR FormattingMessage_CHT = L"檢測到舊版 MacType 正在執行。此程式（%s）已啟用 VxKex NEXT 相容層，VxKex NEXT 與舊版 MacType（2019.1 和 2025.4.11 之間的版本）同時啟用可能導致程式當機，更新 MacType 至 2025.6.9 及以上版本即可解決此問題。"
+			PCWSTR FormattingMessage_CHT = L"偵測到舊版 MacType 正在執行。此程式（%s）已啟用 VxKex NEXT 相容層，VxKex NEXT 與舊版 MacType（2019.1 和 2025.4.11 之間的版本）同時啟用可能導致程式當機，更新 MacType 至 2025.6.9 及以上版本即可解決此問題。"
 				L"\n\n"
 				L"建議結束此處理程序，以防止程式進一步的錯誤。是否想要立即結束此處理程序？";
 			PCWSTR WarningTitle_ENG = L"VxKex NEXT Application Warning";
@@ -179,13 +179,7 @@ VOID NTAPI KexDllNotificationCallback(
 
 		unless (KexData->IfeoParameters.DisableAppSpecific) {
 			if (ShouldRewriteImports) {
-				if (!(KexData->Flags & KEXDATA_FLAG_CHROMIUM)) {
-					//
-					// APPSPECIFICHACK: Perform heuristic-based Chromium detection if we don't
-					// already know that this is a Chromium process.
-					//
-					AshPerformChromiumDetectionFromLoadedDll(NotificationData);
-				}
+				AshDllLoadNotification(NotificationData);
 			}
 		}
 

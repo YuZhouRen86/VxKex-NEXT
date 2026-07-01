@@ -250,10 +250,10 @@ BOOL WINAPI DllMain(
 				KexRtlNtStatusToString(Status), Status,
 				NtCurrentPeb()->ImageBaseAddress);
 
-			KexHeErrorBox(
-				L"VxKex could not start because the DLL imports of the main "
+			KexHeErrorBox(_(
+				L"VxKex NEXT could not start because the DLL imports of the main "
 				L"process image could not be rewritten. If the problem persists, "
-				L"please disable VxKex for this program.");
+				L"please disable VxKex NEXT for this program."));
 
 			NOT_REACHED;
 		}

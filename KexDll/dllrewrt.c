@@ -30,7 +30,7 @@
 #include "buildcfg.h"
 #include "kexdllp.h"
 
-STATIC PKEX_RTL_STRING_MAPPER DllRewriteStringMapper = NULL;
+STATIC PKEX_SMP_STRING_MAPPER DllRewriteStringMapper = NULL;
 
 // This header file contains the definition of the DLL rewrite table.
 #include "redirects.h"
@@ -43,7 +43,7 @@ NTSTATUS KexAddDllRewriteEntry(
 	ASSUME (VALID_UNICODE_STRING(DllName));
 	ASSUME (VALID_UNICODE_STRING(RewrittenDllName));
 
-	return KexRtlInsertEntryStringMapper(
+	return SmpInsertEntryStringMapper(
 		DllRewriteStringMapper,
 		DllName,
 		RewrittenDllName);
@@ -55,7 +55,7 @@ NTSTATUS KexRemoveDllRewriteEntry(
 	ASSUME (DllRewriteStringMapper != NULL);
 	ASSUME (VALID_UNICODE_STRING(DllName));
 
-	return KexRtlRemoveEntryStringMapper(
+	return SmpRemoveEntryStringMapper(
 		DllRewriteStringMapper,
 		DllName);
 }
@@ -84,9 +84,9 @@ NTSTATUS KexInitializeDllRewrite(
 	// Create the DLL rewrite string mapper.
 	//
 
-	Status = KexRtlCreateStringMapper(
+	Status = SmpCreateStringMapper(
 		&DllRewriteStringMapper,
-		KEX_RTL_STRING_MAPPER_CASE_INSENSITIVE_KEYS);
+		KEX_SMP_STRING_MAPPER_CASE_INSENSITIVE_KEYS);
 
 	ASSERT (NT_SUCCESS(Status));
 
@@ -203,7 +203,7 @@ STATIC NTSTATUS KexpLookupDllRewriteEntry(
 	// have a rewrite entry for it.
 	//
 
-	Status = KexRtlLookupEntryStringMapper(
+	Status = SmpLookupEntryStringMapper(
 		DllRewriteStringMapper,
 		&CleanDllName,
 		RewrittenDllName);

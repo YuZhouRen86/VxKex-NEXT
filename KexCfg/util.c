@@ -27,8 +27,6 @@
 #include <KexComm.h>
 #include <WtsApi32.h>
 
-EXTERN PWSTR FRIENDLYAPPNAME;
-
 BOOLEAN Interactive;
 ULONG SessionId;
 
@@ -60,8 +58,8 @@ BOOLEAN RunningInInteractiveWindowStation(
 
 INT KexCfgMessageBox(
 	IN	HWND	ParentWindow OPTIONAL,
-	IN	PWSTR	Message,
-	IN	PWSTR	Title,
+	IN	PCWSTR	Message,
+	IN	PCWSTR	Title,
 	IN	ULONG	Flags)
 {
 	BOOLEAN Success;
@@ -88,9 +86,9 @@ INT KexCfgMessageBox(
 		Success = WTSSendMessage(
 			WTS_CURRENT_SERVER_HANDLE,
 			SessionId,
-			Title,
+			(LPWSTR)Title,
 			(ULONG) wcslen(Title) * sizeof(WCHAR),
-			Message,
+			(LPWSTR)Message,
 			(ULONG) wcslen(Message) * sizeof(WCHAR),
 			Flags,
 			0,
@@ -134,7 +132,7 @@ BOOLEAN KexCfgParseBooleanParameter(
 		KexCfgMessageBox(
 			NULL,
 			L"A boolean argument was invalid. Pass the /? argument for more information.",
-			FRIENDLYAPPNAME,
+			_(FRIENDLYAPPNAME_ENG),
 			MB_ICONERROR | MB_OK);
 
 		ExitProcess(STATUS_INVALID_PARAMETER);

@@ -51,9 +51,10 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgGetConfiguration(
 
 	ASSERT (ExeFullPath != NULL);
 	ASSERT (ExeFullPath[0] != '\0');
-	ASSERT (Configuration != NULL);
 
-	RtlZeroMemory(Configuration, sizeof(*Configuration));
+	if (Configuration != NULL) {
+		RtlZeroMemory(Configuration, sizeof(*Configuration));
+	}
 
 	//
 	// Open the IFEO key for this program.
@@ -69,6 +70,12 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgGetConfiguration(
 	if (!NT_SUCCESS(Status)) {
 		SetLastError(RtlNtStatusToDosError(Status));
 		return FALSE;
+	}
+
+	if (Configuration == NULL) {
+		// All the caller wants to know is if the IFEO key exists.
+		SafeClose(KeyHandle);
+		return TRUE;
 	}
 
 	//

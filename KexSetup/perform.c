@@ -4,6 +4,8 @@
 #include <taskschd.h>
 #include <ShlObj.h>
 
+#define VXKEX_NEXT_CPIWBYPALDR_SCHTASK_NAME L"VxKex NEXT CPIW Version Check Bypass DLL Loader Task"
+
 HANDLE KexSetupTransactionHandle = NULL;
 BOOLEAN KexSetupOkToCommitTransaction = FALSE;
 ULONG InstalledSize;
@@ -455,6 +457,296 @@ VOID KexSetupRemoveKexCfgScheduledTask(
 	}
 }
 
+//
+// This function installs the CPIW Version Check Bypass DLL Loader scheduled task.
+//
+// Note: Errors in this function aren't critical.
+//
+VOID KexSetupAddCpiwBypaLdrScheduledTask(
+    VOID)
+{
+    HRESULT Result;
+    VARIANT VariantNull;
+    WCHAR TaskXml[4096];
+
+    ITaskService *TaskService;
+    ITaskFolder *TaskFolder;
+    IRegisteredTask *KexCfgTask;
+
+    ZeroMemory(&VariantNull, sizeof(VariantNull));
+    TaskService = NULL;
+    TaskFolder = NULL;
+    KexCfgTask = NULL;
+
+    Result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (FAILED(Result)) {
+        ASSERT (SUCCEEDED(Result));
+        return;
+    }
+
+    try {
+        Result = CoCreateInstance(
+            &CLSID_TaskScheduler,
+            NULL,
+            CLSCTX_INPROC_SERVER,
+            &IID_ITaskService,
+            (PPVOID) &TaskService);
+
+        if (FAILED(Result)) {
+            ASSERT (SUCCEEDED(Result));
+            return;
+        }
+
+        //
+        // Connect to the Task Scheduler service.
+        //
+
+        Result = ITaskService_Connect(
+            TaskService,
+            VariantNull,
+            VariantNull,
+            VariantNull,
+            VariantNull);
+
+        if (FAILED(Result)) {
+            ASSERT (SUCCEEDED(Result));
+            return;
+        }
+
+        //
+        // Get the root Task Scheduler folder interface so we can use it to
+        // register a task.
+        //
+
+        Result = ITaskService_GetFolder(
+            TaskService,
+            L"\\",
+            &TaskFolder);
+
+        if (FAILED(Result)) {
+            ASSERT (SUCCEEDED(Result));
+            return;
+        }
+
+        //
+        // Format the XML string that we'll use to register the task.
+        // Now includes a logon trigger, runs CpiwBypaLdr.exe without arguments,
+        // and uses the BUILTIN\Users group with LeastPrivilege run level.
+        //
+
+        Result = StringCchPrintf(
+            TaskXml,
+            ARRAYSIZE(TaskXml),
+            L"<?xml version='1.0' encoding='UTF-16'?>\r\n"
+            L"<Task version='1.3' xmlns='http://schemas.microsoft.com/windows/2004/02/mit/task'>\r\n"
+            L"  <RegistrationInfo>\r\n"
+            L"    <Author>YuZhouRen</Author>\r\n"
+            L"    <Source>VxKex NEXT</Source>\r\n"
+            L"    <Description>\r\n"
+            L"This scheduled task runs CpiwBypaLdr.exe automatically at every user logon "
+            L"with the privileges of the logged-on user (non-administrative). "
+            L"It is also available for on-demand execution. You may safely disable or remove "
+            L"this task if it is not needed."
+            L"    </Description>\r\n"
+            L"  </RegistrationInfo>\r\n"
+            L"  <Triggers>\r\n"
+            L"    <LogonTrigger>\r\n"
+            L"      <Enabled>true</Enabled>\r\n"
+            L"    </LogonTrigger>\r\n"
+            L"  </Triggers>\r\n"
+            L"  <Principals>\r\n"
+            L"    <Principal>\r\n"
+            L"      <GroupId>BUILTIN\\Users</GroupId>\r\n"
+            L"      <RunLevel>LeastPrivilege</RunLevel>\r\n"
+            L"    </Principal>\r\n"
+            L"  </Principals>\r\n"
+            L"  <Settings>\r\n"
+            L"    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>\r\n"
+            L"    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>\r\n"
+            L"    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>\r\n"
+            L"    <AllowHardTerminate>true</AllowHardTerminate>\r\n"
+            L"    <StartWhenAvailable>false</StartWhenAvailable>\r\n"
+            L"    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>\r\n"
+            L"    <IdleSettings>\r\n"
+            L"      <StopOnIdleEnd>false</StopOnIdleEnd>\r\n"
+            L"      <RestartOnIdle>false</RestartOnIdle>\r\n"
+            L"    </IdleSettings>\r\n"
+            L"    <AllowStartOnDemand>true</AllowStartOnDemand>\r\n"
+            L"    <Enabled>true</Enabled>\r\n"
+            L"    <Hidden>false</Hidden>\r\n"
+            L"    <RunOnlyIfIdle>false</RunOnlyIfIdle>\r\n"
+            L"    <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>\r\n"
+            L"    <UseUnifiedSchedulingEngine>false</UseUnifiedSchedulingEngine>\r\n"
+            L"    <WakeToRun>false</WakeToRun>\r\n"
+            L"    <ExecutionTimeLimit>PT1H</ExecutionTimeLimit>\r\n"
+            L"    <Priority>7</Priority>\r\n"
+            L"  </Settings>\r\n"
+            L"  <Actions>\r\n"
+            L"    <Exec>\r\n"
+            L"      <Command>%s\\CpiwBypaLdr.exe</Command>\r\n"
+			L"      <Arguments>/START</Arguments>\r\n"
+            L"      <WorkingDirectory>%s</WorkingDirectory>\r\n"
+            L"    </Exec>\r\n"
+            L"  </Actions>\r\n"
+            L"</Task>",
+            KexDir,
+            KexDir);
+
+        if (FAILED(Result)) {
+            ASSERT (SUCCEEDED(Result));
+            return;
+        }
+
+        //
+        // Register the task.
+        //
+
+        Result = ITaskFolder_RegisterTask(
+            TaskFolder,
+            VXKEX_NEXT_CPIWBYPALDR_SCHTASK_NAME,
+            TaskXml,
+            TASK_CREATE_OR_UPDATE,
+            VariantNull,
+            VariantNull,
+            TASK_LOGON_GROUP,
+            VariantNull,
+            &KexCfgTask);
+
+        if (FAILED(Result)) {
+            ASSERT (SUCCEEDED(Result));
+            return;
+        }
+
+        //
+        // Set the security descriptor on the task so that every user on the system
+        // can run the task.
+        //
+        // Owner: Builtin Administrator
+        // Group: Builtin Administrator
+        // Local System has full access.
+        // Administrators have full access.
+        // Users can read and execute.
+        //
+
+        Result = IRegisteredTask_SetSecurityDescriptor(
+            KexCfgTask,
+            L"O:BAG:BAD:AI(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGX;;;BU)",
+            0);
+
+        ASSERT (SUCCEEDED(Result));
+
+    } finally {
+        if (TaskService) {
+            ITaskService_Release(TaskService);
+            TaskService = NULL;
+        }
+
+        if (TaskFolder) {
+            ITaskFolder_Release(TaskFolder);
+            TaskFolder = NULL;
+        }
+
+        if (KexCfgTask) {
+            IRegisteredTask_Release(KexCfgTask);
+            KexCfgTask = NULL;
+        }
+
+        CoUninitialize();
+    }
+}
+
+//
+// This function deletes the CPIW Version Check Bypass DLL Loader scheduled task.
+//
+// As with KexSetupAddCpiwBypaLdrScheduledTask, errors in this function
+// aren't critical.
+//
+VOID KexSetupRemoveCpiwBypaLdrScheduledTask(
+	VOID)
+{
+	HRESULT Result;
+	VARIANT VariantNull;
+
+	ITaskService *TaskService;
+	ITaskFolder *TaskFolder;
+
+	ZeroMemory(&VariantNull, sizeof(VariantNull));
+	TaskService = NULL;
+	TaskFolder = NULL;
+
+	Result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+	try {
+		Result = CoCreateInstance(
+			&CLSID_TaskScheduler,
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			&IID_ITaskService,
+			(PPVOID) &TaskService);
+
+		if (FAILED(Result)) {
+			ASSERT (SUCCEEDED(Result));
+			return;
+		}
+
+		//
+		// Connect to Task Scheduler service.
+		//
+
+		Result = ITaskService_Connect(
+			TaskService,
+			VariantNull,
+			VariantNull,
+			VariantNull,
+			VariantNull);
+
+		if (FAILED(Result)) {
+			ASSERT (SUCCEEDED(Result));
+			return;
+		}
+
+		//
+		// Get the ITaskFolder interface so we can use it to delete the task
+		//
+
+		Result = ITaskService_GetFolder(
+			TaskService,
+			L"\\",
+			&TaskFolder);
+
+		if (FAILED(Result)) {
+			ASSERT (SUCCEEDED(Result));
+			return;
+		}
+
+		//
+		// Delete the CpiwBypaLdr scheduled task.
+		//
+
+		Result = ITaskFolder_DeleteTask(
+			TaskFolder,
+			VXKEX_NEXT_CPIWBYPALDR_SCHTASK_NAME,
+			0);
+
+		if (FAILED(Result)) {
+			ASSERT (SUCCEEDED(Result));
+		}
+
+	} finally {
+		if (TaskService) {
+			ITaskService_Release(TaskService);
+			TaskService = NULL;
+		}
+
+		if (TaskFolder) {
+			ITaskFolder_Release(TaskFolder);
+			TaskFolder = NULL;
+		}
+
+		CoUninitialize();
+	}
+}
+
 VOID KexSetupInstallFiles(
 	VOID)
 {
@@ -465,7 +757,7 @@ VOID KexSetupInstallFiles(
 	// This includes everything in Core\, as well as the current program
 	// (kexsetup.exe).
 	//
-	
+
 	KexSetupMoveFileSpecToDirectory(L".\\KexSetup.*", KexDir);
 	KexSetupMoveFileSpecToDirectory(L".\\Core\\*", KexDir);
 
@@ -475,7 +767,7 @@ VOID KexSetupInstallFiles(
 	//
 
 	if (Is64BitOS) {
-		GetWindowsDirectory(TargetPath, ARRAYSIZE(TargetPath));
+		GetSystemWindowsDirectory(TargetPath, ARRAYSIZE(TargetPath));
 		PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), L"sysnative");
 		KexSetupMoveFileSpecToDirectory(L".\\Core64\\KexDll.*", TargetPath);
 
@@ -488,8 +780,8 @@ VOID KexSetupInstallFiles(
 			KexSetupDeleteFile(TargetPath);
 		}
 	}
-	
-	GetWindowsDirectory(TargetPath, ARRAYSIZE(TargetPath));
+
+	GetSystemWindowsDirectory(TargetPath, ARRAYSIZE(TargetPath));
 	PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), L"system32"); // On 64-bit OS, this actually goes to syswow64
 	KexSetupMoveFileSpecToDirectory(L".\\Core32\\KexDll.*", TargetPath);
 
@@ -552,22 +844,6 @@ VOID KexSetupInstallFiles(
 
 	PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), L"*.old_*");
 	KexSetupDeleteFilesBySpec(TargetPath);
-
-	// remove dnsw8, which is no longer included
-	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\dnsw8.dll", KexDir);
-	KexSetupDeleteFile(TargetPath);
-
-	// remove msvw10, which is no longer included
-	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\msvw10.dll", KexDir);
-	KexSetupDeleteFile(TargetPath);
-
-	// remove icu, which is no longer included
-	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\icu.dll", KexDir);
-	KexSetupDeleteFile(TargetPath);
-
-	// remove icuin, which is no longer included
-	KexSetupFormatPath(TargetPath, L"%s\\Kex32\\icuin.dll", KexDir);
-	KexSetupDeleteFile(TargetPath);
 	
 	if (Is64BitOS) {
 		// remove old PDBs
@@ -579,23 +855,42 @@ VOID KexSetupInstallFiles(
 
 		PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), L"*.old_*");
 		KexSetupDeleteFilesBySpec(TargetPath);
-
-		// remove dnsw8
-		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\dnsw8.dll", KexDir);
-		KexSetupDeleteFile(TargetPath);
-
-		// remove msvw10
-		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\msvw10.dll", KexDir);
-		KexSetupDeleteFile(TargetPath);
-
-		// remove icu
-		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\icu.dll", KexDir);
-		KexSetupDeleteFile(TargetPath);
-
-		// remove icuin
-		KexSetupFormatPath(TargetPath, L"%s\\Kex64\\icuin.dll", KexDir);
-		KexSetupDeleteFile(TargetPath);
 	}
+
+	{
+		PCWSTR UnwantedPrebuiltDlls[] = {
+			L"dnsw8.dll",
+			L"dcow8.dll",
+			L"msvw10.dll",
+			L"icu.dll",
+			L"icuin.dll",
+		};
+
+		ULONG Index;
+
+		//
+		// Past releases of VxKex have included some prebuilt DLLs which are no longer
+		// included and so we want to get rid of them now.
+		//
+
+		for (Index = 0; Index < ARRAYSIZE(UnwantedPrebuiltDlls); ++Index) {
+			KexSetupFormatPath(TargetPath, L"%s\\Kex32\\%s", KexDir, UnwantedPrebuiltDlls[Index]);
+			KexSetupDeleteFile(TargetPath);
+
+			if (Is64BitOS) {
+				KexSetupFormatPath(TargetPath, L"%s\\Kex64\\%s", KexDir, UnwantedPrebuiltDlls[Index]);
+				KexSetupDeleteFile(TargetPath);
+			}
+		}
+	}
+
+	//
+	// WolfSSL-based KxSChanl included a ROOT.crt (PEM formatted) certificate file.
+	// The new native KxSChanl uses a ROOT.sst file. Delete the old .crt file.
+	//
+
+	KexSetupFormatPath(TargetPath, L"%s\\Certificates\\ROOT.crt", KexDir);
+	KexSetupDeleteFile(TargetPath);
 }
 
 //
@@ -620,8 +915,8 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 			KexSetupTransactionHandle);
 
 		if (!Success) {
-			ErrorBoxF(
-				L"Setup was unable to delete VxKex legacy configuration for \"%s\". %s",
+			ErrorBoxF(_(
+				L"Setup was unable to delete VxKex legacy configuration for \"%s\". %s"),
 				ExeFullPathOrBaseName, GetLastErrorAsString());
 
 			RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
@@ -629,7 +924,7 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 
 		return TRUE;
 	}
-	
+
 	ASSERT (!PathIsRelative(ExeFullPathOrBaseName));
 
 	if (PreserveConfig) {
@@ -649,8 +944,8 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 				KexSetupTransactionHandle);
 
 			if (!Success) {
-				ErrorBoxF(
-					L"Setup was unable to disable VxKex for \"%s\". %s",
+				ErrorBoxF(_(
+					L"Setup was unable to disable VxKex for \"%s\". %s"),
 					ExeFullPathOrBaseName, GetLastErrorAsString());
 
 				RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
@@ -662,8 +957,8 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 			KexSetupTransactionHandle);
 		
 		if (!Success) {
-			ErrorBoxF(
-				L"Setup was unable to delete VxKex configuration for \"%s\". %s",
+			ErrorBoxF(_(
+				L"Setup was unable to delete VxKex configuration for \"%s\". %s"),
 				ExeFullPathOrBaseName, GetLastErrorAsString());
 
 			RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
@@ -683,7 +978,7 @@ VOID KexSetupUninstall(
 	// If PreserveConfig is TRUE, disable VxKex for all programs.
 	// Otherwise, delete all VxKex program configuration.
 	//
-	
+
 	KxCfgEnumerateConfiguration(
 		KexSetupConfigurationEnumerationCallback,
 		NULL);
@@ -714,12 +1009,7 @@ VOID KexSetupUninstall(
 
 		//
 		// Schedule the temporary file and directory to be deleted later.
-		// We have to temporarily set the transaction to NULL, since the
-		// MoveFileTransacted API doesn't like it when you already have a
-		// transaction handle in the TEB.
 		//
-
-		RtlSetCurrentTransaction(NULL);
 
 		MoveFileTransacted(
 			NewKexSetupLocation,
@@ -738,21 +1028,20 @@ VOID KexSetupUninstall(
 			NULL,
 			MOVEFILE_DELAY_UNTIL_REBOOT,
 			KexSetupTransactionHandle);
-		
-		RtlSetCurrentTransaction(KexSetupTransactionHandle);
 	}
-	
+
 	//
 	// Delete the rest of KexDir and remove KexDll from system32 and syswow64.
 	//
+
 	KexSetupRemoveDirectoryRecursive(KexDir);
 
-	GetWindowsDirectory(PathBuffer, ARRAYSIZE(PathBuffer));
+	GetSystemWindowsDirectory(PathBuffer, ARRAYSIZE(PathBuffer));
 	PathCchAppend(PathBuffer, ARRAYSIZE(PathBuffer), L"system32\\KexDll.*");
 	KexSetupDeleteFilesBySpec(PathBuffer);
 
 	if (Is64BitOS) {
-		GetWindowsDirectory(PathBuffer, ARRAYSIZE(PathBuffer));
+		GetSystemWindowsDirectory(PathBuffer, ARRAYSIZE(PathBuffer));
 		PathCchAppend(PathBuffer, ARRAYSIZE(PathBuffer), L"sysnative\\KexDll.*");
 		KexSetupDeleteFilesBySpec(PathBuffer);
 	}
@@ -774,11 +1063,15 @@ VOID KexSetupUninstall(
 				leave;
 			}
 
+			// We do all this rather than using KexSetupRemoveDirectoryRecursive
+			// because the LogDir is a user-controlled location. Imagine how bad
+			// it would be if the user set LogDir to his desktop and we just go
+			// and delete his entire desktop.
 			KexSetupRegReadString(VxKexKeyHandle, L"LogDir", PathBuffer, ARRAYSIZE(PathBuffer));
 			PathCchAppend(PathBuffer, ARRAYSIZE(PathBuffer), L"*.vxl");
 			KexSetupDeleteFilesBySpec(PathBuffer);
 			PathCchRemoveFileSpec(PathBuffer, ARRAYSIZE(PathBuffer));
-			RemoveDirectory(PathBuffer);
+			RemoveDirectoryTransacted(PathBuffer, KexSetupTransactionHandle);
 			SafeClose(VxKexKeyHandle);
 
 			VxKexKeyHandle = KxCfgOpenVxKexRegistryKey(
@@ -794,7 +1087,7 @@ VOID KexSetupUninstall(
 			PathCchAppend(PathBuffer, ARRAYSIZE(PathBuffer), L"*.vxl");
 			KexSetupDeleteFilesBySpec(PathBuffer);
 			PathCchRemoveFileSpec(PathBuffer, ARRAYSIZE(PathBuffer));
-			RemoveDirectory(PathBuffer);
+			RemoveDirectoryTransacted(PathBuffer, KexSetupTransactionHandle);
 		} except (GetExceptionCode() == STATUS_KEXSETUP_FAILURE) {
 			// ignore error - not critical
 		}
@@ -857,7 +1150,7 @@ VOID KexSetupUninstall(
 	//
 	// Remove .vxl disk cleanup handler.
 	//
-	
+
 	Success = KxCfgRemoveDiskCleanupHandler(KexSetupTransactionHandle);
 	ASSERT (Success);
 
@@ -884,7 +1177,7 @@ VOID KexSetupUninstall(
 	//
 	// Remove VxKex context menu entry
 	//
-	
+
 	Success = KxCfgConfigureShellContextMenuEntries(
 		FALSE,
 		FALSE,
@@ -905,6 +1198,8 @@ VOID KexSetupUninstall(
 
 	KexSetupRemoveKexCfgScheduledTask();
 
+	KexSetupRemoveCpiwBypaLdrScheduledTask();
+
 	KexSetupDeleteLinkFromStartMenu();
 }
 
@@ -915,8 +1210,8 @@ VOID KexSetupInstall(
 	ULONG ErrorCode;
 	HKEY KeyHandle;
 	WCHAR TargetPath[MAX_PATH];
+	WCHAR SystemLogDir[MAX_PATH];
 	WCHAR UserLogDir[MAX_PATH];
-	WCHAR LogDir[MAX_PATH];
 
 	//
 	// Get the installed size (required when adding the uninstall entry)
@@ -949,18 +1244,20 @@ VOID KexSetupInstall(
 		KEY_READ | KEY_WRITE,
 		&KeyHandle);
 
-	ASSERT (KeyHandle != NULL);
-	ASSERT (KeyHandle != INVALID_HANDLE_VALUE);
-	ASSERT (InstallerVxKexVersion & 0x80000000);
-
 	try {
+		ErrorCode = ExpandEnvironmentStrings(
+			L"%PROGRAMDATA%\\VxKex\\Logs",
+			SystemLogDir,
+			ARRAYSIZE(SystemLogDir));
+
+		ASSERT (ErrorCode != 0);
+		ASSERT (ErrorCode <= ARRAYSIZE(SystemLogDir));
+
 		KexSetupRegWriteI32(KeyHandle, L"InstalledVersion", InstallerVxKexVersion);
 		KexSetupRegWriteString(KeyHandle, L"KexDir", KexDir);
-		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, 0, (LPWSTR)LogDir);
-		StringCchCat(LogDir, MAX_PATH, L"\\VxKex\\Logs");
-		KexSetupRegWriteString(KeyHandle, L"LogDir", LogDir);
+		KexSetupRegWriteString(KeyHandle, L"LogDir", SystemLogDir);
 	} finally {
-		RegCloseKey(KeyHandle);
+		SafeClose(KeyHandle);
 	}
 
 	//
@@ -973,10 +1270,7 @@ VOID KexSetupInstall(
 		KEY_READ | KEY_WRITE,
 		&KeyHandle);
 
-	try {	
-		ASSERT (KeyHandle != NULL);
-		ASSERT (KeyHandle != INVALID_HANDLE_VALUE);
-
+	try {
 		//
 		// Since the HKCU LogDir value is non-critical, we won't bother informing the
 		// user of errors in ExpandEnvironmentStrings.
@@ -997,8 +1291,7 @@ VOID KexSetupInstall(
 				UserLogDir);
 		}
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	//
@@ -1017,8 +1310,7 @@ VOID KexSetupInstall(
 		KexSetupRegWriteI32(KeyHandle, L"VerifierFlags", 0x80000000);
 		KexSetupRegWriteString(KeyHandle, L"VerifierDlls", L"KexDll.dll");
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	//
@@ -1026,7 +1318,8 @@ VOID KexSetupInstall(
 	// This step is not critical, so we do not fail if it doesn't succeed.
 	//
 
-	KxCfgEnableVxKexForMsiexec(TRUE, KexSetupTransactionHandle);
+	Success = KxCfgEnableVxKexForMsiexec(TRUE, KexSetupTransactionHandle);
+	ASSERT (Success);
 
 	//
 	// Call subroutine to install VxKex files.
@@ -1067,8 +1360,7 @@ VOID KexSetupInstall(
 			NULL,
 			L"vxlfile");
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	KexSetupCreateKey(
@@ -1083,8 +1375,7 @@ VOID KexSetupInstall(
 			NULL,
 			L"VxLog File");
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	KexSetupCreateKey(
@@ -1101,8 +1392,7 @@ VOID KexSetupInstall(
 			NULL,
 			TargetPath);
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	KexSetupCreateKey(
@@ -1120,8 +1410,7 @@ VOID KexSetupInstall(
 			NULL,
 			TargetPath);
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	//
@@ -1132,7 +1421,6 @@ VOID KexSetupInstall(
 		KexDir,
 		UserLogDir,
 		KexSetupTransactionHandle);
-
 	ASSERT (Success);
 
 	//
@@ -1172,8 +1460,7 @@ VOID KexSetupInstall(
 		KexSetupRegWriteString(KeyHandle, NULL, TargetPath);
 		KexSetupRegWriteString(KeyHandle, L"ThreadingModel", L"Apartment");
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	if (Is64BitOS) {
@@ -1190,8 +1477,7 @@ VOID KexSetupInstall(
 			KexSetupRegWriteString(KeyHandle, NULL, TargetPath);
 			KexSetupRegWriteString(KeyHandle, L"ThreadingModel", L"Apartment");
 		} finally {
-			RegCloseKey(KeyHandle);
-			KeyHandle = NULL;
+			SafeClose(KeyHandle);
 		}
 	}
 
@@ -1204,8 +1490,7 @@ VOID KexSetupInstall(
 	try {
 		KexSetupRegWriteString(KeyHandle, NULL, CLSID_STRING_KEXSHLEX);
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	KexSetupCreateKey(
@@ -1217,8 +1502,7 @@ VOID KexSetupInstall(
 	try {
 		KexSetupRegWriteString(KeyHandle, NULL, CLSID_STRING_KEXSHLEX);
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	KexSetupCreateKey(
@@ -1230,8 +1514,7 @@ VOID KexSetupInstall(
 	try {
 		KexSetupRegWriteString(KeyHandle, NULL, CLSID_STRING_KEXSHLEX);
 	} finally {
-		RegCloseKey(KeyHandle);
-		KeyHandle = NULL;
+		SafeClose(KeyHandle);
 	}
 
 	//
@@ -1302,20 +1585,16 @@ VOID KexSetupInstall(
 
 	KexSetupAddKexCfgScheduledTask();
 
+	KexSetupAddCpiwBypaLdrScheduledTask();
+
 	KexSetupCreateLinkToStartMenu();
 }
 
 VOID KexSetupUpgrade(
 	VOID)
 {
-	HKEY VxKexKeyHandle;
-
-	//
-	// 1. Uninstall Pre-Rewrite Version if present
-	// 2. Update VxKex Registry Key
-	// 3. Call Subroutine To Install VxKex Files
-	// 4. Update Uninstall Entry
-	//
+	BOOLEAN Success;
+	HKEY KeyHandle;
 
 	//
 	// If pre-rewrite version is present, we will do a full uninstall and reinstall.
@@ -1333,27 +1612,43 @@ VOID KexSetupUpgrade(
 	// but is no longer used.
 	//
 
-	VxKexKeyHandle = KxCfgOpenVxKexRegistryKey(
+	KeyHandle = KxCfgOpenVxKexRegistryKey(
 		FALSE,
 		KEY_READ | KEY_WRITE,
 		KexSetupTransactionHandle);
 
-	if (!VxKexKeyHandle) {
+	if (!KeyHandle) {
 		ErrorBoxF(L"Setup was unable to open the VxKex HKLM registry key. %s", GetLastErrorAsString());
 		RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
 	}
 
 	try {
-		KexSetupRegWriteI32(VxKexKeyHandle, L"InstalledVersion", InstallerVxKexVersion);
-
-		//
-		// Delete the DllRewrite key which was present in older versions, but is
-		// no longer wanted.
-		//
-
-		KexSetupDeleteKey(VxKexKeyHandle, L"DllRewrite");
+		KexSetupRegWriteI32(KeyHandle, L"InstalledVersion", InstallerVxKexVersion);
+		KexSetupDeleteKey(KeyHandle, L"DllRewrite");
 	} finally {
-		RegCloseKey(VxKexKeyHandle);
+		SafeClose(KeyHandle);
+	}
+
+	//
+	// In version 1.1.6.1896 we added a Security Support Provider which enabled
+	// support for TLS 1.3. This was registered through the registry value
+	// HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SecurityProviders.
+	//
+	// This was suboptimal since it caused KxSChanl to be loaded into random
+	// applications, even when VxKex was not enabled.
+	//
+	// For version 1.2.0.1994 we changed KxSChanl to no longer be globally
+	// registered. Even though 1.1.6.x was never officially released, various
+	// beta/pre-release versions were distributed, which means we now have to
+	// delete the legacy SSP registration.
+	//
+
+	Success = KxCfgEnableLegacyKxSChanlSsp(FALSE, KexSetupTransactionHandle);
+	ASSERT (Success);
+
+	if (KxCfgQueryUnstableExplorerCpiwBypass()) {
+		Success = KxCfgEnableUnstableExplorerCpiwBypass(FALSE, KexSetupTransactionHandle);
+		ASSERT (Success);
 	}
 
 	//
@@ -1367,7 +1662,9 @@ VOID KexSetupUpgrade(
 	//
 
 	KexSetupWriteUninstallEntry();
-	
+
+	KexSetupAddCpiwBypaLdrScheduledTask();
+
 	KexSetupCreateLinkToStartMenu();
 }
 
@@ -1460,6 +1757,7 @@ FailDebugPrivilege:
 		CloseHandle(ParentProcess);
 
 		ASSERT (ElevatedProcess != NULL);
+
 		SendMessage(MainWindow, WM_USER + 1, 0, (LPARAM) ElevatedProcess);
 	}
 
@@ -1471,11 +1769,12 @@ FailDebugPrivilege:
 		Success = KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir));
 
 		if (!Success) {
-			ErrorBoxF(
-				L"Setup was unable to determine the location of the existing VxKex installation. %s",
+			ErrorBoxF(_(
+				L"Setup was unable to determine the location "
+				L"of the existing VxKex installation. %s"),
 				GetLastErrorAsString());
 
-			ExitProcess(STATUS_UNSUCCESSFUL);
+			ExitProcess(STATUS_KEXSETUP_FAILURE);
 		}
 	}
 
@@ -1489,13 +1788,12 @@ FailDebugPrivilege:
 	KexSetupTransactionHandle = CreateSimpleTransaction(L"KexSetup Transaction");
 
 	if (KexSetupTransactionHandle == INVALID_HANDLE_VALUE) {
-		ErrorBoxF(
-			L"Setup was unable to create a transaction for this operation. %s",
+		ErrorBoxF(_(
+			L"Setup was unable to create a transaction for this operation. %s"),
 			GetLastErrorAsString());
-		ExitProcess(STATUS_UNSUCCESSFUL);
-	}
 
-	RtlSetCurrentTransaction(KexSetupTransactionHandle);
+		ExitProcess(STATUS_KEXSETUP_FAILURE);
+	}
 
 	//
 	// Call a subroutine to perform the requested action.
@@ -1516,10 +1814,6 @@ FailDebugPrivilege:
 			NOT_REACHED;
 		}
 
-		// Accidentally calling a *Transacted file API will cause the
-		// transaction handle in the TEB to be set to NULL, so we will
-		// check for that situation here.
-		ASSERT (RtlGetCurrentTransaction() == KexSetupTransactionHandle);
 		KexSetupOkToCommitTransaction = TRUE;
 	} except (GetExceptionCode() == STATUS_KEXSETUP_FAILURE) {
 		KexSetupOkToCommitTransaction = FALSE;
@@ -1530,7 +1824,7 @@ FailDebugPrivilege:
 		Success = NT_SUCCESS(Status);
 
 		if (!Success) {
-			ErrorBoxF(L"Setup failed to commit the transaction. %s", NtStatusAsString(Status));
+			ErrorBoxF(_(L"Setup failed to commit the transaction. %s"), NtStatusAsString(Status));
 		}
 	} else {
 		Success = FALSE;
@@ -1539,11 +1833,8 @@ FailDebugPrivilege:
 
 	ASSERT (NT_SUCCESS(Status));
 	SafeClose(KexSetupTransactionHandle);
-	RtlSetCurrentTransaction(NULL);
 
-	if (Success) {
-		ExitProcess(STATUS_SUCCESS);
-	} else {
-		ExitProcess(STATUS_UNSUCCESSFUL);
+	if (!Success) {
+		ExitProcess(STATUS_KEXSETUP_FAILURE);
 	}
 }

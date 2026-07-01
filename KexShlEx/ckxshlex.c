@@ -102,6 +102,10 @@ ULONG STDMETHODCALLTYPE CKexShlEx_Release(
 	if (NewRefCount == 0) {
 		InterlockedDecrement(&DllReferenceCount);
 		SafeFree(This);
+
+		// Unload MLS translation data when no more property sheets are open.
+		MlsCleanup();
+
 		return 0;
 	}
 

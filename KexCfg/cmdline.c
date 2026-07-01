@@ -33,7 +33,7 @@ STATIC VOID DisplayHelpMessage(
 		L"The /STRONGSPOOF parameter takes one or more of the KEX_STRONGSPOOF_* bit flags, defined in KexDll.h.\r\n"
 		L"\r\n"
 		L"Any values which are not specified on the command line will use default values.",
-		FRIENDLYAPPNAME,
+		_(FRIENDLYAPPNAME_ENG),
 		MB_OK);
 }
 
@@ -62,8 +62,8 @@ VOID KexCfgHandleCommandLine(
 	if (StringSearchI(CommandLine, L"/SCHTASK $(Arg0)")) {
 		KexCfgMessageBox(
 			NULL,
-			L"This scheduled task is not designed to be invoked by the user.",
-			FRIENDLYAPPNAME,
+			_(L"This scheduled task is not designed to be invoked by the user."),
+			_(FRIENDLYAPPNAME_ENG),
 			MB_ICONINFORMATION | MB_OK);
 
 		ExitProcess(STATUS_NOT_SUPPORTED);
@@ -83,7 +83,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"/EXE was specified without an executable name.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -106,7 +106,7 @@ VOID KexCfgHandleCommandLine(
 				KexCfgMessageBox(
 					NULL,
 					L"The argument to /EXE was too long or missing an end quote.",
-					FRIENDLYAPPNAME,
+					_(FRIENDLYAPPNAME_ENG),
 					MB_ICONERROR | MB_OK);
 
 				ExitProcess(STATUS_INVALID_PARAMETER);
@@ -132,7 +132,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /EXE could not be canonicalized and is invalid.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -149,7 +149,7 @@ VOID KexCfgHandleCommandLine(
 				L"The argument to /EXE must be an absolute path with a drive letter. "
 				L"If this program is on a network share, you must map the share as a "
 				L"network drive (right click -> Map network drive...).",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -170,7 +170,7 @@ VOID KexCfgHandleCommandLine(
 					NULL,
 					L"The argument to /EXE cannot be in the Windows directory "
 					L"or the VxKex installation directory.",
-					FRIENDLYAPPNAME,
+					_(FRIENDLYAPPNAME_ENG),
 					MB_ICONERROR | MB_OK);
 
 				ExitProcess(STATUS_INVALID_PARAMETER);
@@ -183,7 +183,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /EXE must have a file name, not just an extension.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -195,7 +195,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /EXE must have a .exe or .msi file extension.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -204,7 +204,7 @@ VOID KexCfgHandleCommandLine(
 		KexCfgMessageBox(
 			NULL,
 			L"/EXE must be specified.",
-			FRIENDLYAPPNAME,
+			_(FRIENDLYAPPNAME_ENG),
 			MB_ICONERROR | MB_OK);
 
 		ExitProcess(STATUS_INVALID_PARAMETER);
@@ -273,7 +273,7 @@ VOID KexCfgHandleCommandLine(
 				KexCfgMessageBox(
 					NULL,
 					L"The argument to /WINVERSPOOF could not be parsed.",
-					FRIENDLYAPPNAME,
+					_(FRIENDLYAPPNAME_ENG),
 					MB_ICONERROR | MB_OK);
 
 				ExitProcess(STATUS_INVALID_PARAMETER);
@@ -283,7 +283,7 @@ VOID KexCfgHandleCommandLine(
 				KexCfgMessageBox(
 					NULL,
 					L"The decimal argument to /WINVERSPOOF is out of range.",
-					FRIENDLYAPPNAME,
+					_(FRIENDLYAPPNAME_ENG),
 					MB_ICONERROR | MB_OK);
 
 				ExitProcess(STATUS_INVALID_PARAMETER);
@@ -311,7 +311,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /STRONGSPOOF could not be parsed.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -321,7 +321,7 @@ VOID KexCfgHandleCommandLine(
 			KexCfgMessageBox(
 				NULL,
 				L"The argument to /STRONGSPOOF contained invalid flags.",
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(STATUS_INVALID_PARAMETER);
@@ -353,13 +353,13 @@ VOID KexCfgHandleCommandLine(
 			StringCchPrintf(
 				ErrorMessage,
 				ARRAYSIZE(ErrorMessage),
-				L"The transaction for this operation could not be committed. %s",
+				_(L"The transaction for this operation could not be committed. %s"),
 				NtStatusAsString(Status));
 
 			KexCfgMessageBox(
 				NULL,
 				ErrorMessage,
-				FRIENDLYAPPNAME,
+				_(FRIENDLYAPPNAME_ENG),
 				MB_ICONERROR | MB_OK);
 
 			ExitProcess(Status);
@@ -375,14 +375,14 @@ VOID KexCfgHandleCommandLine(
 		StringCchPrintf(
 			ErrorMessage,
 			ARRAYSIZE(ErrorMessage),
-			L"The VxKex NEXT configuration for \"%s\" could not be applied due to the following error: %s",
+			_(L"The VxKex NEXT configuration for \"%s\" could not be applied due to the following error: %s"),
 			ExeFullPath,
 			GetLastErrorAsString());
 
 		KexCfgMessageBox(
 			NULL,
 			ErrorMessage,
-			FRIENDLYAPPNAME,
+			_(FRIENDLYAPPNAME_ENG),
 			MB_ICONERROR | MB_OK);
 
 		ExitProcess(STATUS_UNSUCCESSFUL);

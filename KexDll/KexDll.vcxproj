@@ -297,11 +297,10 @@
     <ClCompile Include="ntthread.c" />
     <ClCompile Include="ntwnf.c" />
     <ClCompile Include="propagte.c" />
-    <ClCompile Include="rtlrng.c" />
+    <ClCompile Include="rtlsec.c" />
     <ClCompile Include="rtlwoa.c" />
     <ClCompile Include="rtlwow64.c" />
     <ClCompile Include="status.c" />
-    <ClCompile Include="strmap.c" />
     <ClCompile Include="syscal.c" />
     <ClCompile Include="verspoof.c" />
     <ClCompile Include="vxlopcl.c" />

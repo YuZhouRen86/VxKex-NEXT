@@ -307,25 +307,15 @@ KXUSERAPI HRESULT WINAPI GetDpiForMonitor(
 		*DpiY = GetDeviceCaps(DeviceContext, LOGPIXELSY);
 	}
 
+	//
+	// APPSPECIFICHACK: Java applications using the "awt.dll" framework do not
+	// scale properly on high DPI displays. I couldn't find out how to fix this
+	// properly, so just pretend the screen is 96DPI. It's usable on 120DPI
+	// monitors but unfortunately anything higher and text starts getting too small.
+	//
+
 	unless (KexData->IfeoParameters.DisableAppSpecific) {
-		if (AshExeBaseNameIs(L"java.exe")
-			|| AshExeBaseNameIs(L"ABDownloadManager.exe")
-			|| AshExeBaseNameIs(L"jetbrains_client64.exe")
-			|| AshExeBaseNameIs(L"jetbrains-toolbox.exe")
-			|| AshExeBaseNameIs(L"Fleet.exe")
-			|| AshExeBaseNameIs(L"aqua64.exe")
-			|| AshExeBaseNameIs(L"clion64.exe")
-			|| AshExeBaseNameIs(L"datagrip64.exe")
-			|| AshExeBaseNameIs(L"dataspell64.exe")
-			|| AshExeBaseNameIs(L"goland64.exe")
-			|| AshExeBaseNameIs(L"idea64.exe")
-			|| AshExeBaseNameIs(L"phpstorm64.exe")
-			|| AshExeBaseNameIs(L"pycharm64.exe")
-			|| AshExeBaseNameIs(L"rider64.exe")
-			|| AshExeBaseNameIs(L"rubymine64.exe")
-			|| AshExeBaseNameIs(L"rustrover64.exe")
-			|| AshExeBaseNameIs(L"webstorm64.exe")
-			|| AshExeBaseNameIs(L"writerside64.exe")) {
+		if (AshModuleBaseNameIs(ReturnAddress(), L"awt.dll")) {
 			*DpiX = USER_DEFAULT_SCREEN_DPI;
 			*DpiY = USER_DEFAULT_SCREEN_DPI;
 		}
