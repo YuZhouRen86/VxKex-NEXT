@@ -37,6 +37,9 @@ BOOL WINAPI DllMain(
 
 		KexDataInitialize(&KexData);
 		KexLogDebugEvent(L"DllMain called with DLL_PROCESS_ATTACH");
+		InitializeTouchAndPenPoints();
+	} else if (Reason == DLL_PROCESS_DETACH) {
+		CleanupTouchAndPenPoints();
 	}
 
 	return TRUE;

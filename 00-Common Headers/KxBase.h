@@ -863,4 +863,22 @@ KXBASEAPI BOOL WINAPI Ext_RemoveDllDirectory(
 KXBASEAPI BOOL WINAPI Ext_SetDefaultDllDirectories(
 	IN	ULONG	DirectoryFlags);
 
+//
+// console.c
+//
+
+KXBASEAPI BOOL WINAPI Ext_WriteConsoleA(
+	IN	HANDLE	ConsoleHandle,
+	IN	PCVOID	Buffer,
+	IN	ULONG	CchToWrite,
+	OUT	PULONG	CchWritten OPTIONAL,
+	IN	PVOID	Reserved OPTIONAL);
+
+KXBASEAPI BOOL WINAPI Ext_WriteConsoleW(
+	IN	HANDLE	ConsoleHandle,
+	IN	PCVOID	Buffer,
+	IN	ULONG	CchToWrite,
+	OUT	PULONG	CchWritten OPTIONAL,
+	IN	PVOID	Reserved OPTIONAL);
+
 #endif // if defined(KEX_ENV_WIN32)

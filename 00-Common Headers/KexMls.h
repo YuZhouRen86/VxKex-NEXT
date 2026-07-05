@@ -96,5 +96,8 @@ MLSAPI NTSTATUS NTAPI MlsSetCurrentLangId(
 MLSAPI NTSTATUS NTAPI MlsSetDefaultLangId(
 	IN	LANGID	LangId);
 
+MLSAPI NTSTATUS NTAPI MlsSetParentOfGlobalizationFolder(
+	IN	PWSTR	Path);
+
 MLSAPI PCWSTR NTAPI MlsMapString(
 	IN	PCWSTR	EnglishString);

@@ -180,7 +180,7 @@ STATIC CONST UNICODE_STRING DllRedirects[][2] = {
 	DLL_REDIRECT("api-ms-win-security-base",					"kxbase"			)
 	DLL_REDIRECT("api-ms-win-security-cryptoapi",				"cryptsp"			)
 	DLL_REDIRECT("api-ms-win-security-lsalookup-ansi",			"kxadvapi"			)
-	DLL_REDIRECT("api-ms-win-security-lsalookup",				"sechost"			)
+	DLL_REDIRECT("api-ms-win-security-lsalookup",				"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-security-sddl-ansi",				"kxadvapi"			)
 	DLL_REDIRECT("api-ms-win-security-sddl",					"sechost"			)
 	DLL_REDIRECT("api-ms-win-security-systemfunctions",			"kxadvapi"			)

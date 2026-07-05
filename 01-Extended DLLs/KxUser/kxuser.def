@@ -70,6 +70,8 @@ EXPORTS
 	EnableMouseInPointer
 	IsMouseInPointerEnabled
 	RegisterPointerDeviceNotifications
+	GetWindowFeedbackSetting
+	SetWindowFeedbackSetting
 
 	;;
 	;; processref.c
@@ -127,3 +129,18 @@ EXPORTS
 	;;
 
 	IsWindowArranged
+	
+	;;
+	;; winmsg.c
+	;;
+
+	GetMessageA							= Ext_GetMessageA
+	GetMessageW							= Ext_GetMessageW
+	PeekMessageA						= Ext_PeekMessageA
+	PeekMessageW						= Ext_PeekMessageW
+	DefWindowProcA						= Ext_DefWindowProcA
+	DefWindowProcW						= Ext_DefWindowProcW
+	RegisterTouchWindow					= Ext_RegisterTouchWindow
+	UnregisterTouchWindow				= Ext_UnregisterTouchWindow
+	CreateWindowExA						= Ext_CreateWindowExA
+	CreateWindowExW						= Ext_CreateWindowExW

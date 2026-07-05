@@ -48,6 +48,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -109,6 +110,11 @@
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <MASM>
+      <IncludePaths>
+      </IncludePaths>
+      <CallingConvention>0</CallingConvention>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -141,6 +147,11 @@
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <MASM>
+      <IncludePaths>
+      </IncludePaths>
+      <CallingConvention>0</CallingConvention>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -180,6 +191,11 @@
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <MASM>
+      <IncludePaths>
+      </IncludePaths>
+      <CallingConvention>0</CallingConvention>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -219,6 +235,11 @@
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <MASM>
+      <IncludePaths>
+      </IncludePaths>
+      <CallingConvention>0</CallingConvention>
+    </MASM>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\00-Common Headers\KxUser.h" />
@@ -238,9 +259,11 @@
     <ClCompile Include="pwrnotfy.c" />
     <ClCompile Include="scaling.c" />
     <ClCompile Include="forwards.c" />
+    <ClCompile Include="syscal.c" />
     <ClCompile Include="sysmetrc.c" />
     <ClCompile Include="timer.c" />
     <ClCompile Include="window.c" />
+    <ClCompile Include="winmsg.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kxuser.def" />
@@ -248,7 +271,11 @@
   <ItemGroup>
     <ResourceCompile Include="KxUser.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="syscal64.asm" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

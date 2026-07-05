@@ -71,6 +71,12 @@
     <ClCompile Include="processref.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="winmsg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="syscal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="kxuser.def">
@@ -81,5 +87,10 @@
     <ResourceCompile Include="KxUser.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="syscal64.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

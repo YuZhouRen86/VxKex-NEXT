@@ -321,6 +321,21 @@ KXBASEAPI BOOL WINAPI Ext_WriteFile(
 {
 	ULONG DummyNumberOfBytesWritten;
 
+	if (IsConsoleHandle(FileHandle) && BaseIsConsoleAnsiSupportEnabled(FileHandle)) {
+		//
+		// In order to support ANSI escape sequences, we need to redirect
+		// WriteFile to Ext_WriteConsoleA if we're writing to a console and the
+		// ANSI escape sequence processing is enabled.
+		//
+
+		return Ext_WriteConsoleA(
+			FileHandle,
+			Buffer,
+			NumberOfBytesToWrite,
+			NumberOfBytesWritten,
+			Overlapped);
+	}
+
 	// See comment in Ext_DeviceIoControl for why this is necessary.
 	// They changed the behavior of WriteFile in Windows 8 as well.
 	if (NumberOfBytesWritten == NULL) {
