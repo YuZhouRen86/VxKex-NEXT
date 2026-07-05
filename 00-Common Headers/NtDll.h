@@ -1379,6 +1379,9 @@ typedef struct _API_SET_VALUE_ENTRY {
 	ULONG	ValueLength;
 } TYPEDEF_TYPE_NAME(API_SET_VALUE_ENTRY);
 
+typedef NTSTATUS (NTAPI *PFN_DISPATCH)(
+	IN	PVOID Context OPTIONAL);
+
 typedef struct _PEB {
 	BOOLEAN								InheritedAddressSpace;
 	BOOLEAN								ReadImageFileExecOptions;

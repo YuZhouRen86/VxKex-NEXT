@@ -89,6 +89,11 @@ BOOL WINAPI DllMain(
 	IN	ULONG	Reason,
 	IN	PVOID	Reserved)
 {
+	EXTERN IMAGE_DOS_HEADER __ImageBase;
+	WCHAR DllPath[MAX_PATH] = {0};
+	GetModuleFileName((HMODULE)&__ImageBase, DllPath, MAX_PATH);
+	PathCchRemoveFileSpec(DllPath, ARRAYSIZE(DllPath));
+	MlsSetParentOfGlobalizationFolder(DllPath);
 	MlsSetDefaultLangId(GetUserDefaultUILanguage());
 
 	if (Reason == DLL_PROCESS_ATTACH) {

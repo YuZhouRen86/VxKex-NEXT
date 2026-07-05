@@ -45,6 +45,7 @@ STATIC LANGID MlsDefaultLangId = LANG_NEUTRAL;
 STATIC LANGID MlsOverrideLangId = LANG_NEUTRAL;
 STATIC MLSP_DICTIONARY MlsDictionary = {0};
 STATIC PKEX_SMP_STRING_MAPPER MlsStringMapper = NULL;
+WCHAR ParentOfGlobalizationFolder[MAX_PATH] = {0};
 
 //
 // Get the language ID of the language we will try to translate all strings into.
@@ -337,7 +338,17 @@ STATIC NTSTATUS MlspFormRelativePath(
 		Status = KexDataInitialize(&KexData);
 	}
 
-	if (NT_SUCCESS(Status)) {
+	if (ParentOfGlobalizationFolder[0] != L'\0') {
+		Result = StringCchCat(
+			Buffer,
+			BufferCch,
+			ParentOfGlobalizationFolder);
+
+		ASSERT (SUCCEEDED(Result));
+		if (FAILED(Result)) {
+			return STATUS_BUFFER_OVERFLOW;
+		}
+	} else if (NT_SUCCESS(Status)) {
 		//
 		// We're running in KexDll, so we can use KexDir as a prefix path.
 		//
@@ -980,6 +991,32 @@ MLSAPI NTSTATUS NTAPI MlsSetDefaultLangId(
 	}
 
 	MlsDefaultLangId = LangId;
+
+	Status = MlsInitialize();
+	return Status;
+}
+
+MLSAPI NTSTATUS NTAPI MlsSetParentOfGlobalizationFolder(
+	IN	PWSTR	Path)
+{
+	NTSTATUS Status;
+	HRESULT Result;
+	if (!Path) return STATUS_INVALID_PARAMETER;
+
+	Result = StringCchCat(
+		ParentOfGlobalizationFolder,
+		ARRAYSIZE(ParentOfGlobalizationFolder),
+		Path);
+
+	ASSERT (SUCCEEDED(Result));
+	if (FAILED(Result)) {
+		return STATUS_BUFFER_OVERFLOW;
+	}
+
+	if (!MlsInitialized) return STATUS_SUCCESS;
+
+	Status = MlsCleanup();
+	if (!NT_SUCCESS(Status)) return Status;
 
 	Status = MlsInitialize();
 	return Status;
