@@ -295,6 +295,14 @@ STATIC VOID AddProgram(
 	OPENFILENAME OpenFileInfo;
 	KXCFG_PROGRAM_CONFIGURATION Configuration;
 	HANDLE TransactionHandle;
+	WCHAR FilterString[256] = {0};
+	INT Index;
+
+	StringCchCat(FilterString, ARRAYSIZE(FilterString), _(L"Programs (*.exe, *.msi)"));
+	StringCchCat(FilterString, ARRAYSIZE(FilterString), L"$*.exe;*.msi$");
+	for (Index = 0; FilterString[Index] != L'\0'; ++Index) {
+		if (FilterString[Index] == L'$') FilterString[Index] = L'\0';
+	}
 
 	//
 	// Get a list of one or more programs from the user.
@@ -305,12 +313,12 @@ STATIC VOID AddProgram(
 	RtlZeroMemory(&OpenFileInfo, sizeof(OpenFileInfo));
 	OpenFileInfo.lStructSize		= sizeof(OpenFileInfo);
 	OpenFileInfo.hwndOwner			= MainWindow;
-	OpenFileInfo.lpstrFilter		= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0";
+	OpenFileInfo.lpstrFilter		= FilterString;
 	OpenFileInfo.lpstrFile			= FileNames;
 	OpenFileInfo.nMaxFile			= ARRAYSIZE(FileNames);
 	OpenFileInfo.lpstrTitle			= _(L"Select Program(s)");
 	OpenFileInfo.Flags				= OFN_EXPLORER | OFN_ALLOWMULTISELECT |
-									  OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+		OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 	OpenFileInfo.lpstrDefExt		= L"exe";
 
 	if (GetOpenFileName(&OpenFileInfo) == FALSE) {
@@ -352,9 +360,9 @@ STATIC VOID AddProgram(
 	if (StringBeginsWithI(DirectoryName, SharedUserData->NtSystemRoot)
 		&& !StringEqualI(PathFindFileName(FileName), L"py.exe")
 		&& !StringEqualI(PathFindFileName(FileName), L"pyw.exe")) {
-		// program(s) are in the Windows directory - do not allow
-		ErrorBoxF(_(L"You cannot enable VxKex NEXT for programs in the Windows directory."));
-		return;
+			// program(s) are in the Windows directory - do not allow
+			ErrorBoxF(_(L"You cannot enable VxKex NEXT for programs in the Windows directory."));
+			return;
 	}
 
 	RtlZeroMemory(&Configuration, sizeof(Configuration));
@@ -389,7 +397,7 @@ STATIC VOID AddProgram(
 		if (StringBeginsWithI(FileFullPath, SharedUserData->NtSystemRoot)
 			&& !StringEqualI(PathFindFileName(FileFullPath), L"py.exe")
 			&& !StringEqualI(PathFindFileName(FileFullPath), L"pyw.exe")) {
-			Success = TRUE;
+				Success = TRUE;
 		} else {
 			Success = KxCfgSetConfiguration(
 				FileFullPath,
@@ -581,7 +589,7 @@ STATIC VOID HandleListViewContextMenu(
 
 	HeaderWindow = ListView_GetHeader(ListViewWindow);
 	GetWindowRect(HeaderWindow, &HeaderWindowRect);
-	
+
 	if (PtInRect(&HeaderWindowRect, *ClickPoint)) {
 		// The user has right clicked on the list view header.
 		return;
@@ -616,7 +624,7 @@ STATIC VOID HandleListViewContextMenu(
 	if (!MenuSelection) {
 		return;
 	}
-	
+
 	if (MenuSelection == M_OPENFILELOCATION) {
 		ASSERT (ListViewSelectedCount == 1);
 		OpenSelectedItemLocation();
@@ -643,7 +651,7 @@ STATIC INT CALLBACK KexCfgGuiSortListViewItems(
 	ULONG Length1;
 	ULONG Length2;
 	INT ComparisonResult;
-	
+
 	ListView_GetItemTextEx(ListViewWindow, LParam1, (INT) ColumnIndex, Text1, ARRAYSIZE(Text1), &Length1);
 	ListView_GetItemTextEx(ListViewWindow, LParam2, (INT) ColumnIndex, Text2, ARRAYSIZE(Text2), &Length2);
 
@@ -741,11 +749,11 @@ STATIC INT_PTR CALLBACK DialogProc(
 
 		RtlZeroMemory(&Column, sizeof(Column));
 		Column.mask = LVCF_TEXT | LVCF_WIDTH;
-		
+
 		Column.pszText = (LPWSTR)_(L"Application");
 		Column.cx = DpiScaleX(100);
 		ListView_InsertColumn(ListViewWindow, 0, &Column);
-		
+
 		Column.pszText = (LPWSTR)_(L"Containing folder");
 		ListView_InsertColumn(ListViewWindow, 1, &Column);
 		ListView_SetColumnWidth(ListViewWindow, 1, LVSCW_AUTOSIZE_USEHEADER);
@@ -803,10 +811,10 @@ STATIC INT_PTR CALLBACK DialogProc(
 			(ControlId == IDC_WHICHCONTEXTMENU && NotificationCode == CBN_SELCHANGE) ||
 			(ControlId == IDC_LOGDIR && NotificationCode == EN_CHANGE)) {
 
-			if (UnsavedChanges == FALSE) {
-				UnsavedChanges = TRUE;
-				EnableWindow(GetDlgItem(Window, IDC_APPLY), TRUE);
-			}
+				if (UnsavedChanges == FALSE) {
+					UnsavedChanges = TRUE;
+					EnableWindow(GetDlgItem(Window, IDC_APPLY), TRUE);
+				}
 		}
 
 		if (ControlId == IDC_CANCEL) {

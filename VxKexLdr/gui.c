@@ -76,7 +76,7 @@ INT_PTR CALLBACK VklDialogProc(
 		SetWindowIcon(Window, IDI_APPICON);
 
 		KexDataInitialize(&KexData);
-		
+
 		Uxtheme = LoadLibrary(L"uxtheme.dll");
 		pEnableThemeDialogTexture = (HRESULT (WINAPI *) (HWND, DWORD)) GetProcAddress(Uxtheme, "EnableThemeDialogTexture");
 		if (pEnableThemeDialogTexture) pEnableThemeDialogTexture(Window, ETDT_ENABLE | ETDT_USEAEROWIZARDTABTEXTURE);
@@ -147,13 +147,23 @@ INT_PTR CALLBACK VklDialogProc(
 		} else if (ControlId == IDC_BROWSE) {
 			OPENFILENAME OpenFileInfo;
 			WCHAR FilePath[MAX_PATH];
+			WCHAR FilterString[256] = {0};
+			INT Index;
+
+			StringCchCat(FilterString, ARRAYSIZE(FilterString), _(L"Programs (*.exe, *.msi)"));
+			StringCchCat(FilterString, ARRAYSIZE(FilterString), L"$*.exe;*.msi$");
+			StringCchCat(FilterString, ARRAYSIZE(FilterString), _(L"All Files (*.*)"));
+			StringCchCat(FilterString, ARRAYSIZE(FilterString), L"$*.*$");
+			for (Index = 0; FilterString[Index] != L'\0'; ++Index) {
+				if (FilterString[Index] == L'$') FilterString[Index] = L'\0';
+			}
 
 			GetDlgItemText(Window, IDC_FILEPATH, FilePath, ARRAYSIZE(FilePath));
 
 			RtlZeroMemory(&OpenFileInfo, sizeof(OpenFileInfo));
 			OpenFileInfo.lStructSize	= sizeof(OpenFileInfo);
 			OpenFileInfo.hwndOwner		= Window;
-			OpenFileInfo.lpstrFilter	= L"Programs (*.exe, *.msi)\0*.exe;*.msi\0All Files (*.*)\0*.*\0";
+			OpenFileInfo.lpstrFilter	= FilterString;
 			OpenFileInfo.lpstrFile		= FilePath;
 			OpenFileInfo.nMaxFile		= ARRAYSIZE(FilePath);
 			OpenFileInfo.lpstrTitle		= _(L"Select Program");
@@ -219,7 +229,7 @@ INT_PTR CALLBACK VklDialogProc(
 					WindowWidth, ExpandedWindowHeight,
 					SWP_NOACTIVATE | SWP_NOMOVE |
 					SWP_NOSENDCHANGING | SWP_NOZORDER);
-				
+
 				SetDlgItemText(Window, IDC_MOREOPTIONS, _(L"▲ Hide &options"));
 			}
 

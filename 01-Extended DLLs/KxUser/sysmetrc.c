@@ -33,11 +33,8 @@ INT WINAPI GetSystemMetricsForDpi(
 	case SM_CYMENU:
 	case SM_CYVSCROLL:
 	case SM_CXHSCROLL:
-	case SM_CXMIN:
-	case SM_CXMINTRACK:
-	case SM_CYMIN:
-	case SM_CYMINTRACK:
 	case SM_CXSIZE:
+	case SM_CYSIZE:
 	case SM_CXFRAME:
 	case SM_CYFRAME:
 	case SM_CXICONSPACING:
@@ -51,7 +48,10 @@ INT WINAPI GetSystemMetricsForDpi(
 	case SM_CYMENUSIZE:
 	case SM_CXMENUCHECK:
 	case SM_CYMENUCHECK:
+	case SM_CXPADDEDBORDER:
 		// These are pixel values that have to be scaled according to DPI.
+		// The exact SM_* values that are scaled by this function are obtained
+		// by decompiling Win10 user32.dll.
 		{
 			UINT SystemDpi = GetDpiForSystem();
 			if (SystemDpi == 0) SystemDpi = USER_DEFAULT_SCREEN_DPI;

@@ -466,19 +466,23 @@ KXUSERAPI BOOL WINAPI AdjustWindowRectExForDpi(
 	IN		ULONG	WindowExStyle,
 	IN		ULONG	Dpi)
 {
+	INT SystemDpi;
+
 	if (!Rect) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
+	SystemDpi = GetDpiForSystem();
+
 	Rect->left *= Dpi;
-	Rect->left /= USER_DEFAULT_SCREEN_DPI;
+	Rect->left /= SystemDpi;
 	Rect->top *= Dpi;
-	Rect->top /= USER_DEFAULT_SCREEN_DPI;
+	Rect->top /= SystemDpi;
 	Rect->right *= Dpi;
-	Rect->right /= USER_DEFAULT_SCREEN_DPI;
+	Rect->right /= SystemDpi;
 	Rect->bottom *= Dpi;
-	Rect->bottom /= USER_DEFAULT_SCREEN_DPI;
+	Rect->bottom /= SystemDpi;
 	return AdjustWindowRectEx(
 		Rect,
 		WindowStyle,

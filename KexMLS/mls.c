@@ -207,7 +207,7 @@ STATIC LANGID NTAPI MlspGetIdealLangId(
 	//
 	// We can't get the user's default LANGID. Just use English (default).
 	//
-	
+
 	LangId = LANG_ENGLISH;
 
 Finished:
@@ -321,23 +321,6 @@ STATIC NTSTATUS MlspFormRelativePath(
 	Buffer[3] = '\\';
 	Buffer[4] = '\0';
 
-	//
-	// Decide which prefix path to use.
-	// Figure out if we're using the EXE path or KexDir.
-	//
-
-	RtlInitConstantAnsiString(&KexDataInitializeName, "KexDataInitialize");
-
-	Status = LdrGetProcedureAddress(
-		&__ImageBase,
-		&KexDataInitializeName,
-		0,
-		(PPVOID) &KexDataInitialize);
-
-	if (NT_SUCCESS(Status)) {
-		Status = KexDataInitialize(&KexData);
-	}
-
 	if (ParentOfGlobalizationFolder[0] != L'\0') {
 		Result = StringCchCat(
 			Buffer,
@@ -348,49 +331,67 @@ STATIC NTSTATUS MlspFormRelativePath(
 		if (FAILED(Result)) {
 			return STATUS_BUFFER_OVERFLOW;
 		}
-	} else if (NT_SUCCESS(Status)) {
-		//
-		// We're running in KexDll, so we can use KexDir as a prefix path.
-		//
-
-		Result = StringCchCat(
-			Buffer,
-			BufferCch,
-			KexData->KexDir.Buffer);
-
-		ASSERT (SUCCEEDED(Result));
-		if (FAILED(Result)) {
-			return STATUS_BUFFER_OVERFLOW;
-		}
 	} else {
 		//
-		// We're not running in KexDll (e.g. in KexSetup), so use the EXE's
-		// directory as a prefix path.
+		// Decide which prefix path to use.
+		// Figure out if we're using the EXE path or KexDir.
 		//
 
-		// Append the path to the EXE.
-		Result = StringCchCat(
-			Buffer,
-			BufferCch,
-			NtCurrentPeb()->ProcessParameters->ImagePathName.Buffer);
+		RtlInitConstantAnsiString(&KexDataInitializeName, "KexDataInitialize");
 
-		ASSERT (SUCCEEDED(Result));
-		if (FAILED(Result)) {
-			return STATUS_BUFFER_OVERFLOW;
+		Status = LdrGetProcedureAddress(
+			&__ImageBase,
+			&KexDataInitializeName,
+			0,
+			(PPVOID) &KexDataInitialize);
+
+		if (NT_SUCCESS(Status)) {
+			Status = KexDataInitialize(&KexData);
 		}
+		if (NT_SUCCESS(Status)) {
+			//
+			// We're running in KexDll, so we can use KexDir as a prefix path.
+			//
 
-		// Remove the EXE name.
-		Index = (ULONG) wcslen(Buffer);
+			Result = StringCchCat(
+				Buffer,
+				BufferCch,
+				KexData->KexDir.Buffer);
 
-		until (Buffer[Index] == '\\' || Index == 0) {
-			--Index;
+			ASSERT (SUCCEEDED(Result));
+			if (FAILED(Result)) {
+				return STATUS_BUFFER_OVERFLOW;
+			}
+		} else {
+			//
+			// We're not running in KexDll (e.g. in KexSetup), so use the EXE's
+			// directory as a prefix path.
+			//
+
+			// Append the path to the EXE.
+			Result = StringCchCat(
+				Buffer,
+				BufferCch,
+				NtCurrentPeb()->ProcessParameters->ImagePathName.Buffer);
+
+			ASSERT (SUCCEEDED(Result));
+			if (FAILED(Result)) {
+				return STATUS_BUFFER_OVERFLOW;
+			}
+
+			// Remove the EXE name.
+			Index = (ULONG) wcslen(Buffer);
+
+			until (Buffer[Index] == '\\' || Index == 0) {
+				--Index;
+			}
+
+			if (Buffer[Index] != '\\') {
+				return STATUS_OBJECT_NAME_INVALID;
+			}
+
+			Buffer[Index] = '\0';
 		}
-
-		if (Buffer[Index] != '\\') {
-			return STATUS_OBJECT_NAME_INVALID;
-		}
-
-		Buffer[Index] = '\0';
 	}
 
 	//
@@ -441,8 +442,8 @@ STATIC NTSTATUS MlspLoadDictionary(
 	BOOLEAN SecondTry;
 	OBJECT_ATTRIBUTES ObjectAttributes;
 	IO_STATUS_BLOCK IoStatusBlock;
-	HANDLE FileHandle;
-	HANDLE SectionHandle;
+	HANDLE FileHandle = NULL;
+	HANDLE SectionHandle = NULL;
 	UNICODE_STRING FileName;
 	WCHAR FileNameBuffer[MAX_PATH + 4]; // +4 for \??\
 
@@ -576,8 +577,8 @@ TryAgain:
 		Dictionary->Header->Magic[2] != 'I' ||
 		Dictionary->Header->Magic[3] != 'C') {
 
-		Status = STATUS_MLS_BDI_MAGIC_MISMATCH;
-		goto Exit;
+			Status = STATUS_MLS_BDI_MAGIC_MISMATCH;
+			goto Exit;
 	}
 
 	if (Dictionary->Header->Version != MLSP_VERSION) {
@@ -595,14 +596,18 @@ TryAgain:
 
 Exit:
 	if (!NT_SUCCESS(Status)) {
-		NTSTATUS Status2;
-		
-		Status2 = NtUnmapViewOfSection(
-			NtCurrentProcess(),
-			(PVOID) Dictionary->Header);
+		if (Dictionary->Header) {
+			NTSTATUS Status2;
 
-		ASSERT (NT_SUCCESS(Status2));
+			Status2 = NtUnmapViewOfSection(
+				NtCurrentProcess(),
+				(PVOID) Dictionary->Header);
 
+			ASSERT (NT_SUCCESS(Status2));
+			Dictionary->Header = NULL;
+			Dictionary->Data = NULL;
+			Dictionary->DataCb = 0;
+		}
 		RtlZeroMemory(Dictionary, sizeof(*Dictionary));
 	}
 
@@ -619,14 +624,13 @@ STATIC NTSTATUS MlspCleanupDictionary(
 	Status = STATUS_SUCCESS;
 
 	if (Dictionary->Flags & MLSP_DICTIONARY_FLAG_MAPPED_FILE) {
-		ASSERT (Dictionary->Data != NULL);
-		ASSERT (Dictionary->DataCb != 0);
+		if (Dictionary->Header) {
+			Status = NtUnmapViewOfSection(
+				NtCurrentProcess(),
+				(PVOID) Dictionary->Header);
 
-		Status = NtUnmapViewOfSection(
-			NtCurrentProcess(),
-			(PVOID) Dictionary->Data);
-
-		ASSERT (NT_SUCCESS(Status));
+			ASSERT (NT_SUCCESS(Status));
+		}
 	}
 
 	RtlZeroMemory(Dictionary, sizeof(*Dictionary));
@@ -715,14 +719,14 @@ STATIC NTSTATUS MlspScanDictionary(
 				// Finished processing key-value pair.
 
 				if (Value.Length > 0 && !OversizedKeyOrValue) {
-					
+
 					Status = Iterator(IteratorContext, &Key, &Value);
 					++NumberOfKeyValuePairsProcessed;
 
 					if (NumberOfKeyValuePairsProcessed >= Dictionary->Header->NumberOfKeyValuePairs) {
 						break;
 					}
-					
+
 					if (!NT_SUCCESS(Status)) {
 						break;
 					}
@@ -869,7 +873,7 @@ MLSAPI NTSTATUS NTAPI MlsInitialize(
 			LanguageWasMappedToAnother = FALSE;
 			break;
 		}
-		
+
 		if (LanguageWasMappedToAnother) {
 			Status = MlspLoadDictionary(MlsLangId, &MlsDictionary);
 
@@ -909,6 +913,7 @@ MLSAPI NTSTATUS NTAPI MlsInitialize(
 	if (!NT_SUCCESS(Status)) {
 		MlspCleanupDictionary(&MlsDictionary);
 		SmpDeleteStringMapper(&MlsStringMapper);
+		MlsStringMapper = NULL;
 		MlsLangId = LANG_ENGLISH;
 		goto Finished;
 	}
@@ -930,6 +935,7 @@ MLSAPI NTSTATUS NTAPI MlsCleanup(
 	if (MlsStringMapper) {
 		Status = SmpDeleteStringMapper(&MlsStringMapper);
 		ASSERT (NT_SUCCESS(Status));
+		MlsStringMapper = NULL;
 	}
 
 	Status = MlspCleanupDictionary(&MlsDictionary);
@@ -1003,7 +1009,7 @@ MLSAPI NTSTATUS NTAPI MlsSetParentOfGlobalizationFolder(
 	HRESULT Result;
 	if (!Path) return STATUS_INVALID_PARAMETER;
 
-	Result = StringCchCat(
+	Result = StringCchCopy(
 		ParentOfGlobalizationFolder,
 		ARRAYSIZE(ParentOfGlobalizationFolder),
 		Path);
