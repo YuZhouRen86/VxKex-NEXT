@@ -108,6 +108,7 @@ SMPAPI NTSTATUS NTAPI SmpDeleteStringMapper(
 
 	do {
 		Entry = RtlEnumerateEntryHashTable(&Mapper->HashTable, &Enumerator);
+		if (Entry) RtlRemoveEntryHashTable(&Mapper->HashTable, Entry, NULL);
 		RtlFreeHeap(RtlProcessHeap(), 0, Entry);
 	} until (Entry == NULL);
 
