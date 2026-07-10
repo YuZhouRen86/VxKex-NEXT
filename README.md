@@ -150,6 +150,7 @@ Donations  捐赠
 If you would like to support development, consider making a donation.  
 如果您想支持开发，请考虑捐款。
 
+- PayPal : [paypal.me/YZR2024](https://paypal.me/YZR2024)
 - ERC20 (ETC/USDT) : 0xaF1AfBDE5F226FB229267D8591D757C3E6E0e1A0
 - Bitcoin (BTC/USDT) : 32XgoYcRVy3CTcga3DUBtua5QCToRtS78G
 - Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
