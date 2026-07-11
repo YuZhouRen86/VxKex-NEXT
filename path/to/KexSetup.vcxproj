@@ -1,0 +1,23 @@
+# complete code
+# KexSetup.vcxproj
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+        <ProjectGuid>{your_project_guid}</ProjectGuid>
+        <RootNamespace>KexSetup</RootNamespace>
+        <AssemblyName>KexSetup</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="cfgmgr32_x64.lib" />
+        <Reference Include="cfgmgr32_x86.lib" />
+    </ItemGroup>
+    <ItemGroup>
+        <ClCompile Include="setup.cpp" />
+    </ItemGroup>
+    <ItemGroup>
+        <Resource Include="KexSetup.rc" />
+    </ItemGroup>
+</Project>

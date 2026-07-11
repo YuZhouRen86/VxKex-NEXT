@@ -1,0 +1,29 @@
+# complete code
+// installer.exe
+#include <Windows.h>
+#include "setup.h"
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+    try
+    {
+        // Initialize the setup process
+        Setup::InitializeSetup();
+
+        // Install the required dependencies
+        Setup::InstallDependencies();
+
+        // Install the KexSetup application
+        Setup::InstallApplication();
+
+        // Clean up the setup process
+        Setup::CleanUp();
+    }
+    catch (const std::exception& e)
+    {
+        MessageBoxA(NULL, e.what(), "Error", MB_ICONERROR);
+        return 1;
+    }
+
+    return 0;
+}
