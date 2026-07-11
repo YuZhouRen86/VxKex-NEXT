@@ -174,8 +174,9 @@ VOID NTAPI KexDllNotificationCallback(
 	if (Reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
 		BOOLEAN ShouldRewriteImports;
 
-		ShouldRewriteImports = KexShouldRewriteImportsOfDll(
-			NotificationData->FullDllName);
+		ShouldRewriteImports = KexShouldRewriteStaticImportsOfDll(
+			NotificationData->FullDllName,
+			NotificationData->BaseDllName);
 
 		unless (KexData->IfeoParameters.DisableAppSpecific) {
 			if (ShouldRewriteImports) {

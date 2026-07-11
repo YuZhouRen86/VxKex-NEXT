@@ -36,6 +36,9 @@
     <ClCompile Include="wtsapi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tbs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buildcfg.h">

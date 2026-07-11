@@ -5,6 +5,9 @@ EXPORTS
 	PowerRegisterSuspendResumeNotification
 	PowerUnregisterSuspendResumeNotification
 
+	;; tbs.c
+	Tbsi_GetDeviceInfo
+
 	;; userenv.c
 	CreateAppContainerProfile
 	DeleteAppContainerProfile

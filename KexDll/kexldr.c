@@ -75,7 +75,7 @@ NTSTATUS NTAPI KexLdrGetDllFullName(
 // DLL a function call comes from.
 //
 NTSTATUS NTAPI KexLdrGetDllFullNameFromAddress(
-	IN	PVOID			Address,
+	IN	PCVOID			Address,
 	OUT	PUNICODE_STRING	DllFullPath)
 {
 	NTSTATUS Status;
@@ -531,6 +531,9 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 	PCWSTR OriginalDllPath;
 	ULONG DllCharacteristics;
 	UNICODE_STRING RewrittenDll;
+	UNICODE_STRING TbsDllName;
+	BOOLEAN ShouldRewrite;
+	BOOLEAN RewriteTbs = FALSE;
 
 	ASSERT (VALID_UNICODE_STRING(DllName));
 	ASSERT (DllHandle != NULL);
@@ -556,8 +559,19 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 		DllPath = *DllPathIndirect;
 	}
 
-	if (!NtCurrentTeb()->KexLdrShouldRewriteDll) {
-		// KxBase has not asked us to rewrite DLL names, so we won't.
+	if (NtCurrentTeb()->KexLdrShouldRewriteDll) {
+		// KxBase has asked us to rewrite DLL names.
+		ShouldRewrite = TRUE;
+
+		// Clear KexLdrShouldRewriteDll flag so that dynamic DLL loads done
+		// from inside DllMains of Windows DLLs (user32 is one of those that
+		// does that, and it has caused crashes) do not get rewrite enabled
+		NtCurrentTeb()->KexLdrShouldRewriteDll = FALSE;
+	} else {
+		ShouldRewrite = FALSE;
+	}
+
+	if (DllName->Length == 0) {
 		goto BailOut;
 	}
 
@@ -567,7 +581,13 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 		goto BailOut;
 	}
 
-	if (DllName->Length == 0) {
+	if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
+		// An app (e.g. Thunderbird) has called LdrLoadDll directly.
+		ShouldRewrite = TRUE;
+	}
+
+	if (!ShouldRewrite) {
+		// Skip past DLL rewriting.
 		goto BailOut;
 	}
 
@@ -577,7 +597,20 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 
 	RtlInitEmptyUnicodeStringFromTeb(&RewrittenDll);
 
-	Status = KexRewriteDllPath(DllName, &RewrittenDll);
+	RtlInitConstantUnicodeString(&TbsDllName, L"tbs.dll");
+	unless (KexData->IfeoParameters.DisableAppSpecific) {
+		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) && RtlEqualUnicodeString(&TbsDllName, DllName, TRUE))
+			RewriteTbs = TRUE;
+	}
+
+	if (RewriteTbs) {
+		UNICODE_STRING KxmiDllName;
+		RtlInitConstantUnicodeString(&KxmiDllName, L"kxmi");
+		RtlCopyUnicodeString(&RewrittenDll, &KxmiDllName);
+		Status = STATUS_SUCCESS;
+	} else {
+		Status = KexRewriteDllPath(DllName, &RewrittenDll);
+	}
 
 	ASSERT (NT_SUCCESS(Status) ||
 			Status == STATUS_STRING_MAPPER_ENTRY_NOT_FOUND ||
@@ -659,14 +692,28 @@ KEXAPI NTSTATUS NTAPI KexLdrGetDllHandleEx(
 {
 	NTSTATUS Status;
 	UNICODE_STRING RewrittenDll;
+	BOOLEAN ShouldRewrite;
 
 	ASSERT (VALID_UNICODE_STRING(DllName));
 
-	if (!NtCurrentTeb()->KexLdrShouldRewriteDll) {
-		goto BailOut;
+	if (NtCurrentTeb()->KexLdrShouldRewriteDll) {
+		// KxBase has asked us to rewrite the DLL
+		ShouldRewrite = TRUE;
+		NtCurrentTeb()->KexLdrShouldRewriteDll = FALSE;
+	} else {
+		ShouldRewrite = FALSE;
 	}
 
 	if (DllName->Length == 0) {
+		goto BailOut;
+	}
+
+	if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
+		// An app called LdrGetDllHandle(Ex) directly
+		ShouldRewrite = TRUE;
+	}
+
+	if (!ShouldRewrite) {
 		goto BailOut;
 	}
 
