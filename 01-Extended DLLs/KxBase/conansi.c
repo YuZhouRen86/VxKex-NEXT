@@ -115,7 +115,7 @@ STATIC ULONG ParseNumber(
 	Accumulator = 0;
 	Index = 0;
 
-	until (!isdigit(Characters[Index]) || Index >= MaxCch) {
+	until (!iswdigit(Characters[Index]) || Index >= MaxCch) {
 		Accumulator *= 10;
 		Accumulator += Characters[Index] - '0';
 		++Index;

@@ -4601,7 +4601,7 @@ NTSYSAPI NTSTATUS NTAPI LdrGetProcedureAddressEx(
 	IN	ULONG				Flags); // Takes a flag value of 0 or 1 only. Don't know what it does.
 
 NTSYSAPI NTSTATUS NTAPI LdrFindEntryForAddress(
-	IN	PVOID					Address,
+	IN	PCVOID					Address,
 	OUT	PPLDR_DATA_TABLE_ENTRY	TableEntry);
 
 NTSYSAPI VOID NTAPI LdrShutdownThread(

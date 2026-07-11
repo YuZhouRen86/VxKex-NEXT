@@ -90,6 +90,7 @@
 #define KEXDATA_FLAG_KB2533623_PRESENT		64	// Indicates the DllDirectory APIs are available
 #define KEXDATA_FLAG_FIREFOX				128	// This is a Firefox-based application (Firefox, Thunderbird, etc.)
 #define KEXDATA_FLAG_DOTNET					256	// Indicates a .NET application.
+#define KEXDATA_FLAG_QT6					512 // Indicates a Qt6 application.
 
 #define KEX_STRONGSPOOF_SHAREDUSERDATA	1
 #define KEX_STRONGSPOOF_REGISTRY		2
@@ -490,7 +491,7 @@ NTSTATUS NTAPI KexLdrGetDllFullName(
 	OUT	PUNICODE_STRING	DllFullPath);
 
 KEXAPI NTSTATUS NTAPI KexLdrGetDllFullNameFromAddress(
-	IN	PVOID			Address,
+	IN	PCVOID			Address,
 	OUT	PUNICODE_STRING	DllFullPath);
 
 KEXAPI NTSTATUS NTAPI KexLdrProtectImageImportSection(
@@ -546,6 +547,9 @@ KEXAPI BOOLEAN NTAPI AshModuleBaseNameIs(
 
 KEXAPI BOOLEAN NTAPI AshModuleIsWindowsModule(
 	IN	PVOID	AddressInsideModule);
+
+KEXAPI BOOLEAN NTAPI AshModuleIsDynamicRewriteExemptedModule(
+	IN	PCVOID	AddressInsideModule);
 
 #pragma endregion
 
@@ -644,6 +648,10 @@ KEXAPI PCWSTR NTAPI VxlSeverityToText_ENG(
 KEXAPI NTSTATUS NTAPI KexRewriteDllPath(
 	IN	PCUNICODE_STRING	DllPath,
 	OUT	PUNICODE_STRING		RewrittenDllName);
+
+KEXAPI BOOLEAN NTAPI KexIsWindowsDll(
+	IN	PCUNICODE_STRING	FullDllName,
+	IN	PCUNICODE_STRING	BaseDllName);
 
 //
 // kexhe.c

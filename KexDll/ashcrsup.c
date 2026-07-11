@@ -180,6 +180,23 @@ VOID AshDllLoadNotification(
 		}
 	}
 
+	unless (KexData->Flags & KEXDATA_FLAG_QT6) {
+		UNICODE_STRING Qt6;
+
+		//
+		// APPSPECIFICHACK: Newer versions of Qt6 require Windows 10 DWrite.
+		// Otherwise, text is displayed as blank boxes.
+		//
+
+		RtlInitConstantUnicodeString(&Qt6, L"Qt6");
+
+		if (RtlPrefixUnicodeString(&Qt6, &BaseName, TRUE)) {
+			Status = AshSetIsQt6Process();
+			ASSERT (NT_SUCCESS(Status));
+			return;
+		}
+	}
+
 	unless (KexData->Flags & KEXDATA_FLAG_DOTNET) {
 		UNICODE_STRING CoreClr;
 

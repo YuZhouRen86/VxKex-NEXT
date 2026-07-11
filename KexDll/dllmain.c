@@ -223,6 +223,18 @@ BOOL WINAPI DllMain(
 				AshApplyNodeJSEnvironmentVariableHacks();
 			}
 
+			if (!(KexData->Flags & KEXDATA_FLAG_QT6) &&
+				AshIsStaticallyLinkedQt6Image(NtCurrentPeb()->ImageBaseAddress)) {
+
+				//
+				// APPSPECIFICHACK: Usually Qt6 applications get Win10 DWrite based on
+				// detection of loaded Qt6 DLLs. Some applications have statically linked
+				// Qt6 so we need to handle it specifically.
+				//
+
+				AshSetIsQt6Process();
+			}
+
 			// APPSPECIFICHACK: Detect Chromium based on EXE exports.
 			AshPerformChromiumDetectionFromModuleExports(Peb->ImageBaseAddress);
 		}
