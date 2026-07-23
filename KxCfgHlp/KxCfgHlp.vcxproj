@@ -31,6 +31,7 @@
     <ClCompile Include="msisup.c" />
     <ClCompile Include="openkey.c" />
     <ClCompile Include="kxcfgp.c" />
+    <ClCompile Include="preserve.c" />
     <ClCompile Include="setcfg.c" />
   </ItemGroup>
   <ItemGroup>

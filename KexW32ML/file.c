@@ -14,7 +14,7 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI FileExists(
 		return FALSE;
 	}
 
-	FindClose(FindHandle);
+	SafeFindClose(FindHandle);
 	return TRUE;
 }
 
@@ -110,7 +110,7 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 		} until (!FindNextFile(FindHandle, &FindData));
 
 		LastError = GetLastError();
-		FindClose(FindHandle);
+		SafeFindClose(FindHandle);
 		SetLastError(LastError);
 
 		if (LastError != ERROR_NO_MORE_FILES) {

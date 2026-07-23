@@ -432,26 +432,26 @@ KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
 }
 
 //
-// This function changes the page protections on the entire section which
-// contains the import directory.
+// Get the allocation base and region size for a memory region which contains import
+// descriptors for the given PE image.
 //
 
-KEXAPI NTSTATUS NTAPI KexLdrProtectImageImportSection(
+KEXAPI NTSTATUS NTAPI KexLdrGetImageImportSection(
 	IN	PVOID	ImageBase,
-	IN	ULONG	PageProtection,
-	OUT	PULONG	OldProtection)
+	OUT	PPVOID	ImportSectionBase,
+	OUT	PSIZE_T	ImportSectionSize)
 {
 	NTSTATUS Status;
 	PIMAGE_NT_HEADERS NtHeaders;
 	PIMAGE_FILE_HEADER CoffHeader;
 	PIMAGE_OPTIONAL_HEADER OptionalHeader;
 	PIMAGE_DATA_DIRECTORY ImportDirectory;
-	PIMAGE_SECTION_HEADER ImportSectionHeader;
-	PVOID ImportSectionAddress;
-	SIZE_T ImportSectionSize;
+	PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor;
+	MEMORY_BASIC_INFORMATION BasicInformation;
 
 	ASSERT (ImageBase != NULL);
-	ASSERT (OldProtection != NULL);
+	ASSERT (ImportSectionBase != NULL);
+	ASSERT (ImportSectionSize != NULL);
 
 	Status = RtlImageNtHeaderEx(
 		RTL_IMAGE_NT_HEADER_EX_FLAG_NO_RANGE_CHECK,
@@ -475,39 +475,53 @@ KEXAPI NTSTATUS NTAPI KexLdrProtectImageImportSection(
 	CoffHeader = &NtHeaders->FileHeader;
 	OptionalHeader = &NtHeaders->OptionalHeader;
 	ImportDirectory = &OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-
-	//
-	// Find the section that contains the import directory.
-	//
+	ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR) RVA_TO_VA(ImageBase, ImportDirectory->VirtualAddress);
 	
-	ImportSectionHeader = KexRtlSectionTableFromRva(
-		NtHeaders,
-		ImportDirectory->VirtualAddress);
-
-	if (!ImportSectionHeader) {
-		return STATUS_IMAGE_SECTION_NOT_FOUND;
+	if (ImportDescriptor->Name == 0) {
+		return STATUS_INVALID_IMAGE_FORMAT;
 	}
 
-	ImportSectionAddress = RVA_TO_VA(ImageBase, ImportSectionHeader->VirtualAddress);
-	ImportSectionSize = ImportSectionHeader->Misc.VirtualSize;
-
-	ASSERT (ImportSectionAddress != ImageBase);
-	ASSERT (ImportSectionSize != 0);
-
 	//
-	// Set our page protections.
+	// ImportDescriptor now points to the first import descriptor.
+	// Use NtQueryVirtualMemory to find the size of the memory zone which contains
+	// all the import descriptors.
 	//
 
-	Status = NtProtectVirtualMemory(
+	Status = NtQueryVirtualMemory(
 		NtCurrentProcess(),
-		&ImportSectionAddress,
-		&ImportSectionSize,
-		PageProtection,
-		OldProtection);
+		RVA_TO_VA(ImageBase, ImportDescriptor->Name),
+		MemoryBasicInformation,
+		&BasicInformation,
+		sizeof(BasicInformation),
+		NULL);
 
 	ASSERT (NT_SUCCESS(Status));
 
-	return Status;
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
+	if (BasicInformation.Type != MEM_IMAGE) {
+		//
+		// Software (such as MacType versions 2025.01 and earlier) which modifies the
+		// import table (just like we do) may break VxKex-enabled applications. As a
+		// symptom of this, BasicInformation.Type will be equal to MEM_PRIVATE. In this
+		// case, we will consider that we have failed to find the import section.
+		//
+		// Failing here will allow us to show the user an error message rather than just
+		// crashing with an access violation later.
+		//
+
+		return STATUS_ACCESS_VIOLATION;
+	}
+
+	ASSERT (BasicInformation.State == MEM_COMMIT);
+	ASSERT (BasicInformation.Type == MEM_IMAGE);
+
+	*ImportSectionBase = BasicInformation.BaseAddress;
+	*ImportSectionSize = BasicInformation.RegionSize;
+
+	return STATUS_SUCCESS;
 }
 
 //
@@ -532,7 +546,7 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 	ULONG DllCharacteristics;
 	UNICODE_STRING RewrittenDll;
 	UNICODE_STRING TbsDllName;
-	BOOLEAN ShouldRewrite;
+	BOOLEAN ShouldRewrite = NtCurrentTeb()->KexLdrShouldRewriteDll;
 	BOOLEAN RewriteTbs = FALSE;
 
 	ASSERT (VALID_UNICODE_STRING(DllName));
@@ -559,18 +573,6 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 		DllPath = *DllPathIndirect;
 	}
 
-	if (NtCurrentTeb()->KexLdrShouldRewriteDll) {
-		// KxBase has asked us to rewrite DLL names.
-		ShouldRewrite = TRUE;
-
-		// Clear KexLdrShouldRewriteDll flag so that dynamic DLL loads done
-		// from inside DllMains of Windows DLLs (user32 is one of those that
-		// does that, and it has caused crashes) do not get rewrite enabled
-		NtCurrentTeb()->KexLdrShouldRewriteDll = FALSE;
-	} else {
-		ShouldRewrite = FALSE;
-	}
-
 	if (DllName->Length == 0) {
 		goto BailOut;
 	}
@@ -581,10 +583,10 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 		goto BailOut;
 	}
 
-	if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
+	/*if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
 		// An app (e.g. Thunderbird) has called LdrLoadDll directly.
 		ShouldRewrite = TRUE;
-	}
+	}*/
 
 	if (!ShouldRewrite) {
 		// Skip past DLL rewriting.
@@ -692,26 +694,18 @@ KEXAPI NTSTATUS NTAPI KexLdrGetDllHandleEx(
 {
 	NTSTATUS Status;
 	UNICODE_STRING RewrittenDll;
-	BOOLEAN ShouldRewrite;
+	BOOLEAN ShouldRewrite = NtCurrentTeb()->KexLdrShouldRewriteDll;
 
 	ASSERT (VALID_UNICODE_STRING(DllName));
-
-	if (NtCurrentTeb()->KexLdrShouldRewriteDll) {
-		// KxBase has asked us to rewrite the DLL
-		ShouldRewrite = TRUE;
-		NtCurrentTeb()->KexLdrShouldRewriteDll = FALSE;
-	} else {
-		ShouldRewrite = FALSE;
-	}
 
 	if (DllName->Length == 0) {
 		goto BailOut;
 	}
 
-	if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
+	/*if (!ShouldRewrite && !AshModuleIsDynamicRewriteExemptedModule(ReturnAddress())) {
 		// An app called LdrGetDllHandle(Ex) directly
 		ShouldRewrite = TRUE;
-	}
+	}*/
 
 	if (!ShouldRewrite) {
 		goto BailOut;

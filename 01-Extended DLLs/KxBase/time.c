@@ -46,16 +46,7 @@ KXBASEAPI VOID WINAPI KxBasepGetSystemTimeHook(
 KXBASEAPI VOID WINAPI GetSystemTimePreciseAsFileTime(
 	OUT	PFILETIME	SystemTimeAsFileTime)
 {
-	//
-	// The real NtQuerySystemTime export from NTDLL is actually just a jump to
-	// RtlQuerySystemTime, which reads from SharedUserData.
-	//
-	// However, if we are doing SharedUserData-based version spoofing, we will
-	// overwrite that stub function with KexNtQuerySystemTime, so it is the best
-	// of both worlds in terms of speed and actually working.
-	//
-
-	NtQuerySystemTime((PLONGLONG) SystemTimeAsFileTime);
+	*(PLONGLONG) SystemTimeAsFileTime = KexRtlGetSystemTimePrecise();
 }
 
 KXBASEAPI VOID WINAPI QueryUnbiasedInterruptTimePrecise(

@@ -28,11 +28,13 @@ EXPORTS
 	KexRtlEncryptMemory
 
 	KexRtlWow64GetProcessMachines
+	KexRtlWow64IsWowGuestMachineSupported
 	KexRtlSetBit
 	KexRtlClearBit
 	KexRtlQueryPackageIdentity
 	KexRtlQueryPackageIdentityEx
 	KexRtlCheckPortableOperatingSystem
+	KexRtlUnsubscribeWnfNotificationWaitForCompletion
 	KexRtlUnsubscribeWnfStateChangeNotification
 	KexRtlQueryWnfStateData
 	KexRtlPublishWnfStateData
@@ -40,6 +42,10 @@ EXPORTS
 	KexRtlAddGrowableFunctionTable
 	KexRtlDeleteGrowableFunctionTable
 	KexRtlGetSystemTimePrecise
+	KexRtlGetDeviceFamilyInfoEnum
+	KexRtlGetPersistedStateLocation
+	KexRtlCanonicalizeDomainName
+	KexRtlIsProcessorFeaturePresent
 
 	KexRtlWaitOnAddress
 	KexRtlWakeAddressSingle
@@ -54,7 +60,7 @@ EXPORTS
 	KexLdrFindDllInitRoutine
 	KexLdrGetDllFullName
 	KexLdrGetDllFullNameFromAddress
-	KexLdrProtectImageImportSection
+	KexLdrGetImageImportSection
 
 	KexLdrLoadDll
 	KexLdrGetDllHandle
@@ -93,6 +99,8 @@ EXPORTS
 	Ext_NtNotifyChangeMultipleKeys
 	Ext_NtCreateSection
 	Ext_NtAssignProcessToJobObject
+	Ext_NtWriteFile
+	Ext_NtSetInformationFile
 
 	Ext_RtlInitializeCriticalSection
 	Ext_RtlInitializeCriticalSectionAndSpinCount
@@ -117,3 +125,6 @@ EXPORTS
 
 	NtCompareObjects
 	NtQueryWnfStateData
+	NtWaitForAlertByThreadId
+	NtAlertThreadByThreadId
+	NtAllocateVirtualMemoryEx

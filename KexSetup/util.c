@@ -233,13 +233,16 @@ VOID KexSetupRegReadString(
 	}
 }
 
-// This function applies the ACL from KexDir to the specified file.
+// This function applies the ACL from KexDir to the specified file or folder
+// recursively.
 VOID KexSetupApplyAclToFile(
 	IN	PCWSTR	FilePath)
 {
+	BOOL Success;
 	ULONG ErrorCode;
 	HANDLE FileHandle;
 	STATIC PACL Dacl = NULL;
+	WIN32_FILE_ATTRIBUTE_DATA FileAttributes;
 
 	if (!Dacl) {
 		PSECURITY_DESCRIPTOR SecurityDescriptor = NULL;
@@ -318,6 +321,81 @@ VOID KexSetupApplyAclToFile(
 
 	ASSERT (ErrorCode == ERROR_SUCCESS);
 	SafeClose(FileHandle);
+
+	//
+	// If the file is a directory, recurse into it.
+	//
+
+	Success = GetFileAttributesTransacted(
+		FilePath,
+		GetFileExInfoStandard,
+		&FileAttributes,
+		KexSetupTransactionHandle);
+
+	ASSERT (Success);
+
+	if (Success && (FileAttributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		HRESULT Result;
+		WCHAR FindPath[MAX_PATH];
+		HANDLE FindHandle;
+		WIN32_FIND_DATA FindData;
+
+		Result = StringCchCopy(FindPath, ARRAYSIZE(FindPath), FilePath);
+		ASSERT (SUCCEEDED(Result));
+
+		if (FAILED(Result)) {
+			return;
+		}
+
+		Result = PathCchAppend(FindPath, ARRAYSIZE(FindPath), L"*");
+		ASSERT (SUCCEEDED(Result));
+
+		if (FAILED(Result)) {
+			return;
+		}
+
+		FindHandle = FindFirstFileTransacted(
+			FindPath,
+			FindExInfoBasic,
+			&FindData,
+			FindExSearchNameMatch,
+			NULL,
+			0,
+			KexSetupTransactionHandle);
+
+		ASSERT (FindHandle != INVALID_HANDLE_VALUE);
+
+		if (FindHandle == INVALID_HANDLE_VALUE) {
+			return;
+		}
+
+		do {
+			WCHAR FullPath[MAX_PATH];
+
+			if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+				(StringEqual(FindData.cFileName, L".") || StringEqual(FindData.cFileName, L".."))) {
+				continue;
+			}
+
+			Result = StringCchCopy(FullPath, ARRAYSIZE(FullPath), FilePath);
+			ASSERT (SUCCEEDED(Result));
+
+			if (FAILED(Result)) {
+				continue;
+			}
+
+			Result = PathCchAppend(FullPath, ARRAYSIZE(FullPath), FindData.cFileName);
+			ASSERT (SUCCEEDED(Result));
+
+			if (FAILED(Result)) {
+				continue;
+			}
+
+			KexSetupApplyAclToFile(FullPath);
+		} until (!FindNextFile(FindHandle, &FindData));
+
+		SafeFindClose(FindHandle);
+	}
 }
 
 BOOLEAN KexSetupFilesAreIdentical(
@@ -572,9 +650,7 @@ BOOLEAN KexSetupDirectoriesAreIdentical(
 	Identical = TRUE;
 
 Exit:
-	if (FindHandle != NULL) {
-		FindClose(FindHandle);
-	}
+	SafeFindClose(FindHandle);
 
 	return Identical;
 }
@@ -671,7 +747,16 @@ VOID KexSetupSupersedeFile(
 	if (!Success) {
 		if (KexSetupFilesOrDirectoriesAreIdentical(SourceFile, TargetFile)) {
 			// We couldn't move the files but it turns out that they're the same anyway.
-			// So we do nothing.
+
+			//
+			// Fix the ACLs in the files even though we don't have to change the file
+			// contents.
+			// Some beta builds were distributed which failed to set ACLs on dictionary
+			// files and ICU data files, etc. which means that applications would fail
+			// if they tried to use these files while running as non-admin.
+			//
+
+			KexSetupApplyAclToFile(TargetFile);
 			return;
 		}
 
@@ -776,7 +861,7 @@ VOID KexSetupMoveFileSpecToDirectory(
 		RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);
 	}
 
-	FindClose(FindHandle);
+	SafeFindClose(FindHandle);
 }
 
 VOID KexSetupCreateDirectory(
@@ -923,7 +1008,7 @@ BOOLEAN KexSetupRemoveDirectoryRecursive(
 
 	ASSERT (GetLastError() == ERROR_NO_MORE_FILES);
 
-	FindClose(FindHandle);
+	SafeFindClose(FindHandle);
 
 	// Remove the directory itself, which should now hopefully be empty.
 	return RemoveDirectoryTransacted(DirectoryPath, KexSetupTransactionHandle);
@@ -974,6 +1059,6 @@ BOOLEAN KexSetupDeleteFilesBySpec(
 
 	ASSERT (GetLastError() == ERROR_NO_MORE_FILES);
 
-	FindClose(FindHandle);
+	SafeFindClose(FindHandle);
 	return Success;
 }

@@ -4,6 +4,8 @@ EXPORTS
 	RoInitialize
 	RoUninitialize
 	RoGetActivationFactory
+	RoRegisterActivationFactories
+	RoRevokeActivationFactories
 	RoActivateInstance
 	RoCaptureErrorContext
 	RoSetErrorReportingFlags
