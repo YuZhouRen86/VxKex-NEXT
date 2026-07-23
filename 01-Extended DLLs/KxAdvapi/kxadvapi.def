@@ -9,3 +9,13 @@ EXPORTS
 	;; time.c
 	EnumDynamicTimeZoneInformation
 	GetDynamicTimeZoneInformationEffectiveYears
+
+	;; token.c
+	OpenProcessToken			= Ext_OpenProcessToken
+
+	;; reggval.c
+	RegGetValueA				= Ext_RegGetValueA
+	RegGetValueW				= Ext_RegGetValueW
+
+	;; regqval.c
+	RegQueryValueExW			= Ext_RegQueryValueExW

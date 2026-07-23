@@ -2,10 +2,21 @@
 #include <KexComm.h>
 #include <WinDNS.h>
 #include <WinHTTP.h>
+#include <WS2tcpip.h>
 
 EXTERN PKEX_PROCESS_DATA KexData;
 
+// For setsockopt and getsockopt.
+// These values are not supported on Win7.
+#define SO_REUSE_UNICASTPORT	0x3007
+#define SO_REUSE_MULTICASTPORT	0x3008
+#define SO_ORIGINAL_DST			0x300F
+
 #define DNS_ADDR_MAX_SOCKADDR_LENGTH 32
+
+GEN_STD_TYPEDEFS(ADDRINFOEXA);
+GEN_STD_TYPEDEFS(ADDRINFOEXW);
+typedef struct timeval TYPEDEF_TYPE_NAME(TIMEVAL);
 
 typedef struct _DNS_ADDR {
 	CHAR		MaxSa[DNS_ADDR_MAX_SOCKADDR_LENGTH];

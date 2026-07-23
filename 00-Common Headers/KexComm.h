@@ -261,6 +261,18 @@
 #  else
 #    define InterlockedCompareExchangePointer(PointerToPointer, Pointer, Compare) ((PVOID) _InterlockedCompareExchange((LONG VOLATILE *) (PointerToPointer), (LONG) (Pointer), (LONG) Compare))
 #  endif
+
+#  define InterlockedExchange _InterlockedExchange
+#  define InterlockedExchange8 _InterlockedExchange8
+#  define InterlockedExchange16 _InterlockedExchange16
+#  define InterlockedExchange64 _InterlockedExchange64
+
+#  undef InterlockedExchangePointer
+#  ifdef _M_X64
+#    define InterlockedExchangePointer(PointerToPointer, Pointer) ((PVOID) _InterlockedExchange64((LONGLONG VOLATILE *) (PointerToPointer), (LONGLONG) (Pointer)))
+#  else
+#    define InterlockedExchangePointer(PointerToPointer, Pointer) ((PVOID) _InterlockedExchange((LONG VOLATILE *) (PointerToPointer), (LONG) (Pointer)))
+#  endif
 #pragma endregion
 
 #pragma region Convenience Macros
@@ -305,6 +317,8 @@
 // returns 66, not 65.
 //
 #  define BITS_TO_BYTES(Bits) (((ULONG)(Bits) + 7) / 8)
+
+#  define IS_POWER_OF_TWO(n) (((n) != 0) && (((n) & ((n) - 1)) == 0))
 
 //
 // Check that a kernel handle is not NULL or INVALID_HANDLE_VALUE.

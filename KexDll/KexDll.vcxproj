@@ -282,12 +282,17 @@
     <ClCompile Include="dllrewrt.c" />
     <ClCompile Include="etw.c" />
     <ClCompile Include="except.c" />
+    <ClCompile Include="initapc.c" />
     <ClCompile Include="kexdata.c" />
     <ClCompile Include="kexhe.c" />
     <ClCompile Include="kexhk.c" />
     <ClCompile Include="kexldr.c" />
     <ClCompile Include="kexrtl.c" />
+    <ClCompile Include="kexrtlp.c" />
     <ClCompile Include="logging.c" />
+    <ClCompile Include="ntalrtid.c" />
+    <ClCompile Include="ntcondrv.c" />
+    <ClCompile Include="ntfile.c" />
     <ClCompile Include="ntjob.c" />
     <ClCompile Include="ntobj.c" />
     <ClCompile Include="ntpriv.c" />
@@ -295,6 +300,7 @@
     <ClCompile Include="ntreg.c" />
     <ClCompile Include="ntsect.c" />
     <ClCompile Include="ntthread.c" />
+    <ClCompile Include="ntvmem.c" />
     <ClCompile Include="ntwnf.c" />
     <ClCompile Include="propagte.c" />
     <ClCompile Include="rtlsec.c" />
@@ -317,6 +323,7 @@
     <ResourceCompile Include="KexDll.rc" />
   </ItemGroup>
   <ItemGroup>
+    <MASM Include="initapc64.asm" />
     <MASM Include="syscal64.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

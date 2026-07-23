@@ -29,6 +29,15 @@
     <ClCompile Include="time.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="reggval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="regqval.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="token.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="kxadvapi.rc">

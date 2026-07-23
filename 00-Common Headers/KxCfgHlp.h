@@ -158,6 +158,13 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableLegacyKxSChanlSsp(
 	IN	BOOLEAN	Enable,
 	IN	HANDLE	TransactionHandle OPTIONAL);
 
+KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgPreserveConfiguration(
+	IN	PCWSTR	ExeFullPath,
+	IN	HANDLE	TransactionHandle OPTIONAL);
+
+KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgRestorePreservedConfiguration(
+	IN	HANDLE	TransactionHandle OPTIONAL);
+
 #ifdef KXCFGDECLSPEC
 //
 // Private functions

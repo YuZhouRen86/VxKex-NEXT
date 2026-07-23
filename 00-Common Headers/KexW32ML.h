@@ -40,6 +40,16 @@
 #define GetLastErrorAsString() Win32ErrorAsString(GetLastError())
 #define NtStatusAsString(Status) Win32ErrorAsString(RtlNtStatusToDosErrorNoTeb(Status))
 
+#define SafeFindClose(FindHandle) \
+	do { \
+		if (FindHandle != NULL) { \
+			BOOL SafeFindCloseSuccess; \
+			SafeFindCloseSuccess = FindClose(FindHandle); \
+			ASSERT (SafeFindCloseSuccess); \
+			FindHandle = NULL; \
+		} \
+	} while (0)
+
 // Use CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE) instead
 #pragma deprecated(CoInitialize)
 

@@ -10,3 +10,18 @@ KXUIAAPI HRESULT WINAPI UiaRaiseNotificationEvent(
 {
 	return E_NOTIMPL;
 }
+
+KXUIAAPI HRESULT WINAPI UiaDisconnectProvider(
+	IN		IUnknown					*Provider)
+{
+	return E_NOTIMPL;
+}
+
+//
+// Some Unity games require this.
+//
+KXUIAAPI HRESULT WINAPI UiaDisconnectAllProviders(
+	VOID)
+{
+	return E_NOTIMPL;
+}

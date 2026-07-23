@@ -70,9 +70,9 @@ STATIC RTL_VERIFIER_PROVIDER_DESCRIPTOR AVrfProviderDescriptor = {
 //     application verifier machinery inside NTDLL.
 //
 BOOL WINAPI DllMain(
-	IN	PVOID								DllBase,
-	IN	ULONG								Reason,
-	IN	PRTL_VERIFIER_PROVIDER_DESCRIPTOR	*Descriptor)
+	IN		PVOID								DllBase,
+	IN		ULONG								Reason,
+	IN OUT	PRTL_VERIFIER_PROVIDER_DESCRIPTOR	*Descriptor)
 {
 	NTSTATUS Status;
 	PVOID DllNotificationCookie;
@@ -100,6 +100,7 @@ BOOL WINAPI DllMain(
 
 	if ((KexData->Flags & KEXDATA_FLAG_MSIEXEC) &&
 		!(KexData->Flags & KEXDATA_FLAG_ENABLED_FOR_MSI) &&
+		!(KexData->Flags & KEXDATA_FLAG_MSI_SERVICE) &&
 		NtCurrentPeb()->SubSystemData == NULL) {
 
 		//
@@ -117,6 +118,27 @@ BOOL WINAPI DllMain(
 		ASSERT (KexData != NULL);
 
 		Peb = NtCurrentPeb();
+
+		//
+		// Try to get rid of as much Application verifier functionality as
+		// possible.
+		//
+
+		if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) KexDisableAVrf();
+
+		//
+		// Queue an APC to patch the CreateProcessInternalW subsystem check and
+		// also to work around MacType being incompatible with Application Verifier.
+		//
+
+		Status = NtQueueApcThread(
+			NtCurrentThread(),
+			KexPostInitializationApcRoutine,
+			NULL,
+			NULL,
+			NULL);
+
+		ASSERT (NT_SUCCESS(Status));
 
 		//
 		// Open log file.
@@ -148,13 +170,6 @@ BOOL WINAPI DllMain(
 			KexRtlCurrentProcessBitness(), KexRtlOperatingSystemBitness(),
 			&Peb->ProcessParameters->ImagePathName,
 			&Peb->ProcessParameters->CommandLine);
-
-		//
-		// Try to get rid of as much Application verifier functionality as
-		// possible.
-		//
-
-		if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) KexDisableAVrf();
 
 		//
 		// Initialize Propagation subsystem.
@@ -235,6 +250,22 @@ BOOL WINAPI DllMain(
 				AshSetIsQt6Process();
 			}
 
+			if (AshIsGodotImage(NtCurrentPeb()->ImageBaseAddress)) {
+
+				//
+				// APPSPECIFICHACK: Godot games use Vulkan, which can cause crashes on some
+				// Intel graphics drivers. We will disable Vulkan and force the game engine
+				// to use OpenGL instead.
+				//
+
+				AshApplyGodotEnvironmentVariableHacks();
+			}
+
+			if (AshIsZigImage(NtCurrentPeb()->ImageBaseAddress)) {
+				KexLogInformationEvent(L"App-Specific Hack applied for Zig");
+				KexData->Flags |= KEXDATA_FLAG_CONDRV_EMULATION;
+			}
+
 			// APPSPECIFICHACK: Detect Chromium based on EXE exports.
 			AshPerformChromiumDetectionFromModuleExports(Peb->ImageBaseAddress);
 		}
@@ -274,7 +305,21 @@ BOOL WINAPI DllMain(
 		Status = LdrDisableThreadCalloutsForDll(DllBase);
 		ASSERT (NT_SUCCESS(Status));
 	} else if (Reason == DLL_PROCESS_DETACH) {
+		// Close log, if it's open, so that all log entries are properly flushed.
 		VxlCloseLog(&KexData->LogHandle);
+
+		if (Descriptor == NULL) {
+			// When Descriptor is NULL, we're being unloaded from the process and the
+			// process will continue running without us. So we have to free extra
+			// resources.
+
+			SafeClose(KexData->BaseNamedObjects);
+			SafeClose(KexData->UntrustedNamedObjects);
+			SafeClose(KexData->GlobalKeyedEvent);
+
+			// Safe to call even if never initialized.
+			MlsCleanup();
+		}
 	}
 
 	return TRUE;

@@ -230,7 +230,10 @@
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="forwards.c" />
+    <ClCompile Include="reggval.c" />
+    <ClCompile Include="regqval.c" />
     <ClCompile Include="time.c" />
+    <ClCompile Include="token.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="kxadvapi.rc" />

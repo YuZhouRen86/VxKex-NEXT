@@ -90,6 +90,12 @@ EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
 BOOLEAN AshIsStaticallyLinkedQt6Image(
 	IN	PVOID	ModuleBase);
 
+BOOLEAN AshIsGodotImage(
+	IN	PVOID	ModuleBase);
+
+BOOLEAN AshIsZigImage(
+	IN	PVOID	ModuleBase);
+
 NTSTATUS AshSetIsQt6Process(
 	VOID);
 
@@ -100,6 +106,9 @@ VOID AshApplyPythonEnvironmentVariableHacks(
 	VOID);
 
 VOID AshApplyNodeJSEnvironmentVariableHacks(
+	VOID);
+
+VOID AshApplyGodotEnvironmentVariableHacks(
 	VOID);
 
 //
@@ -173,6 +182,18 @@ KEXAPI BOOLEAN NTAPI KexShouldRewriteDynamicImportsOfDll(
 	IN	PCUNICODE_STRING	FullDllName,
 	IN	PCUNICODE_STRING	BaseDllName);
 
+BOOL IsCurrentProcessInternetExplorer(
+	VOID);
+
+//
+// initapc.c
+//
+
+VOID NTAPI KexPostInitializationApcRoutine(
+	IN	PVOID	NormalContext,
+	IN	PVOID	SystemArgument1,
+	IN	PVOID	SystemArgument2);
+
 //
 // kexdata.c
 //
@@ -193,6 +214,13 @@ NTSTATUS NTAPI Ext_NtRaiseHardError(
 
 NORETURN VOID KexHeErrorBox(
 	IN	PCWSTR	ErrorMessage);
+
+//
+// kexrtlp.c
+//
+
+HANDLE KexRtlpGetGlobalKeyedEvent(
+	VOID);
 
 //
 // logging.c

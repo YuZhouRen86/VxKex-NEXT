@@ -163,7 +163,7 @@ ULONG GetDirectorySize(
 
 	ASSERT (GetLastError() == ERROR_NO_MORE_FILES);
 
-	FindClose(FindHandle);
+	SafeFindClose(FindHandle);
 	return DirectorySize;
 }
 
@@ -368,8 +368,9 @@ CannotDisplayChangelog:
 		default:
 			SendDlgItemMessage(MainWindow, IDPROGRESS, PBM_SETMARQUEE, FALSE, 0);
 			HideAndDisableControl(IDPROGRESS);
-			HideAndDisableControl(IDCANCEL2);
+			ShowWindow(GetDlgItem(MainWindow, IDCANCEL2), SW_HIDE);
 			EnableWindow(NextButton, TRUE);
+			SetFocus(MainWindow);
 			break;
 		}
 	}

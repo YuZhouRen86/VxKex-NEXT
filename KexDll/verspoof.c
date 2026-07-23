@@ -229,7 +229,8 @@ VOID KexApplyVersionSpoof(
 			AshExeBaseNameIs(L"Listary.exe") ||
 			AshExeBaseNameIs(L"Listary.Service.exe") ||
 			AshExeBaseNameIs(L"Update.exe") ||
-			(KexData->Flags & KEXDATA_FLAG_CHROMIUM)) {
+			(KexData->Flags & KEXDATA_FLAG_CHROMIUM) ||
+			IsCurrentProcessInternetExplorer()) {
 			
 			return;
 		}

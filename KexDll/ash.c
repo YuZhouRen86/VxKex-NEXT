@@ -25,13 +25,9 @@
 #include "buildcfg.h"
 #include "kexdllp.h"
 
-//
-// Statically linked Qt6 applications tend to have a .qtmimed PE section in their
-// EXE file. We can check for this section to determine that an application has
-// statically-linked Qt6.
-//
-BOOLEAN AshIsStaticallyLinkedQt6Image(
-	IN	PVOID	ModuleBase)
+STATIC BOOLEAN AshDoesImageContainSection(
+	IN	PVOID	ModuleBase,
+	IN	PCSTR	Section)
 {
 	PIMAGE_NT_HEADERS NtHeaders;
 	ANSI_STRING SectionName;
@@ -44,11 +40,40 @@ BOOLEAN AshIsStaticallyLinkedQt6Image(
 		return FALSE;
 	}
 
-	RtlInitConstantAnsiString(&SectionName, ".qtmimed");
+	RtlInitAnsiString(&SectionName, Section);
 
 	SectionHeader = KexRtlSectionTableFromName(NtHeaders, &SectionName);
 
 	return (SectionHeader != NULL) ? TRUE : FALSE;
+}
+
+//
+// Statically linked Qt6 applications tend to have a .qtmimed PE section in their
+// EXE file. We can check for this section to determine that an application has
+// statically-linked Qt6.
+//
+BOOLEAN AshIsStaticallyLinkedQt6Image(
+	IN	PVOID	ModuleBase)
+{
+	return AshDoesImageContainSection(ModuleBase, ".qtmimed");
+}
+
+//
+// Godot games have a "pck" section.
+//
+BOOLEAN AshIsGodotImage(
+	IN	PVOID	ModuleBase)
+{
+	return AshDoesImageContainSection(ModuleBase, "pck");
+}
+
+//
+// Zig programs *seem* to always have a non-standard .buildid section.
+//
+BOOLEAN AshIsZigImage(
+	IN	PVOID	ModuleBase)
+{
+	return AshDoesImageContainSection(ModuleBase, ".buildid");
 }
 
 //
@@ -279,4 +304,20 @@ VOID AshApplyNodeJSEnvironmentVariableHacks(
 		RtlInitConstantUnicodeString(&VariableValue, L"1");
 		RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
 	}
+}
+
+VOID AshApplyGodotEnvironmentVariableHacks(
+	VOID)
+{	
+	UNICODE_STRING VariableName;
+	UNICODE_STRING VariableValue;
+
+	KexLogInformationEvent(L"App-Specific Hack applied for Godot");
+		
+	RtlInitConstantUnicodeString(&VariableName, L"VK_ICD_FILENAMES");
+	RtlInitConstantUnicodeString(&VariableValue, L":null:");
+	RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
+
+	RtlInitConstantUnicodeString(&VariableName, L"VK_DRIVER_FILES");
+	RtlSetEnvironmentVariable(NULL, &VariableName, &VariableValue);
 }
