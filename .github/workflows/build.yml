@@ -109,15 +109,46 @@ jobs:
           }
 
           Write-Host "Win7SDK Compiler preparation complete"
-
-      - name: Build
+      - name: Build x64 Release
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 2>nul
-          set VxKex_NEXT_Platform_Toolset=Windows7.1SDK
-          call "01-Development Utilities\Build_Stable_Version_And_Clean.bat"
-
-          echo Build successful
+          msbuild "VxKex.sln" /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=Windows7.1SDK /m
+          if errorlevel 1 (
+            echo Failed to build x64 Release configuration
+            exit /b 1
+          )
+          echo x64 Release build successful
+      - name: Build Win32 Release
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86 2>nul
+          msbuild "VxKex.sln" /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=Windows7.1SDK /m
+          if errorlevel 1 (
+            echo Failed to build Win32 Release configuration
+            exit /b 1
+          )
+          echo Win32 Release build successful
+      - name: Build x64 Debug
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 2>nul
+          msbuild "VxKex.sln" /p:Configuration=Debug /p:Platform=x64 /p:PlatformToolset=Windows7.1SDK /m
+          if errorlevel 1 (
+            echo Failed to build x64 Debug configuration
+            exit /b 1
+          )
+          echo x64 Debug build successful
+      - name: Build Win32 Debug
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86 2>nul
+          msbuild "VxKex.sln" /p:Configuration=Debug /p:Platform=Win32 /p:PlatformToolset=Windows7.1SDK /m
+          if errorlevel 1 (
+            echo Failed to build Win32 Debug configuration
+            exit /b 1
+          )
+          echo Win32 Debug build successful
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
