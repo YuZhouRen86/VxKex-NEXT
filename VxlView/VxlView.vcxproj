@@ -98,7 +98,6 @@
       </AdditionalDependencies>
       <Profile>false</Profile>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>comdlg32.dll</DelayLoadDLLs>
       <SectionAlignment>
       </SectionAlignment>
     </Link>
@@ -134,7 +133,6 @@
       </AdditionalDependencies>
       <Profile>false</Profile>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>comdlg32.dll</DelayLoadDLLs>
       <SectionAlignment>
       </SectionAlignment>
     </Link>
@@ -177,7 +175,6 @@
       </AdditionalDependencies>
       <Profile>false</Profile>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>comdlg32.dll</DelayLoadDLLs>
       <SectionAlignment>
       </SectionAlignment>
     </Link>
@@ -218,7 +215,6 @@
       <AdditionalDependencies>advapi32.lib;kernel32.lib</AdditionalDependencies>
       <Profile>false</Profile>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>comdlg32.dll</DelayLoadDLLs>
       <SectionAlignment>
       </SectionAlignment>
     </Link>

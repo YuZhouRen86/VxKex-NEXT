@@ -25,6 +25,9 @@
 
 #pragma once
 
+#pragma warning(disable: 4091 4311 4312)
+#define _NO_CRT_STDIO_INLINE
+
 #if !defined(KEX_ARCH_X64) && !defined(KEX_ARCH_X86)
 #  if defined(_M_X64)
 #    define KEX_ARCH_X64

@@ -106,7 +106,6 @@
       <SetChecksum>true</SetChecksum>
       <ModuleDefinitionFile>kxcom.def</ModuleDefinitionFile>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
-      <DelayLoadDLLs>urlmon.dll;shell32.dll</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -140,7 +139,6 @@
       <SetChecksum>true</SetChecksum>
       <ModuleDefinitionFile>kxcom.def</ModuleDefinitionFile>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
-      <DelayLoadDLLs>urlmon.dll;shell32.dll</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -181,7 +179,6 @@
       <SetChecksum>true</SetChecksum>
       <ModuleDefinitionFile>kxcom.def</ModuleDefinitionFile>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
-      <DelayLoadDLLs>urlmon.dll;shell32.dll</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -222,7 +219,6 @@
       <SetChecksum>true</SetChecksum>
       <ModuleDefinitionFile>kxcom.def</ModuleDefinitionFile>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
-      <DelayLoadDLLs>urlmon.dll;shell32.dll</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
