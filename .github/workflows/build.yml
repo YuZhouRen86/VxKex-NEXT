@@ -114,7 +114,7 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 2>nul
-          
+          set VxKex_NEXT_Platform_Toolset=Windows7.1SDK
           call "01-Development Utilities\Build_Stable_Version_And_Clean.bat"
 
           echo Build successful
