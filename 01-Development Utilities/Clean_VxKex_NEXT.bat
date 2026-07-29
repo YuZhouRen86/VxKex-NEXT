@@ -20,4 +20,4 @@ if exist "01-Development Utilities\moz2sst\ROOT.sst" del /A /F /Q "01-Developmen
 
 popd
 
-pause
+if not defined VxKex_NEXT_NOPAUSE (pause)
