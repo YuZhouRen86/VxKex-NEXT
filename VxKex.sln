@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common Headers", "Common Headers", "{14941210-9C7B-4C81-8BE8-9B0AEDEE42C3}"
 	ProjectSection(SolutionItems) = preProject
+		00-Common Headers\ammintrin.h = 00-Common Headers\ammintrin.h
 		00-Common Headers\KexAssert.h = 00-Common Headers\KexAssert.h
 		00-Common Headers\KexComm.h = 00-Common Headers\KexComm.h
 		00-Common Headers\KexComp.h = 00-Common Headers\KexComp.h

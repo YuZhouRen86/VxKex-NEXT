@@ -106,7 +106,6 @@
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\00-Import Libraries</AdditionalLibraryDirectories>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>wtsapi32.dll;uxtheme.dll;user32.dll;shell32.dll;ole32.dll;oleaut32.dll;comctl32.dll;comdlg32.dll</DelayLoadDLLs>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <ResourceCompile>
@@ -146,7 +145,6 @@
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\00-Import Libraries</AdditionalLibraryDirectories>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>wtsapi32.dll;uxtheme.dll;user32.dll;shell32.dll;ole32.dll;oleaut32.dll;comctl32.dll;comdlg32.dll</DelayLoadDLLs>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <ResourceCompile>
@@ -193,7 +191,6 @@
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\00-Import Libraries</AdditionalLibraryDirectories>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>wtsapi32.dll;uxtheme.dll;user32.dll;shell32.dll;ole32.dll;oleaut32.dll;comctl32.dll;comdlg32.dll</DelayLoadDLLs>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <ResourceCompile>
@@ -240,7 +237,6 @@
       <AdditionalLibraryDirectories>$(TargetDir);$(SolutionDir)\00-Import Libraries</AdditionalLibraryDirectories>
       <EntryPointSymbol>EntryPoint</EntryPointSymbol>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>wtsapi32.dll;uxtheme.dll;user32.dll;shell32.dll;ole32.dll;oleaut32.dll;comctl32.dll;comdlg32.dll</DelayLoadDLLs>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <ResourceCompile>

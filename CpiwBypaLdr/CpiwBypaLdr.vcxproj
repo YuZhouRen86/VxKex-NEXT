@@ -99,7 +99,6 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>shell32.dll</DelayLoadDLLs>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
     <ResourceCompile>
@@ -134,7 +133,6 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>shell32.dll</DelayLoadDLLs>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
     <ResourceCompile>
@@ -175,7 +173,6 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>shell32.dll</DelayLoadDLLs>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
     <ResourceCompile>
@@ -216,7 +213,6 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <DelayLoadDLLs>shell32.dll</DelayLoadDLLs>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
     </Link>
     <ResourceCompile>

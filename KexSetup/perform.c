@@ -1262,15 +1262,6 @@ VOID KexSetupInstall(
 		KexSetupCreateDirectory(TargetPath);
 	}
 
-	KexSetupFormatPath(TargetPath, L"%s\\Globalization", KexDir);
-	KexSetupCreateDirectory(TargetPath);
-
-	KexSetupFormatPath(TargetPath, L"%s\\Globalization\\Dictionaries", KexDir);
-	KexSetupCreateDirectory(TargetPath);
-
-	KexSetupFormatPath(TargetPath, L"%s\\Certificates", KexDir);
-	KexSetupCreateDirectory(TargetPath);
-
 	//
 	// Create and populate the VxKex registry key.
 	//
