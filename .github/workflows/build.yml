@@ -6,7 +6,7 @@ on:
     tags:
       - '*'
   pull_request:
-    branches: [ main ]
+    branches: [ test ]
   workflow_dispatch:
     inputs:
       tag:
