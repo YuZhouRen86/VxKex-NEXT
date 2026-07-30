@@ -216,8 +216,8 @@ jobs:
 
             Built from tag: `${{ needs.prepare.outputs.tag }}`
 
-If you are not a VxKex NEXT developer, please use the **Release** version.  
-如果您不是 VxKex NEXT 开发者，请使用 **Release** 版本。
+            If you are not a VxKex NEXT developer, please use the **Release** version.  
+            如果您不是 VxKex NEXT 开发者，请使用 **Release** 版本。
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
