@@ -62,15 +62,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
 
-      - name: Cache Windows 7 SDK
-        id: cache-sdk
-        uses: actions/cache@v6
-        with:
-          path: Win7SDK
-          key: Win7SDK-260730
-
       - name: Download and extract Win7SDK
-        if: steps.cache-sdk.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           $sdkUrl = "https://github.com/YuZhouRen86/GitHubActionsBuildTools/releases/download/Win7SDK-260730/Win7SDK-260730.zip"
