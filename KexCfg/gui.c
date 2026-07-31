@@ -217,9 +217,15 @@ STATIC VOID KexCfgGuiPopulateApplicationList(
 	KxCfgEnumerateConfiguration(ConfigurationCallback, NULL);
 
 	if (ListView_GetItemCount(ListViewWindow) != 0) {
+		// enable Clean button
+		EnableWindow(GetDlgItem(MainWindow, IDC_CLEANAPPS), TRUE);
+
 		// reflow column widths
 		ListView_SetColumnWidth(ListViewWindow, 0, LVSCW_AUTOSIZE);
 		ListView_SetColumnWidth(ListViewWindow, 1, LVSCW_AUTOSIZE_USEHEADER);
+	} else {
+		// disable Clean button
+		EnableWindow(GetDlgItem(MainWindow, IDC_CLEANAPPS), FALSE);
 	}
 
 	SetWindowRedraw(ListViewWindow, TRUE);
@@ -575,6 +581,85 @@ STATIC VOID RunSelectedProgram(
 	}
 }
 
+STATIC BOOLEAN ShouldCleanProgramConfiguration(
+	IN	PCWSTR	ExeFullPath)
+{
+	WCHAR Root[MAX_PATH];
+	HRESULT Result;
+
+	if (FileExists(ExeFullPath)) {
+		return FALSE;
+	}
+
+	//
+	// The file doesn't currently exist. Determine what to do based
+	// on the path type and drive type.
+	//
+
+	if (PathIsNetworkPath(ExeFullPath)) {
+		// It's a network path. Don't remove the configuration because
+		// the network path might just be disconnected.
+		return FALSE;
+	}
+
+	StringCchCopy(Root, ARRAYSIZE(Root), ExeFullPath);
+	Result = PathCchStripToRoot(Root, ARRAYSIZE(Root));
+	ASSERT (SUCCEEDED(Result));
+
+	if (SUCCEEDED(Result) && GetDriveType(Root) == DRIVE_FIXED) {
+		// The drive is a fixed, connected drive (e.g. C:) but the file
+		// does not exist. Open and shut case sherlock, we need to delete
+		// the configuration for this nonexistent program.
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+STATIC VOID CleanPrograms(
+	VOID)
+{
+	ULONG ItemIndex;
+	ULONG NumberOfItemsDeleted;
+
+	NumberOfItemsDeleted = 0;
+	ItemIndex = ListView_GetNextItem(ListViewWindow, -1, LVNI_ALL);
+
+	while (ItemIndex != -1) {
+		PCWSTR ExeFullPath;
+
+		ExeFullPath = GetProgramFullPathFromListViewIndex(ItemIndex);
+
+		if (ShouldCleanProgramConfiguration(ExeFullPath)) {
+			BOOLEAN Success;
+
+			Success = KxCfgDeleteConfiguration(ExeFullPath, NULL);
+
+			if (Success) {
+				ListView_DeleteItem(ListViewWindow, ItemIndex);
+				++NumberOfItemsDeleted;
+				--ItemIndex;
+			}
+		}
+
+		ItemIndex = ListView_GetNextItem(ListViewWindow, ItemIndex, LVNI_ALL);
+	}
+
+	switch (NumberOfItemsDeleted) {
+	case 0:
+		InfoBoxF(_(L"No programs require cleaning from the list of VxKex-NEXT-enabled applications."));
+		break;
+	case 1:
+		InfoBoxF(_(L"1 program was cleaned from the list of VxKex-NEXT-enabled applications."));
+		break;
+	default:
+		InfoBoxF(
+			_(L"%lu programs were cleaned from the list of VxKex-NEXT-enabled applications."),
+			NumberOfItemsDeleted);
+		break;
+	}
+}
+
 STATIC VOID HandleListViewContextMenu(
 	IN	PPOINT	ClickPoint)
 {
@@ -638,6 +723,8 @@ STATIC VOID HandleListViewContextMenu(
 		RemoveSelectedPrograms();
 	} else if (MenuSelection == M_ADDPROGRAM) {
 		AddProgram();
+	} else if (MenuSelection == M_CLEANPROGRAMS) {
+		CleanPrograms();
 	}
 }
 
@@ -778,6 +865,9 @@ STATIC INT_PTR CALLBACK DialogProc(
 		ToolTip(Window, IDC_WHICHCONTEXTMENU, (PWSTR)_(
 			L"Shift + Right Click on a .exe or .msi file opens the extended context menu.\r\n"
 			L"Right clicking without holding the Shift key opens the normal context menu."));
+		ToolTip(Window, IDC_CLEANAPPS, (PWSTR)_(
+			L"Applications which no longer exist may remain enabled in VxKex NEXT. Click this button "
+			L"in order to remove deleted EXEs or MSIs from the list."));
 
 		//
 		// Populate the top section (global configuration) and the apps list.
@@ -884,6 +974,8 @@ STATIC INT_PTR CALLBACK DialogProc(
 				GetProgramFullPathFromListViewIndex(ItemIndex),
 				SW_SHOWDEFAULT,
 				FALSE);
+		} else if (ControlId == IDC_CLEANAPPS) {
+			CleanPrograms();
 		} else {
 			return FALSE;
 		}

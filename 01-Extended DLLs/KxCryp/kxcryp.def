@@ -19,6 +19,10 @@ EXPORTS
 	;; rng.c
 	ProcessPrng
 
+	;; isi.c
+	InitSecurityInterfaceA						= Ext_InitSecurityInterfaceA
+	InitSecurityInterfaceW						= Ext_InitSecurityInterfaceW
+
 	;; schannel.c
 ;	AcquireCredentialsHandleA					= Ext_AcquireCredentialsHandleA
 	AcquireCredentialsHandleW					= Ext_AcquireCredentialsHandleW

@@ -99,6 +99,9 @@ BOOLEAN AshIsZigImage(
 NTSTATUS AshSetIsQt6Process(
 	VOID);
 
+NTSTATUS AshSetIsCavalryProcess(
+	VOID);
+
 VOID AshApplyQBittorrentEnvironmentVariableHacks(
 	VOID);
 

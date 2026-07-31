@@ -152,9 +152,6 @@ if %DBGREL%==Debug (
 	copy ..\..\x64\%DBGREL%\KxSchanl.pdb Archive\Kex64\ >nul
 	copy ..\..\x64\%DBGREL%\KxUia.pdb Archive\Kex64\ >nul
 	copy ..\..\x64\%DBGREL%\KxUser.pdb Archive\Kex64\ >nul
-
-	copy "..\..\02-Prebuilt DLLs\x86\*.pdb" Archive\Kex32\ >nul
-	copy "..\..\02-Prebuilt DLLs\x64\*.pdb" Archive\Kex64\ >nul
 )
 
 copy /y 7zS2.sfx ..\..\KexSetup_%DBGREL%.exe >nul

@@ -65,6 +65,8 @@ STATIC NTSTATUS ProcessExtendedParameters(
 	return STATUS_SUCCESS;
 }
 
+//TODO: Complete Implementation of NtAllocateVirtualMemoryEx
+/*
 NTSTATUS NTAPI NtAllocateVirtualMemoryEx(
 	HANDLE						ProcessHandle,
 	PVOID						*BaseAddress,
@@ -99,4 +101,4 @@ NTSTATUS NTAPI NtAllocateVirtualMemoryEx(
 		PageProtection);
 
 	return Status;
-}
+}*/

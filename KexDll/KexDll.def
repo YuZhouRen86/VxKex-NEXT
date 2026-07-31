@@ -127,4 +127,3 @@ EXPORTS
 	NtQueryWnfStateData
 	NtWaitForAlertByThreadId
 	NtAlertThreadByThreadId
-	NtAllocateVirtualMemoryEx

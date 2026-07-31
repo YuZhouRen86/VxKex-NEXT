@@ -8,7 +8,7 @@ REM Regenerate KexMLS .bdi files.
 REM This should be run automatically while building the KexSetup SFX.
 REM
 
-DEL KexDir\Globalization\Dictionaries\*.bdi 2>&1 >NUL
+for /F "delims=" %%f in ('dir /A-D /B /S "KexDir\Globalization\Dictionaries\*" 2^>nul') do if exist "%%f" del /A /F /Q "%%f"
 MLSBDIC.EXE /IN:Dictionaries /OUT:KexDir\Globalization\Dictionaries
 
 POPD
