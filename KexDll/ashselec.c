@@ -65,7 +65,7 @@ NTSTATUS AshSelectDWriteImplementation(
 		RtlInitEmptyUnicodeString(&RewrittenDllName, NULL, 0);
 		break;
 	case DWriteWindows10Implementation:
-		RtlInitConstantUnicodeString(&RewrittenDllName, L"dwrw10");
+		RtlInitConstantUnicodeString(&RewrittenDllName, L"kxdw");
 		break;
 	default:
 		NOT_REACHED;

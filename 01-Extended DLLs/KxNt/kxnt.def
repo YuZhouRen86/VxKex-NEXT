@@ -49,7 +49,6 @@ EXPORTS
 	NtQueryWnfStateData								= KexDll.NtQueryWnfStateData
 	NtWaitForAlertByThreadId						= KexDll.NtWaitForAlertByThreadId
 	NtAlertThreadByThreadId							= KexDll.NtAlertThreadByThreadId
-	NtAllocateVirtualMemoryEx						= KexDll.NtAllocateVirtualMemoryEx
 
 	RtlInitializeCriticalSection					= Stub_Ext_RtlInitializeCriticalSection
 	RtlInitializeCriticalSectionAndSpinCount		= KexDll.Ext_RtlInitializeCriticalSectionAndSpinCount
@@ -68,4 +67,3 @@ EXPORTS
 	ZwQueryWnfStateData								= KexDll.NtQueryWnfStateData
 	ZwWaitForAlertByThreadId						= KexDll.NtWaitForAlertByThreadId
 	ZwAlertThreadByThreadId							= KexDll.NtAlertThreadByThreadId
-	ZwAllocateVirtualMemoryEx						= KexDll.NtAllocateVirtualMemoryEx

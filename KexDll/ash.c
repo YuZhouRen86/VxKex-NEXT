@@ -231,6 +231,13 @@ NTSTATUS AshSetIsQt6Process(
 	UNICODE_STRING Value;
 	SIZE_T VariableValueLength = 0;
 
+	Status = AshSelectDWriteImplementation(DWriteWindows10Implementation);
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
 	//
 	// Users have reported that these variables can fix certain Qt6 programs
 	// which make use of Qt Quick Scene Graph (QSG).
@@ -251,6 +258,39 @@ NTSTATUS AshSetIsQt6Process(
 	}
 
 	KexData->Flags |= KEXDATA_FLAG_QT6;
+	return STATUS_SUCCESS;
+}
+
+NTSTATUS AshSetIsCavalryProcess(
+	VOID)
+{
+	NTSTATUS Status;
+	UNICODE_STRING RewriteEntry;
+
+	ASSERT (AshExeBaseNameIs(L"cavalry.exe"));
+
+	//
+	// APPSPECIFICHACK: Cavalry bundles its own icuuc.dll which is newer than the
+	// version present in Windows 10 (which VxKex includes). Remove icuuc from the
+	// DLL rewrite list to solve this problem.
+	//
+
+	KexLogInformationEvent(L"App-Specific Hack applied for Cavalry");
+	RtlInitConstantUnicodeString(&RewriteEntry, L"icuuc");
+	Status = KexRemoveDllRewriteEntry(&RewriteEntry);
+	ASSERT (NT_SUCCESS(Status));
+
+	Status = AshSetIsQt6Process();
+	ASSERT (NT_SUCCESS(Status));
+
+	// Do not use Win10 DWrite; I have heard reports it causes "weird" text.
+	Status = AshSelectDWriteImplementation(DWriteNoImplementation);
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
 	return STATUS_SUCCESS;
 }
 

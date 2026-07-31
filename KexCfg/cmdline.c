@@ -26,7 +26,7 @@ STATIC VOID DisplayHelpMessage(
 		L"/WINVERSPOOF:<decimal or string> - Configures the spoofed Windows version\r\n"
 		L"/STRONGSPOOF:<hexadecimal flags> - Configures options for strong version spoofing\r\n"
 		L"\r\n"
-		L"The <EXE path> argument must be a full absolute path to a file with a .exe extension.\r\n"
+		L"The <EXE path> argument must be a full absolute path to a file with a .exe or .msi extension.\r\n"
 		L"Boolean parameters TRUE, YES, 1, FALSE, NO, or 0 are recognized.\r\n"
 		L"The /WINVERSPOOF parameter can be a member of the KEX_WIN_VER_SPOOF enumeration or one of the following "
 		L"string values: NONE, WIN7SP1, WIN8, WIN81, WIN10, or WIN11.\r\n"

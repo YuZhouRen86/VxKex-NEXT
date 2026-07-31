@@ -99,7 +99,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -133,7 +133,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -173,7 +173,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>
@@ -213,7 +213,7 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
       <SetChecksum>true</SetChecksum>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>EntryPoint</EntryPointSymbol>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\00-Common Headers</AdditionalIncludeDirectories>

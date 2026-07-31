@@ -220,6 +220,10 @@ BOOL WINAPI DllMain(
 		//
 
 		unless (KexData->IfeoParameters.DisableAppSpecific) {
+			if (AshExeBaseNameIs(L"cavalry.exe")) {
+				AshSetIsCavalryProcess();
+			}
+
 			// APPSPECIFICHACK: Environment variable hack for QBittorrent to fix
 			// bad kerning.
 			if (AshExeBaseNameIs(L"qbittorrent.exe")) {

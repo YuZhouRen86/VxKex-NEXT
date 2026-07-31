@@ -10,7 +10,7 @@ INT InjectedCount = 0, InjectedCapacity = 0;
 CRITICAL_SECTION CriticalSection;
 
 INT IsPidInjected(
-	DWORD Pid)
+	DWORD	Pid)
 {
 	INT Found = 0;
 	INT Index;
@@ -26,7 +26,7 @@ INT IsPidInjected(
 }
 
 VOID AddPid(
-	DWORD Pid)
+	DWORD	Pid)
 {
 	INT NewCapacity;
 	PULONG NewBuffer;
@@ -48,7 +48,7 @@ VOID AddPid(
 
 // Internal deletion, caller must hold the critical section
 static VOID RemovePidInternal(
-	DWORD Pid)
+	DWORD	Pid)
 {
 	INT Index;
 	for (Index = 0; Index < InjectedCount; ++Index) {
@@ -75,7 +75,7 @@ static VOID RemovePidInternal(
 
 // External deletion (with lock)
 VOID RemovePid(
-	DWORD Pid)
+	DWORD	Pid)
 {
 	EnterCriticalSection(&CriticalSection);
 	RemovePidInternal(Pid);
@@ -281,19 +281,16 @@ DWORD WINAPI PollingThread(
 	return 0;
 }
 
-// Main Function
-INT WINAPI wWinMain(
-	HINSTANCE	Instance,
-	HINSTANCE	PrevInstance,
-	LPWSTR		CmdLine,
-	INT			nCmdShow)
+VOID EntryPoint(
+	VOID)
 {
 	INT Argc;
-	PPWSTR Argv = CommandLineToArgvW(CmdLine, &Argc);
-	if (!Argv || Argc != 1) return 0;
-	if (!StringEqualI(L"/START", Argv[0])) return 0;
+	PWSTR CommandLine = GetCommandLineWithoutImageName();
+	PPWSTR Argv = CommandLineToArgvW(CommandLine, &Argc);
+	if (!Argv || Argc != 1) return;
+	if (!StringEqualI(L"/START", Argv[0])) return;
 	LocalFree(Argv);
-	if (!KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir))) return 0;
+	if (!KxCfgGetKexDir(KexDir, ARRAYSIZE(KexDir))) return;
 	StringCchCopy(DllPath, MAX_PATH, KexDir);
 	StringCchCat(DllPath, MAX_PATH, L"\\CpiwBypa.dll");
 	//wprintf(L"Target DLL: %ls\n", DllPath);
@@ -305,5 +302,4 @@ INT WINAPI wWinMain(
 	free(InjectedPids);
 	DeleteCriticalSection(&CriticalSection);
 	//wprintf(L"Program terminated.\n");
-	return 0;
 }
