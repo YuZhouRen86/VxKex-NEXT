@@ -4,6 +4,37 @@
 **本文还提供以下语言版本**  
 **[繁體中文](/README_IN_OTHER_LANGUAGES/README_CHT.md) | [Русский](/README_IN_OTHER_LANGUAGES/README_RUS.md) | [Українська](/README_IN_OTHER_LANGUAGES/README_UKR.md) | [Čeština](/README_IN_OTHER_LANGUAGES/README_CZE.md)**
 
+IMPORTANT NOTICE  重要告示
+================
+
+由于主要开发者的工作安排，VxKex NEXT 的开发即日起完全暂停，至2027年8月恢复。请勿提交除产品缺陷以外的问题，如 Windows API 技术问题。  
+Due to the work schedule of the main developer, the development of VxKex NEXT will be completely suspended from today until August 2027. Please do not submit any issues other than product defects, such as Windows API technical issues.
+
+Hibernating for a Year, Awaiting the Bloom  蛰伏一载，静候花开
+==========================================
+
+Since 2022, I have long faced difficulties in various aspects of my life. I used to be obsessed with astronomy, tilting my head up and following the lines on my phone's star-chart app to find the twinkling glimmers in the vast, boundless sky. Yet, after that point, my stargazing frequency plummeted from twice a month to less than once a year. At night, my gaze no longer turned to the heavens but fixated on lines of program code that read like celestial scripture.  
+At first, my programming foundation was weak. Amid the internet boom, I had picked up some fragmented Python knowledge—basic syntax and the usage of libraries like requests, tkinter, and pygame. Before 2025, I always wrote Python code using IDLE and other code with Kate. I knew nothing about modern development tools like VS Code, nor did I know any programming language besides Python and JavaScript. I was even completely unaware that the .md extension stands for Markdown format or how it differs from a plain text document.  
+In July 2024, after two years of working with PySide, I kept seeing articles comparing C++ and Python performance and wanted to try Qt—the C++ foundation of PySide. I completed my first C++ program with Qt Creator and was amazed by its blazing speed, so I resolved to master C++. From November that year, I gradually migrated client projects to C++ Qt, and my proficiency with Qt soon surpassed my Python skills.  
+In February 2025, generative AI was booming. With the help of AI and companions, I configured VS Code, installed autocompletion plugins, and learned the basics of Markdown.  
+The birth of VxKex NEXT came from a "forced" modification. In December 2024, a client asked me to set up a new program for their company's Windows 7 computers. At that time, VxKex had many bugs, and the new program wouldn't run even with VxKex enabled. I hastily brushed up on some C knowledge, modified VxKex, and surprisingly got the program to work. During the modification process, my companions and I discovered more errors in VxKex, some of which were difficult to fix, so we decided to open-source the code for collective research.  
+VxKex NEXT is the first Windows 7 compatibility layer with localization support. Today, the latest version of VxKex NEXT includes many new features and fixes a large number of bugs compared to the initial release, enabling more new programs to run on Windows 7. Meanwhile, the project has introduced automated scripts and GitHub Actions workflows, greatly improving development efficiency. My heartfelt thanks go to vxiiduu and the many users for their enthusiastic support!  
+Unfortunately, due to recent work commitments, development on VxKex NEXT has to be paused once again—I deeply regret this. Over these tough four years, I have had little time for hobbies, pouring almost all my spare time into programming side projects and open-source collaboration. I am grateful to everyone who has given me care and support!  
+Over the next year, I will devote myself fully to my primary job and temporarily step away from the open-source community. But I believe that the storms will eventually pass, and the rainbow will appear at the perfect moment. See you in August next year!
+
+——Main developer of VxKex NEXT (The English version is translated by DeepSeek from Simplified Chinese)
+
+自2022年起，我长期面临着各方面的困难。我曾痴迷天文，喜欢仰着头，对着手机上星图软件的连线，寻找无边苍穹中一闪一闪的微光。然而，从那之后，我观星的频率从每月两次骤降至每年不足一次。夜晚，我的视线不再投向夜空，而盯在一行行天书般的程序代码上。  
+起初，我的编程基础薄弱。在互联网热潮下，我学过一些零碎的 Python 知识，如基础语法和 requests、tkinter、pygame 等库的用法。在2025年以前，我一直使用 IDLE 编写 Python 代码，用 Kate 编写其他代码。我不了解 VS Code 等现代编程工具，也不会 Python、JavaScript 以外的编程语言，甚至对 .md 后缀代表 Markdown 格式、它和普通文本文档有何区别都浑然不知。  
+2024年7月，接触 PySide 2年的我屡屡看到 C++、Python 性能对比的文章，想试试 PySide 的 C++ 根基——Qt。我用 Qt Creator 完成了第一个 C++ 程序，惊艳于它的极速性能，便下决心学好 C++。同年11月起，我给客户编写的项目陆续迁移至 C++ Qt，我对 Qt 的熟练程度已经超过了 Python。  
+2025年2月，生成式 AI 正蓬勃发展。我在 AI 和同伴的帮助下完成了 VS Code 的配置及自动补全插件安装，并掌握了 Markdown 的基础用法。  
+VxKex NEXT 的诞生，源于一次“被迫的”修改。2024年12月，有一个客户想让我给他们公司的 Windows 7 电脑配置一个新程序，而当时的 VxKex 有不少错误，那个新程序即使开启了 VxKex 也无法运行。我于是临时补了些 C 的知识，对 VxKex 进行修改，竟真让那个程序跑了起来。在修改过程中，我和同伴发现了更多 VxKex 的错误，且有些错误难以修复，便决定将代码开源，供大家一起研究。  
+VxKex NEXT 是首个支持本地化的 Windows 7 兼容层。如今，VxKex NEXT 最新版比初版新增了许多功能，修复了大量错误，使更多新程序得以在 Windows 7 上运行。同时，项目引入自动化脚本和 GitHub Actions 工作流，大幅提升了开发效率。由衷感谢 vxiiduu 和广大用户们对项目的热心支持！  
+遗憾的是，由于近期工作安排，VxKex NEXT 的开发不得不再次按下暂停键，我深表遗憾。在这艰难的4年里，我无暇顾及爱好，将几乎所有空闲时间倾注于编程副业和开源协作。感谢所有给予我关心和支持的人们！  
+接下来的这1年，我将全身心投入本职工作，暂别开源社区。但我相信，风雨终将过去，彩虹会在最恰当的时刻显现。明年8月，再会！
+
+——VxKex NEXT 主要开发者
+
 Introduction  介绍
 ============
 
