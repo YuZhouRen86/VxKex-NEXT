@@ -7,8 +7,8 @@
 IMPORTANT NOTICE  重要告示
 ================
 
-由于主要开发者的工作安排，VxKex NEXT 的开发即日起完全暂停，至2027年8月恢复。请勿提交除产品缺陷以外的问题，如 Windows API 技术问题。  
-Due to the work schedule of the main developer, the development of VxKex NEXT will be completely suspended from today until August 2027. Please do not submit any issues other than product defects, such as Windows API technical issues.
+Due to the work schedule of the main developer, the development of VxKex NEXT will be completely suspended from today until August 2027. Please do not submit any issues other than product defects, such as Windows API technical issues.  
+由于主要开发者的工作安排，VxKex NEXT 的开发即日起完全暂停，至2027年8月恢复。请勿提交除产品缺陷以外的问题，如 Windows API 技术问题。
 
 Hibernating for a Year, Awaiting the Bloom  蛰伏一载，静候花开
 ==========================================
