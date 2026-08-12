@@ -38,14 +38,14 @@
 //
 KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 	IN	PCWSTR	ExeFullPath,
-	IN	HANDLE	TransactionHandle OPTIONAL)
+	IN	HANDLE	TransactionHandle OPTIONAL,
+	IN	PCWSTR	IfeoSubkeyName OPTIONAL)
 {
 	ULONG ErrorCode;
 	BOOLEAN Success;
 	HKEY IfeoKeyHandle;
 	HKEY OriginalIfeoKeyHandle = 0;
 	ULONG Index;
-	UNICODE_STRING ExeFullPathUS;
 	WCHAR VerifierDlls[256];
 	BOOLEAN KexDllWasRemoved;
 	ULONG NumberOfValues;
@@ -84,9 +84,6 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 	//
 	// Step 1. Open the IFEO key for the program.
 	//
-
-	RtlInitUnicodeString(&ExeFullPathUS, ExeFullPath);
-
 	{
 		HKEY IfeoBaseKey;
 		HKEY IfeoExeKey;
@@ -124,60 +121,79 @@ KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 		ASSERT (ErrorCode == ERROR_SUCCESS);
 		
 		if (UseFilter) {
-			ULONG SubkeyIndex = 0;
-			while (TRUE) {
-				WCHAR SubkeyName[32];
-				ULONG SubkeyNameCch;
-				WCHAR FilterFullPath[MAX_PATH];
-
-				SubkeyNameCch = ARRAYSIZE(SubkeyName);
-				ErrorCode = RegEnumKeyEx(
+			if (IfeoSubkeyName && IfeoSubkeyName[0] != L'\0') {
+				ErrorCode = RegOpenKeyEx(
 					IfeoExeKey,
-					SubkeyIndex++,
-					SubkeyName,
-					&SubkeyNameCch,
-					NULL,
-					NULL,
-					NULL,
-					NULL);
-
-				if (ErrorCode == ERROR_NO_MORE_ITEMS) {
-					break;
+					IfeoSubkeyName,
+					0,
+					KEY_READ | KEY_WOW64_64KEY,
+					&IfeoKeyHandle);
+				if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+					return TRUE;
+				} else if (ErrorCode != ERROR_SUCCESS) {
+					RegCloseKey(IfeoExeKey);
+					RegCloseKey(IfeoBaseKey);
+					SetLastError(ErrorCode);
+					return FALSE;
 				}
 
-				if (ErrorCode != ERROR_SUCCESS) {
-					continue;
-				}
+				OriginalIfeoKeyHandle = IfeoKeyHandle;
+			} else {
+				ULONG SubkeyIndex = 0;
+				while (TRUE) {
+					WCHAR SubkeyName[32];
+					ULONG SubkeyNameCch;
+					WCHAR FilterFullPath[MAX_PATH];
 
-				RegReadString(
-					IfeoExeKey,
-					SubkeyName,
-					L"FilterFullPath",
-					FilterFullPath,
-					ARRAYSIZE(FilterFullPath));
-
-				if (FilterFullPath[0] == '\0') {
-					continue;
-				}
-
-				if (StringEqualI(FilterFullPath, ExeFullPath)) {
-					ErrorCode = RegOpenKeyEx(
+					SubkeyNameCch = ARRAYSIZE(SubkeyName);
+					ErrorCode = RegEnumKeyEx(
 						IfeoExeKey,
+						SubkeyIndex++,
 						SubkeyName,
-						0,
-						KEY_READ | KEY_WOW64_64KEY,
-						&IfeoKeyHandle);
-					if (ErrorCode == ERROR_FILE_NOT_FOUND) {
-						return TRUE;
-					} else if (ErrorCode != ERROR_SUCCESS) {
-						RegCloseKey(IfeoExeKey);
-						RegCloseKey(IfeoBaseKey);
-						SetLastError(ErrorCode);
-						return FALSE;
+						&SubkeyNameCch,
+						NULL,
+						NULL,
+						NULL,
+						NULL);
+
+					if (ErrorCode == ERROR_NO_MORE_ITEMS) {
+						break;
 					}
 
-					OriginalIfeoKeyHandle = IfeoKeyHandle;
-					break;
+					if (ErrorCode != ERROR_SUCCESS) {
+						continue;
+					}
+
+					RegReadString(
+						IfeoExeKey,
+						SubkeyName,
+						L"FilterFullPath",
+						FilterFullPath,
+						ARRAYSIZE(FilterFullPath));
+
+					if (FilterFullPath[0] == '\0') {
+						continue;
+					}
+
+					if (StringEqualI(FilterFullPath, ExeFullPath)) {
+						ErrorCode = RegOpenKeyEx(
+							IfeoExeKey,
+							SubkeyName,
+							0,
+							KEY_READ | KEY_WOW64_64KEY,
+							&IfeoKeyHandle);
+						if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+							return TRUE;
+						} else if (ErrorCode != ERROR_SUCCESS) {
+							RegCloseKey(IfeoExeKey);
+							RegCloseKey(IfeoBaseKey);
+							SetLastError(ErrorCode);
+							return FALSE;
+						}
+
+						OriginalIfeoKeyHandle = IfeoKeyHandle;
+						break;
+					}
 				}
 			}
 		}

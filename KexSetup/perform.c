@@ -904,7 +904,8 @@ VOID KexSetupInstallFiles(
 BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 	IN	PCWSTR							ExeFullPathOrBaseName,
 	IN	BOOLEAN							IsLegacyConfiguration,
-	IN	PVOID							ExtraParameter)
+	IN	PVOID							ExtraParameter,
+	IN	PCWSTR							IfeoSubkeyName OPTIONAL)
 {
 	BOOLEAN Success;
 
@@ -948,11 +949,12 @@ BOOLEAN CALLBACK KexSetupConfigurationEnumerationCallback(
 
 	Success = KxCfgDeleteConfiguration(
 		ExeFullPathOrBaseName,
-		KexSetupTransactionHandle);
+		KexSetupTransactionHandle,
+		IfeoSubkeyName);
 
 	if (!Success) {
 		ErrorBoxF(_(
-			L"Setup was unable to delete VxKex configuration for \"%s\". %s"),
+			L"Setup was unable to delete VxKex NEXT configuration for \"%s\". %s"),
 			ExeFullPathOrBaseName, GetLastErrorAsString());
 
 		RtlRaiseStatus(STATUS_KEXSETUP_FAILURE);

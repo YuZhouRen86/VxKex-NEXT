@@ -18,7 +18,7 @@ KXCFGDECLSPEC BOOLEAN WINAPI KxCfgEnableVxKexForMsiexec(
 
 		return KxCfgSetConfiguration(MsiexecPath, &MsiexecConfiguration, TransactionHandle);
 	} else {
-		return KxCfgDeleteConfiguration(MsiexecPath, TransactionHandle);
+		return KxCfgDeleteConfiguration(MsiexecPath, TransactionHandle, NULL);
 	}
 }
 

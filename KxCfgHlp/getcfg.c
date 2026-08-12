@@ -212,7 +212,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnumerateConfiguration(
 		}
 
 		// Legacy configuration has been found - call the callback
-		ContinueEnumeration = ConfigurationCallback(ExeBaseName, TRUE, CallbackExtraParameter);
+		ContinueEnumeration = ConfigurationCallback(ExeBaseName, TRUE, CallbackExtraParameter, NULL);
 		if (!ContinueEnumeration) {
 			RegCloseKey(IfeoExeKey);
 			RegCloseKey(IfeoBaseKey);
@@ -301,7 +301,7 @@ NoLegacyConfigurationFound:
 			// VxKex configuration has been found, call the callback.
 			//
 
-			ContinueEnumeration = ConfigurationCallback(FilterFullPath, FALSE, CallbackExtraParameter);
+			ContinueEnumeration = ConfigurationCallback(FilterFullPath, FALSE, CallbackExtraParameter, SubkeyName);
 
 			if (!ContinueEnumeration) {
 				RegCloseKey(IfeoExeKey);

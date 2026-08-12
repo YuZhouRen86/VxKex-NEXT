@@ -18,6 +18,77 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI FileExists(
 	return TRUE;
 }
 
+//
+// This function is slow and inefficient and doesn't really work properly
+// for all edge cases such as relative input paths
+// Hence why it is left as static
+// It is only really meant for KexSetup to use it through SupersedeFile
+//
+STATIC BOOLEAN CreateDirectoryHierarchy(
+	IN	PCWSTR	DirectoryPath,
+	IN	HANDLE	TransactionHandle OPTIONAL)
+{
+	ULONG Iterations;
+	WCHAR CreateDirectoryPath[MAX_PATH];
+
+	ASSERT (!PathIsRelative(DirectoryPath));
+
+	Iterations = 0;
+
+DoAgain:
+	StringCchCopy(CreateDirectoryPath, ARRAYSIZE(CreateDirectoryPath), DirectoryPath);
+
+	until (PathCchIsRoot(CreateDirectoryPath)) {
+		BOOL Success;
+
+		if (TransactionHandle) {
+			Success = CreateDirectoryTransacted(
+				NULL,
+				CreateDirectoryPath,
+				NULL,
+				TransactionHandle);
+		} else {
+			Success = CreateDirectory(
+				CreateDirectoryPath,
+				NULL);
+		}
+
+		if (Success) {
+			break;
+		}
+
+		switch (GetLastError()) {
+		case ERROR_ALREADY_EXISTS:
+			goto OutOfLoop;
+		case ERROR_PATH_NOT_FOUND:
+			break;
+		default:
+			ASSERT (FALSE);
+			return FALSE;
+		}
+
+		PathCchRemoveFileSpec(CreateDirectoryPath, ARRAYSIZE(CreateDirectoryPath));
+	}
+
+OutOfLoop:
+	if (FileExists(DirectoryPath)) {
+		if (PathIsDirectory(DirectoryPath)) {
+			return TRUE;
+		} else {
+			SetLastError(ERROR_DIRECTORY);
+			return FALSE;
+		}
+	} else {
+		++Iterations;
+
+		if (Iterations > 100) {
+			return FALSE;
+		}
+
+		goto DoAgain;
+	}
+}
+
 KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 	IN	PCWSTR	SourceFile,
 	IN	PCWSTR	TargetFile,
@@ -25,7 +96,7 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 {
 	BOOLEAN Success;
 
-	if (PathIsDirectory(SourceFile) && PathIsDirectory(TargetFile) && FileExists(TargetFile)) {
+	if (PathIsDirectory(SourceFile)) {
 		HANDLE FindHandle;
 		WCHAR FindPath[MAX_PATH];
 		WIN32_FIND_DATA FindData;
@@ -54,6 +125,9 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 		//
 		// What we'll do instead of renaming directories is we'll just recurse into
 		// the source directory and call SupersedeFile on all the child items.
+		//
+		// 11-Jul-2026: This code path was changed so that it also works for when the
+		// source and target are on different drives.
 		//
 
 		// create a path that is %SourceFile%\*
@@ -101,6 +175,14 @@ KW32MLDECLSPEC EXTERN_C BOOLEAN KW32MLAPI SupersedeFile(
 
 			StringCchCopy(TargetPath, ARRAYSIZE(TargetPath), TargetFile);
 			PathCchAppend(TargetPath, ARRAYSIZE(TargetPath), FindData.cFileName);
+
+			if (!FileExists(TargetPath)) {
+				WCHAR TargetDirectoryPath[MAX_PATH];
+
+				StringCchCopy(TargetDirectoryPath, ARRAYSIZE(TargetDirectoryPath), TargetPath);
+				PathCchRemoveFileSpec(TargetDirectoryPath, ARRAYSIZE(TargetDirectoryPath));
+				CreateDirectoryHierarchy(TargetDirectoryPath, TransactionHandle);
+			}
 			
 			Success = SupersedeFile(SourcePath, TargetPath, TransactionHandle);
 

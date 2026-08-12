@@ -246,6 +246,10 @@ KXUSERAPI BOOL WINAPI GetPointerType(
 	IN	DWORD				PointerId,
 	OUT	POINTER_INPUT_TYPE	*PointerType)
 {
+	if (PointerType == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 	// For some reason we have to set this, and all other pointer type requests,
 	// to touchpad pointer type or otherwise Unity doesn't work.
 	if (PointerId == 0)	*PointerType = PT_TOUCHPAD;
@@ -257,6 +261,10 @@ KXUSERAPI BOOL WINAPI GetPointerInfo(
 	IN	DWORD			PointerId,
 	OUT	POINTER_INFO	*PointerInfo)
 {
+	if (PointerInfo == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 	if (PointerId == 0) {
 		PointerInfo->pointerType = PT_TOUCHPAD;
 		PointerInfo->pointerId = PointerId;
@@ -320,8 +328,12 @@ KXUSERAPI BOOL WINAPI GetPointerTouchInfo(
 	INT Index;
 	PTOUCH_POINT_ENTRY Entry;
 
+	if (TouchInfo == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 	if (PointerId == 0) {
-		SetLastError(ERROR_NOT_SUPPORTED);
+		SetLastError(ERROR_DATATYPE_MISMATCH);
 		return FALSE;
 	}
 
@@ -343,6 +355,30 @@ KXUSERAPI BOOL WINAPI GetPointerTouchInfo(
 	return TRUE;
 }
 
+KXUSERAPI BOOL WINAPI GetPointerTouchInfoHistory(
+	IN		DWORD				PointerId,
+	IN OUT	PDWORD				EntriesCount,
+	OUT		PPOINTER_TOUCH_INFO	TouchInfo OPTIONAL)
+{
+	if (EntriesCount == NULL || (*EntriesCount != 0 && TouchInfo == NULL)) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	if (PointerId == 0) {
+		SetLastError(ERROR_DATATYPE_MISMATCH);
+		return FALSE;
+	}
+	if (*EntriesCount == 1) {
+		BOOL Success = GetPointerTouchInfo(PointerId, TouchInfo);
+		if (!Success) *EntriesCount = 0;
+		return Success;
+	}
+	KexDebugCheckpoint();
+	SetLastError(ERROR_NO_DATA);
+	*EntriesCount = 0;
+	return FALSE;
+}
+
 //
 // Returns an array of touch information for all active touch points.
 // The caller passes PointerId = 0 to indicate "all touches" (as
@@ -359,10 +395,12 @@ KXUSERAPI BOOL WINAPI GetPointerFrameTouchInfo(
 	DWORD Idx = 0;
 	PPOINTER_TOUCH_INFO InfoArray = (PPOINTER_TOUCH_INFO)TouchInfo;
 
-	// This implementation only supports retrieving the entire frame;
-	// passing a non-zero PointerId is not supported by this simplified hook.
-	if (PointerId != 0) {
+	if (PointerCount == NULL || TouchInfo == NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	if (PointerId == 0) {
+		SetLastError(ERROR_DATATYPE_MISMATCH);
 		return FALSE;
 	}
 
@@ -398,7 +436,7 @@ KXUSERAPI BOOL WINAPI GetPointerFrameTouchInfoHistory(
 	IN OUT	LPDWORD PointerCount,
 	OUT		LPVOID	TouchInfo)
 {
-	RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return FALSE;
 }
 
@@ -409,8 +447,12 @@ KXUSERAPI BOOL WINAPI GetPointerPenInfo(
 	INT Index;
 	PPEN_POINT_ENTRY Entry;
 
+	if (PenInfo == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 	if (PointerId == 0) {
-		SetLastError(ERROR_NOT_SUPPORTED);
+		SetLastError(ERROR_DATATYPE_MISMATCH);
 		return FALSE;
 	}
 
@@ -437,7 +479,7 @@ KXUSERAPI BOOL WINAPI GetPointerPenInfoHistory(
 	IN OUT	LPDWORD	EntriesCount,
 	OUT		LPVOID	PenInfo)
 {
-	RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return FALSE;
 }
 
@@ -470,11 +512,11 @@ KXUSERAPI BOOL WINAPI RegisterPointerDeviceNotifications(
 	IN	BOOL	NotifyRange)
 {
 	if (!IsWindow(Window)) {
-		RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
-	RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return FALSE;
 }
 
@@ -486,7 +528,7 @@ KXUSERAPI BOOL WINAPI GetWindowFeedbackSetting(
 	IN		PCVOID			Configuration OPTIONAL)
 {
 	if (!IsWindow(Window)) {
-		RtlSetLastWin32Error(ERROR_INVALID_WINDOW_HANDLE);
+		SetLastError(ERROR_INVALID_WINDOW_HANDLE);
 		return FALSE;
 	}
 
@@ -495,11 +537,11 @@ KXUSERAPI BOOL WINAPI GetWindowFeedbackSetting(
 		ConfigurationSize == NULL ||
 		(Flags & ~GWFS_INCLUDE_ANCESTORS) != 0) {
 
-			RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
+			SetLastError(ERROR_INVALID_PARAMETER);
 			return FALSE;
 	}
 
-	RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return FALSE;
 }
 
@@ -511,7 +553,7 @@ KXUSERAPI BOOL WINAPI SetWindowFeedbackSetting(
 	IN	PCVOID			Configuration OPTIONAL)
 {
 	if (!IsWindow(Window)) {
-		RtlSetLastWin32Error(ERROR_INVALID_WINDOW_HANDLE);
+		SetLastError(ERROR_INVALID_WINDOW_HANDLE);
 		return FALSE;
 	}
 
@@ -521,7 +563,7 @@ KXUSERAPI BOOL WINAPI SetWindowFeedbackSetting(
 		Flags != 0 ||
 		(ConfigurationSize != 0 && ConfigurationSize != 4)) {
 
-			RtlSetLastWin32Error(ERROR_INVALID_PARAMETER);
+			SetLastError(ERROR_INVALID_PARAMETER);
 			return FALSE;
 	}
 
@@ -530,7 +572,7 @@ KXUSERAPI BOOL WINAPI SetWindowFeedbackSetting(
 	// Of course, we won't bother actually doing that, since the window feedback
 	// stuff is only relevant for touch screens and pens.
 
-	RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return FALSE;
 }
 
@@ -553,7 +595,7 @@ KXUSERAPI BOOL WINAPI EnableMouseInPointer(
 			return TRUE;
 		}
 
-		RtlSetLastWin32Error(ERROR_NOT_SUPPORTED);
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
 
