@@ -145,7 +145,8 @@ Fail:
 BOOLEAN CALLBACK ConfigurationCallback(
 	IN	PCWSTR							ExeFullPathOrBaseName,
 	IN	BOOLEAN							IsLegacyConfiguration,
-	IN	PVOID							ExtraParameter)
+	IN	PVOID							ExtraParameter,
+	IN	PCWSTR							IfeoSubkeyName OPTIONAL)
 {
 	WCHAR ExeContainingFolder[MAX_PATH];
 	PWSTR ExeBaseName;
@@ -268,7 +269,7 @@ STATIC VOID RemoveSelectedPrograms(
 
 		ExeFullPath = GetProgramFullPathFromListViewIndex(ItemIndex);
 
-		Success = KxCfgDeleteConfiguration(ExeFullPath, TransactionHandle);
+		Success = KxCfgDeleteConfiguration(ExeFullPath, TransactionHandle, NULL);
 		if (!Success) {
 			ErrorBoxF(_(
 				L"There was an error applying settings for \"%s\". %s"),
@@ -633,7 +634,7 @@ STATIC VOID CleanPrograms(
 		if (ShouldCleanProgramConfiguration(ExeFullPath)) {
 			BOOLEAN Success;
 
-			Success = KxCfgDeleteConfiguration(ExeFullPath, NULL);
+			Success = KxCfgDeleteConfiguration(ExeFullPath, NULL, NULL);
 
 			if (Success) {
 				ListView_DeleteItem(ListViewWindow, ItemIndex);

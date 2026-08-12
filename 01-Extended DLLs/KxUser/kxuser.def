@@ -61,6 +61,7 @@ EXPORTS
 	GetPointerType
 	GetPointerInfo
 	GetPointerTouchInfo
+	GetPointerTouchInfoHistory 
 	GetPointerFrameTouchInfo
 	GetPointerFrameTouchInfoHistory
 	GetPointerPenInfo

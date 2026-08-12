@@ -63,7 +63,8 @@ typedef struct {
 typedef BOOLEAN (CALLBACK *PKXCFG_ENUMERATE_CONFIGURATION_CALLBACK) (
 	IN	PCWSTR							ExeFullPathOrBaseName,
 	IN	BOOLEAN							IsLegacyConfiguration,
-	IN	PVOID							ExtraParameter);
+	IN	PVOID							ExtraParameter,
+	IN	PCWSTR							IfeoSubkeyName);
 
 //
 // Public functions
@@ -94,7 +95,8 @@ KXCFGDECLSPEC BOOLEAN KxCfgSetConfiguration(
 
 KXCFGDECLSPEC BOOLEAN KxCfgDeleteConfiguration(
 	IN	PCWSTR	ExeFullPath,
-	IN	HANDLE	TransactionHandle OPTIONAL);
+	IN	HANDLE	TransactionHandle OPTIONAL,
+	IN	PCWSTR	IfeoSubkeyName OPTIONAL);
 
 KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgDeleteLegacyConfiguration(
 	IN	PCWSTR	ExeFullPath,

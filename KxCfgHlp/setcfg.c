@@ -28,6 +28,115 @@
 #include <KxCfgHlp.h>
 #include <KexW32ML.h>
 
+STATIC BOOLEAN CleanInvalidKeys(
+	IN	PCWSTR	ExeFullPath)
+{
+	ULONG ErrorCode;
+	HKEY IfeoBaseKey;
+	HKEY IfeoExeKey;
+	ULONG UseFilter;
+	PCWSTR ExeBaseName = PathFindFileName(ExeFullPath);
+
+	ErrorCode = RegOpenKeyEx(
+		HKEY_LOCAL_MACHINE,
+		L"Software\\Microsoft\\Windows NT\\CurrentVersion\\"
+		L"Image File Execution Options",
+		0,
+		KEY_ENUMERATE_SUB_KEYS | KEY_WOW64_64KEY,
+		&IfeoBaseKey);
+	if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+		return TRUE;
+	} else if (ErrorCode != ERROR_SUCCESS) {
+		SetLastError(ErrorCode);
+		return FALSE;
+	}
+
+	ErrorCode = RegOpenKeyEx(
+		IfeoBaseKey,
+		PathFindFileName(ExeFullPath),
+		0,
+		KEY_READ | KEY_WOW64_64KEY,
+		&IfeoExeKey);
+	if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+		return TRUE;
+	} else if (ErrorCode != ERROR_SUCCESS) {
+		RegCloseKey(IfeoBaseKey);
+		SetLastError(ErrorCode);
+		return FALSE;
+	}
+
+	ErrorCode = RegReadI32(IfeoExeKey, NULL, L"UseFilter", &UseFilter);
+	ASSERT (ErrorCode == ERROR_SUCCESS);
+	
+	if (UseFilter) {
+		ULONG SubkeyIndex = 0;
+		while (TRUE) {
+			WCHAR SubkeyName[32];
+			ULONG SubkeyNameCch;
+			WCHAR FilterFullPath[MAX_PATH];
+
+			SubkeyNameCch = ARRAYSIZE(SubkeyName);
+			ErrorCode = RegEnumKeyEx(
+				IfeoExeKey,
+				SubkeyIndex++,
+				SubkeyName,
+				&SubkeyNameCch,
+				NULL,
+				NULL,
+				NULL,
+				NULL);
+
+			if (ErrorCode == ERROR_NO_MORE_ITEMS) {
+				break;
+			}
+
+			if (ErrorCode != ERROR_SUCCESS) {
+				continue;
+			}
+
+			ErrorCode = RegReadString(
+				IfeoExeKey,
+				SubkeyName,
+				L"FilterFullPath",
+				FilterFullPath,
+				ARRAYSIZE(FilterFullPath));
+
+			if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+				HKEY IfeoKeyHandle;
+				ErrorCode = RegOpenKeyEx(
+					IfeoExeKey,
+					SubkeyName,
+					0,
+					KEY_WRITE | DELETE | KEY_WOW64_64KEY,
+					&IfeoKeyHandle);
+				if (ErrorCode == ERROR_FILE_NOT_FOUND) {
+					continue;
+				} else if (ErrorCode != ERROR_SUCCESS) {
+					RegCloseKey(IfeoExeKey);
+					RegCloseKey(IfeoBaseKey);
+					SetLastError(ErrorCode);
+					return FALSE;
+				}
+				RegDeleteTree(IfeoKeyHandle, NULL);
+				NtDeleteKey(IfeoKeyHandle);
+				RegCloseKey(IfeoKeyHandle);
+				SubkeyIndex--;
+				continue;
+			}
+
+			if (FilterFullPath[0] == '\0') {
+				continue;
+			}
+
+			if (StringEqualI(FilterFullPath, ExeFullPath)) break;
+		}
+	}
+
+	RegCloseKey(IfeoExeKey);
+	RegCloseKey(IfeoBaseKey);
+	return TRUE;
+}
+
 //
 // Configure VxKex for a particular program according to the configuration data
 // structure.
@@ -81,7 +190,7 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgSetConfiguration(
 		Configuration->WinVerSpoof == WinVerSpoofNone &&
 		Configuration->StrongSpoofOptions == 0) {
 
-		return KxCfgDeleteConfiguration(ExeFullPath, TransactionHandle);
+		return KxCfgDeleteConfiguration(ExeFullPath, TransactionHandle, NULL);
 	}
 
 	//
@@ -89,6 +198,8 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgSetConfiguration(
 	//
 
 	RtlInitUnicodeString(&ExeFullPathUS, ExeFullPath);
+
+	CleanInvalidKeys(ExeFullPath);
 
 	Status = LdrOpenImageFileOptionsKey(
 		&ExeFullPathUS,
