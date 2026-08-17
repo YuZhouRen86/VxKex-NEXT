@@ -522,10 +522,11 @@ STATIC VOID RunSelectedProgram(
 	// subsystem version higher than 6.1.
 	//
 
-	if (!(NtCurrentPeb()->SpareBits0 & 1)) {
+	// Modifying Peb->SpareBits0 will crash programs on Windows 8
+	//if (!(NtCurrentPeb()->SpareBits0 & 1)) {
 		LoadLibrary(L"cpiwbypa.dll");
-		ASSERT (NtCurrentPeb()->SpareBits0 & 1);
-	}
+		//ASSERT (NtCurrentPeb()->SpareBits0 & 1);
+	//}
 
 	// why ShellExecute and not CreateProcess? because we can have .msi files too.
 	ErrorCode = (ULONG_PTR) ShellExecute(

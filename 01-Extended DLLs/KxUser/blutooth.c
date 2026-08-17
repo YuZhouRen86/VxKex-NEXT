@@ -1,5 +1,6 @@
 #include "buildcfg.h"
 #include "kxuserp.h"
+//#pragma comment(lib, "bthprops.lib")
 
 //
 // These are all stubs. No idea how to begin implementing them properly.

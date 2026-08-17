@@ -3044,6 +3044,19 @@ typedef struct _EVENT_BASIC_INFORMATION {
 	LONG EventState;
 } TYPEDEF_TYPE_NAME(EVENT_BASIC_INFORMATION);
 
+typedef NTSTATUS(NTAPI *PLDR_MANIFEST_PROBER_ROUTINE)(
+	IN	HMODULE	DllBase,
+	IN	PCWSTR	FullDllPath,
+	OUT	PHANDLE	ActivationContext);
+
+typedef NTSTATUS(NTAPI *PLDR_ACTX_LANGUAGE_ROUTINE)(
+	IN	HANDLE	Unk,
+	IN	USHORT	LangID,
+	OUT	PHANDLE	ActivationContext);
+
+typedef VOID(NTAPI *PLDR_RELEASE_ACT_ROUTINE)(
+	IN	HANDLE	ActivationContext);
+
 // Win10 1803+
 typedef enum {
 	StateLocationTypeRegistry,
@@ -4856,6 +4869,11 @@ NTSYSAPI NTSTATUS NTAPI LdrFindResource_U(
 	PLDR_RESOURCE_INFO			ResourceInfo,
 	ULONG						Level,
 	PIMAGE_RESOURCE_DATA_ENTRY	*ResourceDataEntry);
+
+NTSYSAPI NTSTATUS NTAPI LdrSetDllManifestProber(
+	IN	PLDR_MANIFEST_PROBER_ROUTINE	ManifestProberRoutine,
+	IN	PLDR_ACTX_LANGUAGE_ROUTINE		CreateActCtxLanguageRoutine,
+	IN	PLDR_RELEASE_ACT_ROUTINE		ReleaseActCtxRoutine);
 
 //
 // Non-Exported Functions - Must manually find, or reimplement.

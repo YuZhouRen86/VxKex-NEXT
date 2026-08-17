@@ -73,10 +73,10 @@ BOOL WINAPI DllMain(
 
 	Peb = NtCurrentPeb();
 
-	if (Peb->SpareBits0 & 1) {
+	/*if (Peb->SpareBits0 & 1) {
 		// Already patched.
 		return FALSE;
-	}
+	}*/
 
 	//
 	// We will go ahead with the patching. First, load KexDll so we can use its
@@ -109,7 +109,8 @@ BOOL WINAPI DllMain(
 	// to stash a boolean value.
 	//
 
-	Peb->SpareBits0 |= 1;
+	// Modifying Peb->SpareBits0 will crash programs on Windows 8
+	//Peb->SpareBits0 |= 1;
 
 	FreeLibrary(KexDll);
 	return FALSE;

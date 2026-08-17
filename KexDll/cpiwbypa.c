@@ -80,168 +80,177 @@ KEXAPI NTSTATUS NTAPI KexPatchCpiwSubsystemVersionCheck(
 	VOID)
 {
 	NTSTATUS Status;
-	UNICODE_STRING Kernel32Name;
-	ANSI_STRING SectionName;
-	PVOID Kernel32;
-	PBYTE ExecutableSection;
-	PBYTE EndOfExecutableSection;
-	ULONG SizeOfExecutableSection;
-	PIMAGE_NT_HEADERS NtHeaders;
-	PIMAGE_SECTION_HEADER TextSectionHeader;
-	BOOLEAN FoundAddressOfNtMajorVersion;
-	BOOLEAN FoundAddressOfNtMinorVersion;
 	STATIC BOOLEAN AlreadyPatched = FALSE;
+	ULONG Index;
+
+	STATIC CONST UNICODE_STRING KernelDlls[] = {
+		RTL_CONSTANT_STRING(L"kernel32.dll"),
+		RTL_CONSTANT_STRING(L"kernelbase.dll"),
+	};
 
 	if (AlreadyPatched) {
 		return STATUS_ALREADY_INITIALIZED;
 	}
 
-	//
-	// Get the address of kernel32.dll.
-	//
+	for (Index = 0; Index < ARRAYSIZE(KernelDlls); ++Index) {
+		ANSI_STRING SectionName;
+		PVOID KernelDll;
+		PBYTE ExecutableSection;
+		PBYTE EndOfExecutableSection;
+		ULONG SizeOfExecutableSection;
+		PIMAGE_NT_HEADERS NtHeaders;
+		PIMAGE_SECTION_HEADER TextSectionHeader;
+		BOOLEAN FoundAddressOfNtMajorVersion;
+		BOOLEAN FoundAddressOfNtMinorVersion;
+		UNICODE_STRING KernelDllName = KernelDlls[Index];
 
-	RtlInitConstantUnicodeString(&Kernel32Name, L"kernel32.dll");
+		if (!KexShouldUseWorkaroundsForNewerWindows() && Index != 0) break;
 
-	Status = LdrGetDllHandleByName(
-		&Kernel32Name,
-		NULL,
-		&Kernel32);
+		//
+		// Get the address of kernel dll.
+		//
 
-	ASSERT (NT_SUCCESS(Status));
-	ASSERT (Kernel32 != NULL);
+		Status = LdrGetDllHandleByName(
+			&KernelDllName,
+			NULL,
+			&KernelDll);
 
-	if (!NT_SUCCESS(Status)) {
-		KexLogErrorEvent(L"Could not find the address of kernel32.dll.");
-		return Status;
-	}
+		ASSERT (NT_SUCCESS(Status));
+		ASSERT (KernelDll != NULL);
 
-	//
-	// Find the .text section, which contains executable code.
-	//
+		if (!NT_SUCCESS(Status)) {
+			KexLogErrorEvent(L"Could not find the address of kernel dll.");
+			return Status;
+		}
 
-	Status = RtlImageNtHeaderEx(
-		RTL_IMAGE_NT_HEADER_EX_FLAG_NO_RANGE_CHECK,
-		Kernel32,
-		0,
-		&NtHeaders);
+		//
+		// Find the .text section, which contains executable code.
+		//
 
-	ASSERT (NT_SUCCESS(Status));
-	ASSERT (NtHeaders != NULL);
+		Status = RtlImageNtHeaderEx(
+			RTL_IMAGE_NT_HEADER_EX_FLAG_NO_RANGE_CHECK,
+			KernelDll,
+			0,
+			&NtHeaders);
 
-	if (!NT_SUCCESS(Status)) {
-		KexLogErrorEvent(L"Could not find the address of IMAGE_NT_HEADERS inside kernel32.");
-		return Status;
-	}
+		ASSERT (NT_SUCCESS(Status));
+		ASSERT (NtHeaders != NULL);
 
-	RtlInitConstantAnsiString(&SectionName, ".text");
+		if (!NT_SUCCESS(Status)) {
+			KexLogErrorEvent(L"Could not find the address of IMAGE_NT_HEADERS inside kernel dll.");
+			return Status;
+		}
 
-	TextSectionHeader = KexRtlSectionTableFromName(
-		NtHeaders,
-		&SectionName);
+		RtlInitConstantAnsiString(&SectionName, ".text");
 
-	ASSERT (TextSectionHeader != NULL);
+		TextSectionHeader = KexRtlSectionTableFromName(
+			NtHeaders,
+			&SectionName);
 
-	if (TextSectionHeader == NULL) {
-		KexLogErrorEvent(L"Could not find the address of the executable section inside kernel32.");
-		return STATUS_IMAGE_SECTION_NOT_FOUND;
-	}
+		ASSERT (TextSectionHeader != NULL);
 
-	//
-	// Find the real address and size of the executable section.
-	//
+		if (TextSectionHeader == NULL) {
+			KexLogErrorEvent(L"Could not find the address of the executable section inside kernel dll.");
+			return STATUS_IMAGE_SECTION_NOT_FOUND;
+		}
 
-	ExecutableSection = (PBYTE) RVA_TO_VA(Kernel32, TextSectionHeader->VirtualAddress);
-	SizeOfExecutableSection = TextSectionHeader->SizeOfRawData;
-	EndOfExecutableSection = ExecutableSection + SizeOfExecutableSection - sizeof(ULONG);
+		//
+		// Find the real address and size of the executable section.
+		//
 
-	//
-	// Scan for the addresses of SharedUserData->NtMajorVersion and
-	// SharedUserData->NtMinorVersion.
-	//
+		ExecutableSection = (PBYTE) RVA_TO_VA(KernelDll, TextSectionHeader->VirtualAddress);
+		SizeOfExecutableSection = TextSectionHeader->SizeOfRawData;
+		EndOfExecutableSection = ExecutableSection + SizeOfExecutableSection - sizeof(ULONG);
 
-	FoundAddressOfNtMajorVersion = FALSE;
-	FoundAddressOfNtMinorVersion = FALSE;
-	
-	do {
+		//
+		// Scan for the addresses of SharedUserData->NtMajorVersion and
+		// SharedUserData->NtMinorVersion.
+		//
 
-		if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMajorVersion ||
-			*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMinorVersion) {
+		FoundAddressOfNtMajorVersion = FALSE;
+		FoundAddressOfNtMinorVersion = FALSE;
+		
+		do {
 
-			PVOID BaseAddress;
-			SIZE_T RegionSize;
-			ULONG OldProtect;
+			if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMajorVersion ||
+				*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMinorVersion) {
 
-			//
-			// We've found the address of either NtMajorVersion or NtMinorVersion.
-			//
+				PVOID BaseAddress;
+				SIZE_T RegionSize;
+				ULONG OldProtect;
 
-			if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMajorVersion) {
-				ASSERT (FoundAddressOfNtMajorVersion == FALSE);
-				FoundAddressOfNtMajorVersion = TRUE;
-			} else if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMinorVersion) {
-				ASSERT (FoundAddressOfNtMinorVersion == FALSE);
-				FoundAddressOfNtMinorVersion = TRUE;
-			} else {
-				NOT_REACHED;
-			}
-
-			BaseAddress = ExecutableSection;
-			RegionSize = sizeof(ULONG);
-
-			Status = NtProtectVirtualMemory(
-				NtCurrentProcess(),
-				&BaseAddress,
-				&RegionSize,
-				PAGE_EXECUTE_READWRITE,
-				&OldProtect);
-
-			ASSERT (NT_SUCCESS(Status));
-
-			if (NT_SUCCESS(Status)) {
 				//
-				// Overwrite the address to that of SharedUserData->NumberOfPhysicalPages.
+				// We've found the address of either NtMajorVersion or NtMinorVersion.
 				//
 
-				*(PULONG) ExecutableSection = (ULONG) &SharedUserData->NumberOfPhysicalPages;
+				if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMajorVersion) {
+					ASSERT (FoundAddressOfNtMajorVersion == FALSE);
+					FoundAddressOfNtMajorVersion = TRUE;
+				} else if (*(PULONG) ExecutableSection == (ULONG) &SharedUserData->NtMinorVersion) {
+					ASSERT (FoundAddressOfNtMinorVersion == FALSE);
+					FoundAddressOfNtMinorVersion = TRUE;
+				} else {
+					NOT_REACHED;
+				}
+
+				BaseAddress = ExecutableSection;
+				RegionSize = sizeof(ULONG);
 
 				Status = NtProtectVirtualMemory(
 					NtCurrentProcess(),
 					&BaseAddress,
 					&RegionSize,
-					OldProtect,
+					PAGE_EXECUTE_READWRITE,
 					&OldProtect);
 
 				ASSERT (NT_SUCCESS(Status));
 
-				if (!NT_SUCCESS(Status)) {
-					KexLogWarningEvent(
-						L"Failed to restore original page protections.\r\n\r\n"
+				if (NT_SUCCESS(Status)) {
+					//
+					// Overwrite the address to that of SharedUserData->NumberOfPhysicalPages.
+					//
+
+					*(PULONG) ExecutableSection = (ULONG) &SharedUserData->NumberOfPhysicalPages;
+
+					Status = NtProtectVirtualMemory(
+						NtCurrentProcess(),
+						&BaseAddress,
+						&RegionSize,
+						OldProtect,
+						&OldProtect);
+
+					ASSERT (NT_SUCCESS(Status));
+
+					if (!NT_SUCCESS(Status)) {
+						KexLogWarningEvent(
+							L"Failed to restore original page protections.\r\n\r\n"
+							L"Address:     0x%p\r\n"
+							L"Region size: %lu",
+							BaseAddress,
+							RegionSize);
+					}
+				} else {
+					KexLogErrorEvent(
+						L"Failed to apply PAGE_EXECUTE_READWRITE protection\r\n\r\n"
 						L"Address:     0x%p\r\n"
 						L"Region size: %lu",
 						BaseAddress,
 						RegionSize);
 				}
-			} else {
-				KexLogErrorEvent(
-					L"Failed to apply PAGE_EXECUTE_READWRITE protection\r\n\r\n"
-					L"Address:     0x%p\r\n"
-					L"Region size: %lu",
-					BaseAddress,
-					RegionSize);
+
+				if (FoundAddressOfNtMajorVersion && FoundAddressOfNtMinorVersion) {
+					break;
+				}
 			}
 
-			if (FoundAddressOfNtMajorVersion && FoundAddressOfNtMinorVersion) {
-				break;
-			}
+			++ExecutableSection;
+
+		} until (ExecutableSection >= EndOfExecutableSection);
+
+		if (!FoundAddressOfNtMajorVersion || !FoundAddressOfNtMinorVersion) {
+			KexLogErrorEvent(L"Could not find the address of one of the patch locations.");
+			return STATUS_NOT_FOUND;
 		}
-
-		++ExecutableSection;
-
-	} until (ExecutableSection >= EndOfExecutableSection);
-
-	if (!FoundAddressOfNtMajorVersion || !FoundAddressOfNtMinorVersion) {
-		KexLogErrorEvent(L"Could not find the address of one of the patch locations.");
-		return STATUS_NOT_FOUND;
 	}
 
 	AlreadyPatched = TRUE;

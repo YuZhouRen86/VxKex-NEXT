@@ -95,6 +95,24 @@ STATIC INLINE VOID KexpNormalizeDllPathBackslashes(
 STATIC INLINE VOID KexpReplaceDllPathEmbeddedNulls(
 	IN OUT	PUNICODE_STRING	DllPath);
 
+STATIC BOOL ShouldUseWorkaroundsForNewerWindowsInitialized = FALSE;
+STATIC BOOL ShouldUseWorkaroundsForNewerWindows;
+
+BOOL KexShouldUseWorkaroundsForNewerWindows(
+	VOID)
+{
+	if (!ShouldUseWorkaroundsForNewerWindowsInitialized) {
+		NTSTATUS Status;
+		ANSI_STRING LdrAddDllDirectoryName;
+		NTSTATUS(NTAPI *pLdrAddDllDirectory) (PCUNICODE_STRING, PPVOID);
+		RtlInitAnsiString(&LdrAddDllDirectoryName, "LdrAddDllDirectory");
+		Status = LdrGetProcedureAddress(KexData->SystemDllBase, &LdrAddDllDirectoryName, FALSE, (PPVOID)&pLdrAddDllDirectory);
+		ShouldUseWorkaroundsForNewerWindows = NT_SUCCESS(Status);
+		ShouldUseWorkaroundsForNewerWindowsInitialized = TRUE;
+	}
+	return ShouldUseWorkaroundsForNewerWindows;
+}
+
 NTSTATUS KexpAddKex3264ToDllPath(
 	VOID)
 {

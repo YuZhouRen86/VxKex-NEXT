@@ -12,6 +12,65 @@ EXPORTS
 	;; blutooth.c
 	;;
 
+	;;BluetoothAddressToString
+	;;BluetoothAuthenticateDevice
+	;;BluetoothAuthenticateDeviceEx
+	;;BluetoothAuthenticateMultipleDevices
+	;;BluetoothAuthenticationAgent
+	;;BluetoothDisconnectDevice
+	;;BluetoothDisplayDeviceProperties
+	;;BluetoothEnableDiscovery
+	;;BluetoothEnableIncomingConnections
+	;;BluetoothEnumerateInstalledServices
+	;;BluetoothEnumerateInstalledServicesEx
+	;;BluetoothFindBrowseGroupClose
+	;;BluetoothFindClassIdClose
+	;;BluetoothFindDeviceClose
+	;;BluetoothFindFirstBrowseGroup
+	;;BluetoothFindFirstClassId
+	;;BluetoothFindFirstDevice
+	;;BluetoothFindFirstProfileDescriptor
+	;;BluetoothFindFirstProtocolDescriptorStack
+	;;BluetoothFindFirstProtocolEntry
+	;;BluetoothFindFirstRadio
+	;;BluetoothFindFirstService
+	;;BluetoothFindFirstServiceEx
+	;;BluetoothFindNextBrowseGroup
+	;;BluetoothFindNextClassId
+	;;BluetoothFindNextDevice
+	;;BluetoothFindNextProfileDescriptor
+	;;BluetoothFindNextProtocolDescriptorStack
+	;;BluetoothFindNextProtocolEntry
+	;;BluetoothFindNextRadio
+	;;BluetoothFindNextService
+	;;BluetoothFindProfileDescriptorClose
+	;;BluetoothFindProtocolDescriptorStackClose
+	;;BluetoothFindProtocolEntryClose
+	;;BluetoothFindRadioClose
+	;;BluetoothFindServiceClose
+	;;BluetoothGetDeviceInfo
+	;;BluetoothGetRadioInfo
+	;;BluetoothIsConnectable
+	;;BluetoothIsDiscoverable
+	;;BluetoothIsVersionAvailable
+	;;BluetoothMapClassOfDeviceToImageIndex
+	;;BluetoothMapClassOfDeviceToString
+	;;BluetoothRegisterForAuthentication
+	;;BluetoothRegisterForAuthenticationEx
+	;;BluetoothRemoveDevice
+	;;BluetoothSdpEnumAttributes
+	;;BluetoothSdpGetAttributeValue
+	;;BluetoothSdpGetContainerElementData
+	;;BluetoothSdpGetElementData
+	;;BluetoothSdpGetString
+	;;BluetoothSelectDevices
+	;;BluetoothSelectDevicesFree
+	;;BluetoothSendAuthenticationResponse
+	;;BluetoothSendAuthenticationResponseEx
+	;;BluetoothSetLocalServiceInfo
+	;;BluetoothSetServiceState
+	;;BluetoothUnregisterAuthentication
+	;;BluetoothUpdateDeviceRecord
 	BluetoothGATTAbortReliableWrite
 	BluetoothGATTBeginReliableWrite
 	BluetoothGATTEndReliableWrite
