@@ -154,8 +154,8 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **Q: Can I use this with Windows 8 or 8.1?**  
 **问：可以在 Windows 8 或 8.1 中使用吗？**  
 
-**A**: Currently, VxKex NEXT only provides official support for Windows 7. However, for certain programs, VxKex NEXT works on Windows 8 and 8.1. We plan to provide official support for Windows 8 and 8.1.  
-**答**：目前，VxKex NEXT 仅为 Windows 7 提供官方支持。但是，对于某些程序，VxKex NEXT 在 Windows 8 和 8.1 上起作用。我们计划为 Windows 8 和 8.1 提供官方支持。
+**A**: Currently, VxKex NEXT provides experimental support for Windows 8 and 8.1. For programs such as Chromium and Qt Creator, VxKex NEXT works on Windows 8 and 8.1. We plan to provide official support for Windows 8 and 8.1.  
+**答**：目前，VxKex NEXT 为 Windows 8 和 8.1 提供实验性的支持。对于 Chromium、Qt Creator 等程序，VxKex NEXT 在 Windows 8 和 8.1 上起作用。我们计划为 Windows 8 和 8.1 提供正式支持。
 
 **Q: Can I remove VxKex or VxKex NEXT after upgrading to Windows 8/8.1/10/11?**  
 **问：升级到 Windows 8/8.1/10/11 后可以删除 VxKex 或 VxKex NEXT 吗？**
