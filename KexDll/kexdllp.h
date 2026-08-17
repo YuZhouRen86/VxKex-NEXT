@@ -83,6 +83,7 @@ ULONG KexDllProtectedFunctionExceptionFilter(
 //
 
 EXTERN ULONG OriginalMajorVersion, OriginalMinorVersion, OriginalBuildNumber;
+EXTERN BOOL DllLoaderInitialized;
 
 //
 // ash.c
@@ -141,6 +142,23 @@ NTSTATUS KexDisableAVrf(
 //
 // dllnotif.c
 //
+
+NTSTATUS NTAPI Ext_NtMapViewOfSection(
+	IN		HANDLE						SectionHandle,
+	IN		HANDLE						ProcessHandle,
+	IN OUT	PPVOID						BaseAddress OPTIONAL,
+	IN		ULONG						ZeroBits OPTIONAL,
+	IN		SIZE_T						CommitSize,
+	IN OUT	PLONGLONG					SectionOffset OPTIONAL,
+	IN OUT	PSIZE_T						ViewSize,
+	IN		SECTION_INHERIT				InheritDisposition,
+	IN		ULONG						AllocationType,
+	IN		ULONG						MemoryProtection);
+
+VOID NTAPI KexDllNotificationCallbackForWindows8AndAbove(
+	IN	LDR_DLL_NOTIFICATION_REASON	Reason,
+	IN	PCLDR_DLL_NOTIFICATION_DATA	NotificationData,
+	IN	PVOID						Context);
 
 VOID NTAPI KexDllNotificationCallback(
 	IN	LDR_DLL_NOTIFICATION_REASON	Reason,
@@ -237,6 +255,13 @@ NTSTATUS KexOpenVxlLogForCurrentApplication(
 //
 
 NTSTATUS KexRtlInitializeKsec(
+	VOID);
+
+//
+// syscall.c
+//
+
+BOOL InitializeSsnForAllSyscallFunctions(
 	VOID);
 
 //

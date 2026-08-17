@@ -7,9 +7,9 @@ KXUSERAPI PPWSTR WINAPI Ext_CommandLineToArgvW(
 	OUT	PINT	pNumArgs)
 {
 	PPWSTR Result = CommandLineToArgvW(lpCmdLine, pNumArgs);
-	
+
 	unless (KexData->IfeoParameters.DisableAppSpecific) {
-		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) && KexRtlCurrentProcessBitness() == 32 && Result && *pNumArgs >= 1) {
+		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) && KexRtlCurrentProcessBitness() == 32 && Result && *pNumArgs >= 1 && !KexShouldUseWorkaroundsForNewerWindows()) {
 			ULONG Index;
 			PCWSTR NoSandbox = L"--no-sandbox";
 			PWSTR NoSandboxOption = NULL;

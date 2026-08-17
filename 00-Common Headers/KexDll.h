@@ -685,6 +685,13 @@ KEXAPI PCWSTR NTAPI VxlSeverityToText_ENG(
 	IN		BOOLEAN			LongDescription);
 
 //
+// dllpath.c
+//
+
+BOOL KexShouldUseWorkaroundsForNewerWindows(
+	VOID);
+
+//
 // dllrewrt.c
 //
 
@@ -796,8 +803,7 @@ KEXAPI NTSTATUS NTAPI Ext_RtlInitializeCriticalSection(
 #if defined(KEX_ARCH_X64)
 
 #define DECLARE_SYSCALL(SyscallName, ...) \
-KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7(__VA_ARGS__); \
-KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_ASM(__VA_ARGS__); \
 KEXAPI NTSTATUS NTAPI Kex##SyscallName(__VA_ARGS__);
 
 #else
@@ -805,8 +811,9 @@ KEXAPI NTSTATUS NTAPI Kex##SyscallName(__VA_ARGS__);
 #define DECLARE_SYSCALL(SyscallName, ...) \
 KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7_Native32(__VA_ARGS__); \
 KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win7_Wow64(__VA_ARGS__); \
-KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81_Native32(__VA_ARGS__); \
-KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Win81_Wow64(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Native32(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Wow64_Legacy(__VA_ARGS__); \
+KEXAPI NTSTATUS NTAPI Kex##SyscallName##_Wow64_Modern(__VA_ARGS__); \
 KEXAPI NTSTATUS NTAPI Kex##SyscallName(__VA_ARGS__);
 
 #endif
@@ -948,6 +955,18 @@ DECLARE_SYSCALL(NtQueryInformationProcess,
 DECLARE_SYSCALL(NtAssignProcessToJobObject,
 	IN	HANDLE				JobHandle,
 	IN	HANDLE				ProcessHandle);
+
+DECLARE_SYSCALL(NtMapViewOfSection,
+	IN		HANDLE						SectionHandle,
+	IN		HANDLE						ProcessHandle,
+	IN OUT	PPVOID						BaseAddress OPTIONAL,
+	IN		ULONG						ZeroBits OPTIONAL,
+	IN		SIZE_T						CommitSize,
+	IN OUT	PLONGLONG					SectionOffset OPTIONAL,
+	IN OUT	PSIZE_T						ViewSize,
+	IN		SECTION_INHERIT				InheritDisposition,
+	IN		ULONG						AllocationType,
+	IN		ULONG						MemoryProtection);
 
 //
 // This function was added to the RTL in Win10.

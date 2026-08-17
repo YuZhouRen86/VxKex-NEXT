@@ -117,7 +117,7 @@ KEXAPI NTSTATUS NTAPI KexHkInstallHook(
 		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
-		PAGE_READWRITE,
+		PAGE_EXECUTE_READWRITE,
 		&OldProtect);
 
 	ASSERT (NT_SUCCESS(Status));
@@ -174,7 +174,7 @@ KEXAPI NTSTATUS NTAPI KexHkRemoveHook(
 		ProcessHandle,
 		&ApiPageAddress,
 		&HookLength,
-		PAGE_READWRITE,
+		PAGE_EXECUTE_READWRITE,
 		&OldProtect);
 
 	ASSERT (NT_SUCCESS(Status));

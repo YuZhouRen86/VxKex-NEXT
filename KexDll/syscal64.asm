@@ -13,41 +13,43 @@ SyscallName PROC
 SyscallName ENDP
 ENDM
 
-GENERATE_SYSCALL KexNtQuerySystemTime_Win7,						0057h
-GENERATE_SYSCALL KexNtCreateUserProcess_Win7,					00AAh
-GENERATE_SYSCALL KexNtProtectVirtualMemory_Win7,				004Dh
-GENERATE_SYSCALL KexNtAllocateVirtualMemory_Win7,				0015h
-GENERATE_SYSCALL KexNtQueryVirtualMemory_Win7,					0020h
-GENERATE_SYSCALL KexNtFreeVirtualMemory_Win7,					001Bh
-GENERATE_SYSCALL KexNtQueryObject_Win7,							000Dh
-GENERATE_SYSCALL KexNtOpenFile_Win7,							0030h
-GENERATE_SYSCALL KexNtWriteFile_Win7,							0005h
-GENERATE_SYSCALL KexNtRaiseHardError_Win7,						0130h
-GENERATE_SYSCALL KexNtQueryInformationThread_Win7,				0022h
-GENERATE_SYSCALL KexNtSetInformationThread_Win7,				000Ah
-GENERATE_SYSCALL KexNtNotifyChangeKey_Win7,						00EBh
-GENERATE_SYSCALL KexNtNotifyChangeMultipleKeys_Win7,			00ECh
-GENERATE_SYSCALL KexNtCreateSection_Win7,						0047h
-GENERATE_SYSCALL KexNtQueryInformationProcess_Win7,				0016h
-GENERATE_SYSCALL KexNtAssignProcessToJobObject_Win7,			0085h
+EXTERN SSN_NtQuerySystemTime: DWORD
+EXTERN SSN_NtCreateUserProcess: DWORD
+EXTERN SSN_NtProtectVirtualMemory: DWORD
+EXTERN SSN_NtAllocateVirtualMemory: DWORD
+EXTERN SSN_NtQueryVirtualMemory: DWORD
+EXTERN SSN_NtFreeVirtualMemory: DWORD
+EXTERN SSN_NtQueryObject: DWORD
+EXTERN SSN_NtOpenFile: DWORD
+EXTERN SSN_NtWriteFile: DWORD
+EXTERN SSN_NtRaiseHardError: DWORD
+EXTERN SSN_NtQueryInformationThread: DWORD
+EXTERN SSN_NtSetInformationThread: DWORD
+EXTERN SSN_NtNotifyChangeKey: DWORD
+EXTERN SSN_NtNotifyChangeMultipleKeys: DWORD
+EXTERN SSN_NtCreateSection: DWORD
+EXTERN SSN_NtQueryInformationProcess: DWORD
+EXTERN SSN_NtAssignProcessToJobObject: DWORD
+EXTERN SSN_NtMapViewOfSection: DWORD
 
-GENERATE_SYSCALL KexNtQuerySystemTime_Win81,					0059h
-GENERATE_SYSCALL KexNtCreateUserProcess_Win81,					00B7h
-GENERATE_SYSCALL KexNtProtectVirtualMemory_Win81,				004Fh
-GENERATE_SYSCALL KexNtAllocateVirtualMemory_Win81,				0017h
-GENERATE_SYSCALL KexNtQueryVirtualMemory_Win81,					0022h
-GENERATE_SYSCALL KexNtFreeVirtualMemory_Win81,					001Dh
-GENERATE_SYSCALL KexNtQueryObject_Win81,						000Fh
-GENERATE_SYSCALL KexNtOpenFile_Win81,							0032h
-GENERATE_SYSCALL KexNtWriteFile_Win81,							0007h
-GENERATE_SYSCALL KexNtRaiseHardError_Win81,						0147h
-GENERATE_SYSCALL KexNtQueryInformationThread_Win81,				0024h
-GENERATE_SYSCALL KexNtSetInformationThread_Win81,				000Ch
-GENERATE_SYSCALL KexNtNotifyChangeKey_Win81,					0100h
-GENERATE_SYSCALL KexNtNotifyChangeMultipleKeys_Win81,			0101h
-GENERATE_SYSCALL KexNtCreateSection_Win81,						0049h
-GENERATE_SYSCALL KexNtQueryInformationProcess_Win81,			0018h
-GENERATE_SYSCALL KexNtAssignProcessToJobObject_Win81,			008Ah
+GENERATE_SYSCALL KexNtQuerySystemTime_ASM,							[SSN_NtQuerySystemTime]
+GENERATE_SYSCALL KexNtCreateUserProcess_ASM,						[SSN_NtCreateUserProcess]
+GENERATE_SYSCALL KexNtProtectVirtualMemory_ASM,						[SSN_NtProtectVirtualMemory]
+GENERATE_SYSCALL KexNtAllocateVirtualMemory_ASM,					[SSN_NtAllocateVirtualMemory]
+GENERATE_SYSCALL KexNtQueryVirtualMemory_ASM,						[SSN_NtQueryVirtualMemory]
+GENERATE_SYSCALL KexNtFreeVirtualMemory_ASM,						[SSN_NtFreeVirtualMemory]
+GENERATE_SYSCALL KexNtQueryObject_ASM,								[SSN_NtQueryObject]
+GENERATE_SYSCALL KexNtOpenFile_ASM,									[SSN_NtOpenFile]
+GENERATE_SYSCALL KexNtWriteFile_ASM,								[SSN_NtWriteFile]
+GENERATE_SYSCALL KexNtRaiseHardError_ASM,							[SSN_NtRaiseHardError]
+GENERATE_SYSCALL KexNtQueryInformationThread_ASM,					[SSN_NtQueryInformationThread]
+GENERATE_SYSCALL KexNtSetInformationThread_ASM,						[SSN_NtSetInformationThread]
+GENERATE_SYSCALL KexNtNotifyChangeKey_ASM,							[SSN_NtNotifyChangeKey]
+GENERATE_SYSCALL KexNtNotifyChangeMultipleKeys_ASM,					[SSN_NtNotifyChangeMultipleKeys]
+GENERATE_SYSCALL KexNtCreateSection_ASM,							[SSN_NtCreateSection]
+GENERATE_SYSCALL KexNtQueryInformationProcess_ASM,					[SSN_NtQueryInformationProcess]
+GENERATE_SYSCALL KexNtAssignProcessToJobObject_ASM,					[SSN_NtAssignProcessToJobObject]
+GENERATE_SYSCALL KexNtMapViewOfSection_ASM,							[SSN_NtMapViewOfSection]
 
 _TEXT ENDS
 

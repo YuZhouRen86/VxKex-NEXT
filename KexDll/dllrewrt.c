@@ -481,6 +481,9 @@ KEXAPI BOOLEAN NTAPI KexIsRewriteExemptedDll(
 	IN	PCUNICODE_STRING	FullDllName,
 	IN	PCUNICODE_STRING	BaseDllName)
 {
+	ULONG Index;
+	UNICODE_STRING TargetDllName;
+
 	STATIC CONST UNICODE_STRING MacTypeDlls[] = {
 #ifdef _M_X64
 				RTL_CONSTANT_STRING(L"MacType64.dll"),
@@ -491,14 +494,21 @@ KEXAPI BOOLEAN NTAPI KexIsRewriteExemptedDll(
 #endif
 	};
 
-	ULONG Index;
-
 	for (Index = 0; Index < ARRAYSIZE(MacTypeDlls); ++Index) {
 		if (RtlEqualUnicodeString(BaseDllName, &MacTypeDlls[Index], TRUE)) return TRUE;
 	}
 
+	//
+	// Tablet PC Input Panel Text Services Framework
+	//
+
+	RtlInitConstantUnicodeString(&TargetDllName, L"tiptsf.dll");
+
+	if (RtlEqualUnicodeString(BaseDllName, &TargetDllName, TRUE)) {
+		return TRUE;
+	}
+
 	unless (KexData->IfeoParameters.DisableAppSpecific) {
-		UNICODE_STRING TargetDllName;
 
 		//
 		// APPSPECIFICHACK: This is some sort of .NET DLL that will screw up if we
@@ -607,15 +617,17 @@ BOOLEAN KexShouldRewriteStaticImportsOfDll(
 	IN	PCUNICODE_STRING	BaseDllName)
 {
 	if (KexIsWindowsDll(FullDllName, BaseDllName)) {
-		UNICODE_STRING Kernel;
+		UNICODE_STRING Kernel32;
+		UNICODE_STRING KernelBase;
 
 		if (KexIsRewriteForcedWindowsDll(FullDllName, BaseDllName)) {
 			return TRUE;
 		}
 
-		RtlInitConstantUnicodeString(&Kernel, L"kernel");
+		RtlInitConstantUnicodeString(&Kernel32, L"kernel32.dll");
+		RtlInitConstantUnicodeString(&KernelBase, L"kernelbase.dll");
 
-		if (RtlPrefixUnicodeString(&Kernel, BaseDllName, TRUE)) {
+		if (RtlEqualUnicodeString(&Kernel32, BaseDllName, TRUE) || RtlEqualUnicodeString(&KernelBase, BaseDllName, TRUE)) {
 			//
 			// Rewrite the imports of kernelbase and kernel32. We want to do this
 			// so that certain functions such as LoadLibrary and CreateFileMapping

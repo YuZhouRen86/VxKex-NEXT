@@ -228,7 +228,7 @@ KXBASEAPI LONG WINAPI PackageIdFromFullName(
 
 KXBASEAPI LONG WINAPI GetPackagePath(
 	IN		PCPACKAGE_ID	PackageID,
-	CONST ULONG				Reserved,
+	CONST	ULONG			Reserved,
 	IN OUT	PULONG			PathLength,
 	OUT		PWSTR			Path OPTIONAL)
 {
@@ -241,5 +241,55 @@ KXBASEAPI LONG WINAPI GetPackagePath(
 	}
 
 	*PathLength = 0;
+	return ERROR_SUCCESS;
+}
+
+KXBASEAPI LONG WINAPI FindPackagesByPackageFamily(
+	IN		PCWSTR	PackageFamilyName,
+	IN		UINT32	PackageFilters,
+	IN OUT	PUINT32 Count,
+	OUT		PPWSTR  PackageFullNames OPTIONAL,
+	IN OUT	PUINT32	BufferLength,
+	OUT		PWCHAR	Buffer OPTIONAL,
+	OUT		PUINT32	PackageProperties OPTIONAL)
+{
+	if (!PackageFamilyName || PackageFilters == 0 || !Count || !BufferLength || (!Buffer && (*Count != 0 || *BufferLength != 0))) {
+		return ERROR_INVALID_PARAMETER;
+	}
+	// On Windows 8.1, Buffer will not be emptied, but for safety, we will try to empty it.
+	try {
+		if (*BufferLength != 0) {
+			Buffer[0] = '\0';
+		}
+	} except(EXCEPTION_EXECUTE_HANDLER) {}
+	// On Windows 8.1, if Count cannot be written, the function will still return ERROR_SUCCESS.
+	try {
+		*Count = 0;
+	} except(EXCEPTION_EXECUTE_HANDLER) {}
+	// On Windows 8.1, if BufferLength cannot be written, the function will still return ERROR_SUCCESS.
+	try {
+		*BufferLength = 0;
+	} except(EXCEPTION_EXECUTE_HANDLER) {}
+	return ERROR_SUCCESS;
+}
+
+KXBASEAPI LONG WINAPI GetStagedPackagePathByFullName(
+	IN		PCWSTR	PackageFullName,
+	IN OUT	PUINT32 PathLength,
+	OUT		PWSTR	Path OPTIONAL)
+{
+	if (!PackageFullName || !PathLength) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (*PathLength != 0 && !Path) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (*PathLength != 0) {
+		Path[0] = '\0';
+	}
+
+	*Path = 0;
 	return ERROR_SUCCESS;
 }

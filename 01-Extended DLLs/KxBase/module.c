@@ -107,16 +107,34 @@ STATIC NTSTATUS BasepGetDllDirectoryProcedure(
 	return Status;
 }
 
+STATIC PWSTR CopyPcstrToPwstr(
+	PCSTR Source)
+{
+	PWSTR Dest;
+	INT BufferLength;
+	if (!Source) return NULL;
+	BufferLength = MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, NULL, 0);
+	if (BufferLength == 0) return NULL;
+	Dest = SafeAlloc(WCHAR, BufferLength);
+	if (!Dest) return NULL;
+	if (MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, Dest, BufferLength) == 0) {
+		SafeFree(Dest);
+		return NULL;
+	}
+	return Dest;
+}
+
 KXBASEAPI HMODULE WINAPI Ext_GetModuleHandleA(
 	IN	PCSTR	ModuleName)
 {
 	HMODULE ModuleHandle;
-	BOOLEAN ReEntrant;
-
-	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	ModuleHandle = GetModuleHandleA(ModuleName);
-	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
-
+	PWSTR ModuleName_U = CopyPcstrToPwstr(ModuleName);
+	if (ModuleName_U) {
+		ModuleHandle = Ext_GetModuleHandleW(ModuleName_U);
+		SafeFree(ModuleName_U);
+	} else {
+		ModuleHandle = GetModuleHandleA(ModuleName);
+	}
 	return ModuleHandle;
 }
 
@@ -154,12 +172,14 @@ KXBASEAPI BOOL WINAPI Ext_GetModuleHandleExA(
 	OUT	HMODULE	*ModuleHandleOut)
 {
 	BOOL Success;
-	BOOLEAN ReEntrant;
-
-	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	Success = GetModuleHandleExA(Flags, ModuleName, ModuleHandleOut);
-	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
-
+	PWSTR ModuleName_U = NULL;
+	if (!(Flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)) ModuleName_U = CopyPcstrToPwstr(ModuleName);
+	if (ModuleName_U) {
+		Success = Ext_GetModuleHandleExW(Flags, ModuleName_U, ModuleHandleOut);
+		SafeFree(ModuleName_U);
+	} else {
+		Success = GetModuleHandleExA(Flags, ModuleName, ModuleHandleOut);
+	}
 	return Success;
 }
 
@@ -176,21 +196,6 @@ KXBASEAPI BOOL WINAPI Ext_GetModuleHandleExW(
 	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
 
 	return Success;
-}
-
-STATIC PWSTR CopyPcstrToPwstr(
-	PCSTR Source)
-{
-	PWSTR Dest;
-	INT BufferLength = MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, NULL, 0);
-	if (BufferLength == 0) return NULL;
-	Dest = SafeAlloc(WCHAR, BufferLength);
-	if (!Dest) return NULL;
-	if (MultiByteToWideChar(CP_THREAD_ACP, 0, Source, -1, Dest, BufferLength) == 0) {
-		SafeFree(Dest);
-		return NULL;
-	}
-	return Dest;
 }
 
 KXBASEAPI HMODULE WINAPI Ext_LoadLibraryA(
@@ -211,52 +216,13 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExA(
 	IN	ULONG	Flags)
 {
 	HMODULE ModuleHandle;
-	BOOLEAN ReEntrant;
-	STATIC BOOL (WINAPI *SetDefaultDllDirectories) (ULONG) = NULL;
-
-	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
-	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
-	if (SetDefaultDllDirectories) {
-		ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
+	PWSTR FileName_U = CopyPcstrToPwstr(FileName);
+	if (FileName_U) {
+		ModuleHandle = Ext_LoadLibraryExW(FileName_U, FileHandle, Flags);
+		SafeFree(FileName_U);
 	} else {
-		ULONG OriginalFlags = Flags;
-		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
-
-		ModuleHandle = NULL;
-		if (((0xFFFFE000 | 0x00000004) & Flags) || ((LOAD_WITH_ALTERED_SEARCH_PATH & Flags) && (LoadLibrarySearchMarks & Flags)) || FileName == NULL || FileHandle) {
-			SetLastError(ERROR_INVALID_PARAMETER);
-		} else {
-			Flags &= ~LoadLibrarySearchMarks;
-			ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
-			if (!ModuleHandle &&
-				(OriginalFlags & LOAD_LIBRARY_SEARCH_USER_DIRS || (!(OriginalFlags & LoadLibrarySearchMarks) && (DefaultDllDirectoryFlags & LOAD_LIBRARY_SEARCH_USER_DIRS))) &&
-				FileName &&
-				FileName[0] != '\0' &&
-				FileName[0] != '\\' &&
-				FileName[0] != '/' &&
-				GetLastError() == ERROR_MOD_NOT_FOUND) {
-
-				PWSTR FileName_U = CopyPcstrToPwstr(FileName);
-				if (FileName_U) {
-					PDLL_DIRECTORY_DATA Directory;
-					for (Directory = (PDLL_DIRECTORY_DATA)DllDirectoryData.Next; Directory && Directory->String != NULL; Directory = (PDLL_DIRECTORY_DATA)Directory = (PDLL_DIRECTORY_DATA)Directory->Next) {
-						SIZE_T NewFileNameLength = wcslen(FileName_U) + wcslen(Directory->String) + 2;
-						PWSTR NewFileName = SafeAlloc(WCHAR, NewFileNameLength);
-						StringCchCopy(NewFileName, NewFileNameLength, Directory->String);
-						StringCchCat(NewFileName, NewFileNameLength, L"\\");
-						StringCchCat(NewFileName, NewFileNameLength, FileName_U);
-						ModuleHandle = LoadLibraryExW(NewFileName, FileHandle, Flags);
-						if (ModuleHandle || GetLastError() != ERROR_MOD_NOT_FOUND) break;
-					}
-					SafeFree(FileName_U);
-				}
-
-				if (!ModuleHandle) SetLastError(ERROR_MOD_NOT_FOUND);
-			}
-		}
+		ModuleHandle = LoadLibraryExA(FileName, FileHandle, Flags);
 	}
-	InterceptedKernelBaseLoaderCallReturn(ReEntrant);
-
 	return ModuleHandle;
 }
 
@@ -272,6 +238,20 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
 	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
 	if (SetDefaultDllDirectories) {
+		if (KexShouldUseWorkaroundsForNewerWindows()) {
+			UNICODE_STRING DllName, RewrittenDll;
+			NTSTATUS Status;
+			RtlInitUnicodeString(&DllName, FileName);
+
+			RtlInitEmptyUnicodeStringFromTeb(&RewrittenDll);
+
+			Status = KexRewriteDllPath(&DllName, &RewrittenDll);
+
+			ASSERT(NT_SUCCESS(Status) ||
+				Status == STATUS_STRING_MAPPER_ENTRY_NOT_FOUND ||
+				Status == STATUS_DLL_NOT_IN_SYSTEM_ROOT);
+			if (NT_SUCCESS(Status)) FileName = RewrittenDll.Buffer;
+		}
 		ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
 	} else {
 		ULONG OriginalFlags = Flags;
@@ -378,7 +358,7 @@ KXBASEAPI DLL_DIRECTORY_COOKIE WINAPI Ext_AddDllDirectory(
 			return 0;
 		}
 
-		Attributes = GetFileAttributesW(NewDirectory);
+		Attributes = GetFileAttributes(NewDirectory);
 		if (Attributes == INVALID_FILE_ATTRIBUTES || !(Attributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			SetLastError(ERROR_INVALID_PARAMETER);
 			return 0;

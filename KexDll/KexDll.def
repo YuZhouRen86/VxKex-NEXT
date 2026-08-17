@@ -3,6 +3,7 @@ EXPORTS
 	KexDataInitialize
 	KexInitializePropagation
 	KexDllProtectedFunctionExceptionFilter
+	KexShouldUseWorkaroundsForNewerWindows
 	
 	KexRtlOperatingSystemBitness
 	KexRtlGetNtVersionNumbers
@@ -122,6 +123,7 @@ EXPORTS
 	KexNtNotifyChangeMultipleKeys
 	KexNtCreateSection
 	KexNtAssignProcessToJobObject
+	KexNtMapViewOfSection
 
 	NtCompareObjects
 	NtQueryWnfStateData

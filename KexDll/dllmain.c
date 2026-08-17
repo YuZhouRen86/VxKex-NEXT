@@ -35,6 +35,7 @@
 
 INT WINAPI MessageBoxAHookProc(HWND, PCSTR, PCSTR, UINT);
 ULONG OriginalMajorVersion = 0, OriginalMinorVersion = 0, OriginalBuildNumber = 0;
+BOOL DllLoaderInitialized = FALSE;
 
 STATIC RTL_VERIFIER_DLL_DESCRIPTOR AVrfDllDescriptor[] = {
 	{NULL, 0, NULL, NULL}
@@ -76,6 +77,8 @@ BOOL WINAPI DllMain(
 {
 	NTSTATUS Status;
 	PVOID DllNotificationCookie;
+
+	InitializeSsnForAllSyscallFunctions();
 
 	if (Reason == DLL_PROCESS_VERIFIER) {
 		//
@@ -204,13 +207,29 @@ BOOL WINAPI DllMain(
 		// Register our DLL load/unload callback.
 		//
 
-		Status = LdrRegisterDllNotification(
-			0,
-			KexDllNotificationCallback,
-			NULL,
-			&DllNotificationCookie);
+		if (KexShouldUseWorkaroundsForNewerWindows()) {
+			Status = LdrRegisterDllNotification(
+				0,
+				KexDllNotificationCallbackForWindows8AndAbove,
+				NULL,
+				&DllNotificationCookie);
 
-		ASSERT (NT_SUCCESS(Status));
+			ASSERT(NT_SUCCESS(Status));
+
+			if (OriginalMajorVersion == 6) KexHkInstallBasicHook(NtMapViewOfSection, Ext_NtMapViewOfSection, NULL);
+
+			//Status = LdrSetDllManifestProber(KexProberCallback, NULL, KexReleaseActCtx);
+			//ASSERT(NT_SUCCESS(Status));
+
+		} else {
+			Status = LdrRegisterDllNotification(
+				0,
+				KexDllNotificationCallback,
+				NULL,
+				&DllNotificationCookie);
+
+			ASSERT(NT_SUCCESS(Status));
+		}
 
 		//
 		// Perform any app-specific hacks that need to be done before any further
