@@ -209,8 +209,6 @@ STATIC BOOLEAN ProcessTouchMessage(
 		DWORD PointerId = Ti->dwID;   // Touch identifier, usually > 0
 
 		// Convert himetric coordinates to screen pixels.
-		// This is a simplified conversion; real applications may need
-		// to use PhysicalToLogicalPoint or GetSystemMetrics for proper DPI scaling.
 		POINT Pt = {Ti->x / 100, Ti->y / 100};
 
 		UINT MessageType = 0;
@@ -220,7 +218,10 @@ STATIC BOOLEAN ProcessTouchMessage(
 		POINTER_INFO Info;
 		POINTER_TOUCH_INFO TouchInfo;
 		POINTER_PEN_INFO PenInfo;
-		BOOL IsPenMessage = Ti->dwFlags & TOUCHEVENTF_PEN;
+		BOOL IsPenMessage = TRUE;//Ti->dwFlags & TOUCHEVENTF_PEN;
+
+		// Use PhysicalToLogicalPoint for proper DPI scaling.
+		PhysicalToLogicalPoint(Hwnd, &Pt);
 
 		RtlZeroMemory(&Info, sizeof(Info));
 		RtlZeroMemory(&TouchInfo, sizeof(TouchInfo));

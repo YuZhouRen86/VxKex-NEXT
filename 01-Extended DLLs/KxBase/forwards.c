@@ -675,7 +675,7 @@
 #pragma comment(linker, "/EXPORT:GetUserGeoID=kernel32.GetUserGeoID")
 #pragma comment(linker, "/EXPORT:GetUserPreferredUILanguages=kernel32.GetUserPreferredUILanguages")
 #pragma comment(linker, "/EXPORT:GetVDMCurrentDirectories=kernel32.GetVDMCurrentDirectories")
-#pragma comment(linker, "/EXPORT:GetVersion=kernel32.GetVersion")
+//#pragma comment(linker, "/EXPORT:GetVersion=kernel32.GetVersion")
 //#pragma comment(linker, "/EXPORT:GetVersionExA=kernel32.GetVersionExA")
 //#pragma comment(linker, "/EXPORT:GetVersionExW=kernel32.GetVersionExW")
 #pragma comment(linker, "/EXPORT:GetVolumeInformationA=kernel32.GetVolumeInformationA")
