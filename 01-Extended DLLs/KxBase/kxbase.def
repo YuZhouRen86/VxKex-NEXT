@@ -208,6 +208,7 @@ EXPORTS
 	CreateWellKnownSid						= Ext_CreateWellKnownSid
 
 	;; verspoof.c
+	GetVersion								= Ext_GetVersion
 	GetVersionExA							= Ext_GetVersionExA
 	GetVersionExW							= Ext_GetVersionExW
 	VerifyVersionInfoW						= Ext_VerifyVersionInfoW

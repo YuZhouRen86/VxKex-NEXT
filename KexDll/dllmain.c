@@ -78,6 +78,7 @@ BOOL WINAPI DllMain(
 	NTSTATUS Status;
 	PVOID DllNotificationCookie;
 
+	RtlGetNtVersionNumbers(&OriginalMajorVersion, &OriginalMinorVersion, &OriginalBuildNumber);
 	InitializeSsnForAllSyscallFunctions();
 
 	if (Reason == DLL_PROCESS_VERIFIER) {
@@ -97,7 +98,6 @@ BOOL WINAPI DllMain(
 		//
 
 		KexDataInitialize(&KexData);
-		RtlGetNtVersionNumbers(&OriginalMajorVersion, &OriginalMinorVersion, &OriginalBuildNumber);
 		KexData->KexDllBase = DllBase;
 	}
 
@@ -216,7 +216,7 @@ BOOL WINAPI DllMain(
 
 			ASSERT(NT_SUCCESS(Status));
 
-			if (OriginalMajorVersion == 6) KexHkInstallBasicHook(NtMapViewOfSection, Ext_NtMapViewOfSection, NULL);
+			if (LOWORD(OriginalBuildNumber) <= 10586) KexHkInstallBasicHook(NtMapViewOfSection, Ext_NtMapViewOfSection, NULL);
 
 			//Status = LdrSetDllManifestProber(KexProberCallback, NULL, KexReleaseActCtx);
 			//ASSERT(NT_SUCCESS(Status));

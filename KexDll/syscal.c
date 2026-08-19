@@ -27,34 +27,20 @@ BOOL GetSsnByName(
 	PDWORD	SsnPtr)
 {
 	NTSTATUS Status;
-	HANDLE FileHandle;
-	HANDLE SectionHandle;
-	PVOID ImageBase;
-	SIZE_T ViewSize;
-	BOOL Result;
+	HANDLE FileHandle = NULL;
+	HANDLE SectionHandle = NULL;
+	PVOID ImageBase = NULL;
+	SIZE_T ViewSize = 0;
+	BOOL Result = FALSE;
 	UNICODE_STRING UnicodePath;
 	OBJECT_ATTRIBUTES ObjectAttributes;
 	IO_STATUS_BLOCK IoStatusBlock;
 	PIMAGE_NT_HEADERS NtHeaders;
-	ULONG ExportSize;
-	PIMAGE_EXPORT_DIRECTORY ExportDir;
-	PDWORD NameArray;
-	PWORD OrdinalArray;
-	PDWORD FuncArray;
-	DWORD Index;
-	DWORD FuncRva;
 	PBYTE FuncBytes;
 	INT Index1;
 	INT Index2;
 	DWORD Ssn = 0;
 
-	// Initialize.
-	Result = FALSE;
-	FileHandle = NULL;
-	SectionHandle = NULL;
-	ImageBase = NULL;
-	ViewSize = 0;
-	ExportSize = 0;
 	if (!SsnPtr || !FuncName) return FALSE;
 
 	// 1. Open ntdll.dll via NT object path (no drive letter).
@@ -104,54 +90,34 @@ BOOL GetSsnByName(
 	NtHeaders = RtlImageNtHeader(ImageBase);
 	if (!NtHeaders) goto Cleanup;
 
-	// 5. Get export directory.
-	ExportDir = (PIMAGE_EXPORT_DIRECTORY)RtlImageDirectoryEntryToData(
-		ImageBase,
-		TRUE,
-		IMAGE_DIRECTORY_ENTRY_EXPORT,
-		&ExportSize);
-	if (!ExportDir) goto Cleanup;
+	// 5. Walk export names to find the target function.
+	Status = KexLdrMiniGetProcedureAddress(ImageBase, FuncName, &FuncBytes);
+	if (!NT_SUCCESS(Status)) goto Cleanup;
 
-	// 6. Walk export names to find the target function.
-	NameArray = (PDWORD)((PBYTE)ImageBase + ExportDir->AddressOfNames);
-	OrdinalArray = (PWORD)((PBYTE)ImageBase + ExportDir->AddressOfNameOrdinals);
-	FuncArray = (PDWORD)((PBYTE)ImageBase + ExportDir->AddressOfFunctions);
-
-	for (Index = 0; Index < ExportDir->NumberOfNames; ++Index) {
-		PCSTR CurrentName = (PCSTR)((PBYTE)ImageBase + NameArray[Index]);
-		if (!StringEqualIA(CurrentName, FuncName)) continue;
-
-		// 7. Found the function. Get its raw code bytes from the disk image.
-		FuncRva = FuncArray[OrdinalArray[Index]];
-		FuncBytes = RVA_TO_VA(ImageBase, FuncRva);
-
-		// 8. Scan the first 32 bytes for "B8 imm32" + "0F 05" (syscall).
-		for (Index1 = 0; Index1 < 32; ++Index1) {
-			if (FuncBytes[Index1] == 0xB8) {
-				Ssn = *(PDWORD)(FuncBytes + Index1 + 1);
+	// 6. Scan the first 32 bytes for "B8 imm32" + "0F 05" (syscall).
+	for (Index1 = 0; Index1 < 32; ++Index1) {
+		if (FuncBytes[Index1] == 0xB8) {
+			Ssn = *(PDWORD)(FuncBytes + Index1 + 1);
 #ifdef KEX_ARCH_X64
-				// Verify that the syscall instruction (0F 05) follows within 20 bytes.
-				for (Index2 = Index1 + 5; Index2 < Index1 + 20; ++Index2) {
-					if (FuncBytes[Index2] == 0x0F && FuncBytes[Index2 + 1] == 0x05) {
-						*SsnPtr = Ssn;
-						Result = TRUE;
-						goto Cleanup;
-					}
+			// Verify that the syscall instruction (0F 05) follows within 20 bytes.
+			for (Index2 = Index1 + 5; Index2 < Index1 + 20; ++Index2) {
+				if (FuncBytes[Index2] == 0x0F && FuncBytes[Index2 + 1] == 0x05) {
+					*SsnPtr = Ssn;
+					Result = TRUE;
+					goto Cleanup;
 				}
-#else
-				// In 32-bit Windows, the actual syscall stub (sysenter/int2e) is not
-				// placed inside each service function; only "mov eax, SSN" is present.
-				// Therefore we accept the SSN immediately after finding the B8 opcode.
-				*SsnPtr = Ssn;
-				Result = TRUE;
-				goto Cleanup;
-				UNREFERENCED_PARAMETER(Index2);
-#endif
 			}
+#else
+			// In 32-bit Windows, the actual syscall stub (sysenter/int2e) is not
+			// placed inside each service function; only "mov eax, SSN" is present.
+			// Therefore we accept the SSN immediately after finding the B8 opcode.
+			*SsnPtr = Ssn;
+			Result = TRUE;
+			goto Cleanup;
+			UNREFERENCED_PARAMETER(Index2);
+#endif
 		}
-		break;  // matched name but pattern not found -> exit loop
 	}
-
 Cleanup:
 	// Cleanup all resources.
 	if (ImageBase) {
@@ -211,6 +177,7 @@ BOOL InitializeSsnForAllSyscallFunctions(VOID) {
 	}
 
 	if (Success) {
+		if (KexRtlOperatingSystemBitness() == 64) --SSN_NtQuerySystemTime;
 		SsnInitialized = TRUE;
 	}
 	return Success;
@@ -235,8 +202,8 @@ do { \
 #define GENERATE_SYSCALL(SyscallName, Retn, ...) \
 KEXNTSYSCALLAPI NTSTATUS NTAPI Kex##SyscallName##_Native32(__VA_ARGS__) { asm { \
 	asm mov eax, [SSN_##SyscallName] \
-	asm mov edx, 0x7FFE0300 \
-	asm call [edx] /* Native 32 bit call */ \
+	asm lea edx, [esp+4] \
+	asm int 0x2E \
 	asm ret Retn \
 }} \
 KEXNTSYSCALLAPI NTSTATUS NTAPI Kex##SyscallName##_Wow64_Legacy(__VA_ARGS__) { asm { \
@@ -408,7 +375,7 @@ do { \
 	try { \
 		if (SsnInitialized) { \
 			if (KexRtlCurrentProcessBitness() != KexRtlOperatingSystemBitness()) { \
-				if (KexShouldUseWorkaroundsForNewerWindows()) return Kex##SyscallName##_Wow64_Modern(__VA_ARGS__); \
+				if (LOWORD(OriginalBuildNumber) >= 8102) return Kex##SyscallName##_Wow64_Modern(__VA_ARGS__); \
 				return Kex##SyscallName##_Wow64_Legacy(__VA_ARGS__); \
 			} else { \
 				return Kex##SyscallName##_Native32(__VA_ARGS__); \
