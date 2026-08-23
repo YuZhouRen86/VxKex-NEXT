@@ -25,17 +25,21 @@
 KEXAPI INT NTAPI KexRtlOperatingSystemBitness(
 	VOID)
 {
-#ifdef _M_X64
+#ifdef KEX_ARCH_X64
 	return 64;
 #else
-	ULONG Wow64Information = 0;
-	NtQueryInformationProcess(
-		NtCurrentProcess(),
-		ProcessWow64Information,
-		&Wow64Information,
-		sizeof(Wow64Information),
-		NULL);
-	return Wow64Information ? 64 : 32;
+	STATIC ULONG Bitness = 0;
+	if (!Bitness) {
+		ULONG_PTR Wow64Information = 0;
+		NtQueryInformationProcess(
+			NtCurrentProcess(),
+			ProcessWow64Information,
+			&Wow64Information,
+			sizeof(Wow64Information),
+			NULL);
+		Bitness = Wow64Information ? 64 : 32;
+	}
+	return Bitness;
 #endif
 }
 

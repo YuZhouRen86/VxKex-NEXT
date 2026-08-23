@@ -521,7 +521,7 @@ KEXAPI BOOLEAN NTAPI KexIsRewriteExemptedDll(
 		RtlInitConstantUnicodeString(&TargetDllName, L"wpfgfx_");
 
 		if (RtlPrefixUnicodeString(&TargetDllName, BaseDllName, TRUE)) {
-			return FALSE;
+			return TRUE;
 		}
 
 		//
