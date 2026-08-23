@@ -324,9 +324,60 @@ BOOL WINAPI DllMain(
 			NOT_REACHED;
 		}
 
-	} else if (Reason == DLL_PROCESS_ATTACH && Descriptor == NULL) {
-		Status = LdrDisableThreadCalloutsForDll(DllBase);
-		ASSERT (NT_SUCCESS(Status));
+	} else if (Reason == DLL_PROCESS_ATTACH) {
+		STATIC ULONG CallNumber = 0;
+
+		//
+		// For static imports, this is called once with Descriptor as a PCONTEXT.
+		// For dynamic imports, this is called once with Descriptor == NULL.
+		//
+		// For verifier loads, this is called once with Descriptor as a
+		// PPRTL_VERIFIER_PROVIDER_DESCRIPTOR, and then once *again* with Descriptor
+		// == NULL.
+		//
+
+		++CallNumber;
+
+		if (CallNumber == 1) {
+			//
+			// Disable DLL_THREAD_ATTACH calls if we're not running as a verifier
+			// provider.
+			//
+
+			if (AVrfProviderDescriptor.VerifierImage == NULL) {
+				Status = LdrDisableThreadCalloutsForDll(DllBase);
+				ASSERT (NT_SUCCESS(Status));
+			} else {
+				// Call the ABTI component on the loader initialization thread.
+				KexAlertByThreadIdThreadAttach();
+			}
+		}
+	} else if (Reason == DLL_THREAD_ATTACH) {
+		ASSERT (AVrfProviderDescriptor.VerifierImage != NULL);
+
+		if (NtCurrentTeb()->InitialThread) {
+			//
+			// Queue an APC in order to work around MacType being incompatible with
+			// Application Verifier.
+			//
+			// We'll ignore failure in release builds, since this is only mandatory
+			// for when MacType is enabled (which is a minority of systems).
+			//
+
+			Status = NtQueueApcThread(
+				NtCurrentThread(),
+				KexPostInitializationApcRoutine,
+				NULL,
+				NULL,
+				NULL);
+
+			ASSERT (NT_SUCCESS(Status));
+		}
+
+		// Call back to the NtAlertThreadByThreadId/NtWaitForAlertByThreadId
+		// component since a small piece of initialization code needs to run
+		// per-thread.
+		KexAlertByThreadIdThreadAttach();
 	} else if (Reason == DLL_PROCESS_DETACH) {
 		// Close log, if it's open, so that all log entries are properly flushed.
 		VxlCloseLog(&KexData->LogHandle);

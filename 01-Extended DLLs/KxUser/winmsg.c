@@ -40,6 +40,8 @@
 
 STATIC BOOLEAN g_WindowMessageInterceptionEnabled = FALSE;
 STATIC PFN_DISPATCH g_pfnDWORD = NULL;
+STATIC ULONGLONG LastGestureNotifyTimeStamp_100ns = 0;
+STATIC LPARAM LastPointerLParam = 0;
 
 #define VXKEX_DEFAULT_POINTER_FLAGS ( \
 	POINTER_FLAG_PRIMARY | \
@@ -172,6 +174,14 @@ STATIC LPARAM PointerToMouseCoordinates(
 	return MAKELPARAM(Point.x, Point.y);
 }
 
+STATIC ULONGLONG GetCurrentTimeStamp_100ns(
+	VOID)
+{
+	FILETIME FileTime;
+	GetSystemTimeAsFileTime(&FileTime);
+	return ((ULONGLONG)FileTime.dwHighDateTime << 32) | FileTime.dwLowDateTime;
+}
+
 //
 // Converts a WM_TOUCH message into one or more WM_POINTER* messages
 // (DOWN, UP, UPDATE) and updates the internal touch point cache.
@@ -188,6 +198,8 @@ STATIC BOOLEAN ProcessTouchMessage(
 	HTOUCHINPUT HTouchInput = (HTOUCHINPUT)Message->lParam;
 	UINT CInputs = LOWORD(Message->wParam);
 	TOUCHINPUT Inputs[256];   // Maximum 256 simultaneous touch points
+
+	ASSERT(Message->message == WM_TOUCH);
 
 	if (CInputs > 256) CInputs = 256;
 
@@ -212,13 +224,15 @@ STATIC BOOLEAN ProcessTouchMessage(
 		POINT Pt = {Ti->x / 100, Ti->y / 100};
 
 		UINT MessageType = 0;
-		DWORD PointerFlags = VXKEX_DEFAULT_POINTER_FLAGS;
+		DWORD PointerFlags = POINTER_FLAG_FIRSTBUTTON | POINTER_FLAG_INRANGE | POINTER_FLAG_CONFIDENCE;//VXKEX_DEFAULT_POINTER_FLAGS;
 
 		// Build common POINTER_INFO structure
 		POINTER_INFO Info;
 		POINTER_TOUCH_INFO TouchInfo;
 		POINTER_PEN_INFO PenInfo;
 		BOOL IsPenMessage = TRUE;//Ti->dwFlags & TOUCHEVENTF_PEN;
+
+		if (Index == 0) PointerFlags |= POINTER_FLAG_PRIMARY;
 
 		// Use PhysicalToLogicalPoint for proper DPI scaling.
 		PhysicalToLogicalPoint(Hwnd, &Pt);
@@ -265,7 +279,7 @@ STATIC BOOLEAN ProcessTouchMessage(
 
 		if (Ti->dwFlags & TOUCHEVENTF_DOWN) {
 			PVOID Entry;
-			PointerFlags |= POINTER_FLAG_DOWN | POINTER_FLAG_INCONTACT;
+			PointerFlags |= POINTER_FLAG_NEW | POINTER_FLAG_DOWN | POINTER_FLAG_INCONTACT;
 			MessageType = WM_POINTERDOWN;
 
 			// Store the new touch point
@@ -343,12 +357,21 @@ STATIC BOOLEAN ProcessWindowMessageInPlace(
 	IN OUT	PMSG	Message,
 	IN		BOOLEAN	Unicode)
 {
+	BOOL RegisteredTouchWindow = FALSE;
+	HWND ParentWindow;
 	ASSERT (Message != NULL);
 
-	if (!(KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
-		Message->message == WM_TOUCH &&
-		!GetProp(Message->hwnd, L"VxKex_NEXT_Touch_Window_Registered")) {
-		return ProcessTouchMessage(Message);
+	if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
+		!(KexData->Flags & KEXDATA_FLAG_QT6) &&
+		Message->message == WM_TOUCH) {
+
+		for (ParentWindow = Message->hwnd; ParentWindow != NULL; ParentWindow = GetParent(ParentWindow)) {
+			if (GetProp(ParentWindow, L"VxKex_NEXT_Touch_Window_Registered")) {
+				RegisteredTouchWindow = TRUE;
+				break;
+			}
+		}
+		if (!RegisteredTouchWindow) return ProcessTouchMessage(Message);
 	}
 
 	if (g_WindowMessageInterceptionEnabled == FALSE) {
@@ -774,20 +797,69 @@ STATIC LRESULT KxUserDefWindowProcAorW(
 	Msg.wParam = WParam;
 	Msg.lParam = LParam;
 
+
+	if (Message == WM_GESTURENOTIFY) {
+		LastGestureNotifyTimeStamp_100ns = GetCurrentTimeStamp_100ns();
+		return FALSE;
+	}
+
 	// For pointer messages, check if the pointer ID is zero (mouse simulation).
-	// If not zero, do not convert; pass to original DefWindowProc.
 	switch (Message) {
-	case WM_POINTERACTIVATE:
-	case WM_POINTERCAPTURECHANGED:
+	//case WM_POINTERACTIVATE:
+	//case WM_POINTERCAPTURECHANGED:
 	case WM_POINTERDOWN:
 	case WM_POINTERUP:
 	case WM_POINTERUPDATE:
-	case WM_POINTERWHEEL:
-	case WM_POINTERHWHEEL: {
+	/*case WM_POINTERWHEEL:
+	case WM_POINTERHWHEEL:*/ {
 		UINT PointerId = GET_POINTERID_WPARAM(WParam);
-		if (PointerId != 0) {
-			// This is a touch or pen pointer; do not convert.
-			goto CallOriginalDefWindowProc;
+		USHORT PointerFlags = HIWORD(WParam);
+		if (PointerId != 0 && (PointerFlags & POINTER_FLAG_PRIMARY)) {
+			// This is a touch or pen pointer.
+			switch (Message) {
+			case WM_POINTERDOWN:
+			case WM_POINTERUP: {
+
+				Msg.wParam = KeyStateFromPointerFlags(PointerFlags);
+				Msg.lParam = PointerToMouseCoordinates(Window, LParam);
+
+				if (PointerFlags & POINTER_FLAG_FIRSTBUTTON) {
+					ULONGLONG TimeInterval = 0;
+					ULONGLONG CurrentTimeStamp_100ns = GetCurrentTimeStamp_100ns();
+					if (LastGestureNotifyTimeStamp_100ns > CurrentTimeStamp_100ns)
+						TimeInterval = LastGestureNotifyTimeStamp_100ns - CurrentTimeStamp_100ns;
+					else TimeInterval = CurrentTimeStamp_100ns - LastGestureNotifyTimeStamp_100ns;
+					if (TimeInterval >= 14000000 && TimeInterval < 29000000)
+						Msg.message = WM_RBUTTONDOWN;
+					else Msg.message = WM_LBUTTONDOWN;
+				} else if (PointerFlags & POINTER_FLAG_SECONDBUTTON) {
+					Msg.message = WM_RBUTTONDOWN;
+				} else if (PointerFlags & POINTER_FLAG_THIRDBUTTON) {
+					Msg.message = WM_MBUTTONDOWN;
+				} else if ((PointerFlags & (POINTER_FLAG_FOURTHBUTTON | POINTER_FLAG_FIFTHBUTTON))) {
+					Msg.message = WM_XBUTTONDOWN;
+				} else {
+					ASSERT (FALSE);
+					Msg.message = WM_LBUTTONDOWN;
+				}
+
+				if (Message == WM_POINTERUP) {
+					// adding 1 turns a WM_xxBUTTONDOWN into a WM_xxBUTTONUP message
+					++Msg.message;
+				}
+
+				break;
+							}
+			case WM_POINTERUPDATE: {
+				if (LastPointerLParam == LParam) break;
+				Msg.message = WM_MOUSEMOVE;
+				Msg.wParam = KeyStateFromPointerFlags(PointerFlags);
+				Msg.lParam = PointerToMouseCoordinates(Window, LParam);
+				break;
+								}
+			}
+			LastPointerLParam = LParam;
+			goto SendMouseMessage;
 		}
 		// Otherwise, it's our simulated mouse pointer (ID=0); proceed with conversion.
 		break;
@@ -863,6 +935,7 @@ STATIC LRESULT KxUserDefWindowProcAorW(
 		goto CallOriginalDefWindowProc;
 	}
 
+SendMouseMessage:
 	//
 	// TODO: Technically, we should be using PostMessage here. However, that
 	// causes an infinite loop because we're posting a mouse message, then
@@ -937,6 +1010,12 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExA(
 {
 	HWND Window = CreateWindowExA(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
 	if (Window) Ext_UnregisterTouchWindow(Window);
+	unless(KexData->IfeoParameters.DisableAppSpecific) {
+		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
+			!(KexData->Flags & KEXDATA_FLAG_QT6)) {
+			EnableWindowMessageInterception();
+		}
+	}
 	return Window;
 }
 
@@ -956,5 +1035,11 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExW(
 {
 	HWND Window = CreateWindowExW(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
 	if (Window) Ext_UnregisterTouchWindow(Window);
+	unless(KexData->IfeoParameters.DisableAppSpecific) {
+		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
+			!(KexData->Flags & KEXDATA_FLAG_QT6)) {
+			EnableWindowMessageInterception();
+		}
+	}
 	return Window;
 }

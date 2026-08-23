@@ -53,135 +53,222 @@ STATIC BOOL IsFullyQualifiedPath(
 	return IsDosDevicePath(lpszPath) || StringBeginsWith(lpszPath, L"\\\\");
 }
 
+// Find the last character of the root in a path, if there is one, without any segments
+STATIC PCWSTR FindLastCharacterOfRoot(
+	IN	OUT	PCWSTR	lpszPath)
+{
+	if (IsVolumeGuidPath(lpszPath)) return lpszPath[48] == '\\' ? lpszPath + 48 : lpszPath + 47;
+	else if (IsPrefixedUncPath(lpszPath)) return lpszPath + 7;
+	else if (IsExtendedLengthDosDevicePath(lpszPath)) return lpszPath[6] == '\\' ? lpszPath + 6 : lpszPath + 5;
+	else if (lpszPath[0] == '\\' && lpszPath[1] == '\\') return lpszPath + 1;
+	else if (lpszPath[0] == '\\') return lpszPath;
+	else if (IsDosDevicePath(lpszPath)) return lpszPath[2] == '\\' ? lpszPath + 2 : lpszPath + 1;
+	else return NULL;
+}
+
 WINPATHCCHAPI HRESULT WINAPI PathAllocCanonicalize(
 	IN	PCWSTR	lpszPathIn,
 	IN	DWORD	dwFlags,
 	OUT	PWSTR	*ppszPathOut)
 {
-	PWSTR lpszPathOut = NULL;
-	SIZE_T cchPathIn;
-	SIZE_T cchAlloc;
-	BOOL bAllowLongPaths = dwFlags & PATHCCH_ALLOW_LONG_PATHS;
-	HRESULT hr;
+	PWSTR Buffer, Destination;
+	PCWSTR Source, EndOfRoot;
+	SIZE_T BufferSize, Length;
 
-	if (!ppszPathOut) {
+	if (!lpszPathIn || !ppszPathOut ||
+		((dwFlags & PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS) && (dwFlags & PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS)) ||
+		(dwFlags & (PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS | PATHCCH_FORCE_DISABLE_LONG_NAME_PROCESS) &&
+		!(dwFlags & PATHCCH_ALLOW_LONG_PATHS)) ||
+		((dwFlags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH) && (dwFlags & PATHCCH_ALLOW_LONG_PATHS))) {
+		if (ppszPathOut) *ppszPathOut = NULL;
 		return E_INVALIDARG;
 	}
 
-	*ppszPathOut = NULL;
-	cchPathIn = wcslen(lpszPathIn);
-
-	if (cchPathIn > PATHCCH_MAX_CCH) {
-		return PATHCCH_E_FILENAME_TOO_LONG;
+	Length = wcslen(lpszPathIn);
+	if ((Length + 1 > MAX_PATH && !(dwFlags & (PATHCCH_ALLOW_LONG_PATHS | PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH))) ||
+		(Length + 1 > PATHCCH_MAX_CCH)) {
+		*ppszPathOut = NULL;
+		return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
 	}
 
-	if (cchPathIn > 0) {
-		cchAlloc = cchPathIn + 1;
-	} else {
-		cchAlloc = 2;
-	}
+	// PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH implies PATHCCH_DO_NOT_NORMALIZE_SEGMENTS
+	if (dwFlags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH) dwFlags |= PATHCCH_DO_NOT_NORMALIZE_SEGMENTS;
 
-	if (cchAlloc > MAX_PATH && bAllowLongPaths) {
-		// add space for \\?\ prefix
-		cchAlloc += 6;
-	}
-
-	// limit maximum path length
-	if (cchAlloc > (bAllowLongPaths ? PATHCCH_MAX_CCH : MAX_PATH)) {
-		cchAlloc = (bAllowLongPaths ? PATHCCH_MAX_CCH : MAX_PATH);
-	}
-
-	lpszPathOut = (PWSTR) LocalAlloc(LMEM_ZEROINIT, cchAlloc * sizeof(WCHAR));
-
-	if (!lpszPathOut) {
+	// Path Length + possible \\?\ addition + possible \ addition + NUL
+	BufferSize = (Length + 6) * sizeof(WCHAR);
+	Buffer = (PWSTR) LocalAlloc(LMEM_ZEROINIT, BufferSize);
+	if (!Buffer) {
+		*ppszPathOut = NULL;
 		return E_OUTOFMEMORY;
 	}
 
-	hr = PathCchCanonicalizeEx(lpszPathOut, cchAlloc, lpszPathIn, dwFlags);
+	Source = lpszPathIn;
+	Destination = Buffer;
 
-	if (FAILED(hr)) {
-		LocalFree(lpszPathOut);
-		return hr;
+	EndOfRoot = FindLastCharacterOfRoot(lpszPathIn);
+	if (EndOfRoot) EndOfRoot = Buffer + (EndOfRoot - lpszPathIn);
+
+	// Copy path root
+	if (EndOfRoot) {
+		RtlCopyMemory(Destination, Source, (EndOfRoot - Buffer + 1) * sizeof(WCHAR));
+		Source += EndOfRoot - Buffer + 1;
+		if (PathCchStripPrefix(Destination, Length + 6) == S_OK) {
+			// Fill in \ in X:\ if the \ is missing
+			if (IsDosDevicePath(Destination) && Destination[2] != '\\') {
+				Destination[2] = '\\';
+				Destination[3] = 0;
+			}
+			Destination = Buffer + wcslen(Buffer);
+			EndOfRoot = Destination;
+		}
+		else Destination += EndOfRoot - Buffer + 1;
 	}
 
-	*ppszPathOut = lpszPathOut;
+	while (*Source) {
+		if (Source[0] == '.') {
+			if (Source[1] == '.') {
+				// Keep one . after *
+				if (Destination > Buffer && Destination[-1] == '*') {
+					*Destination++ = *Source++;
+					continue;
+				}
+				// Keep the .. if not surrounded by \.
+				if ((Source[2] != '\\' && Source[2]) || (Destination > Buffer && Destination[-1] != '\\')) {
+					*Destination++ = *Source++;
+					*Destination++ = *Source++;
+					continue;
+				}
+				// Remove the \ before .. if the \ is not part of root
+				if (Destination > Buffer && Destination[-1] == '\\' && (!EndOfRoot || Destination - 1 > EndOfRoot)) {
+					*--Destination = '\0';
+					// Remove characters until a \ is encountered
+					while (Destination > Buffer) {
+						if (Destination[-1] == '\\') {
+							*--Destination = 0;
+							break;
+						}
+						else *--Destination = 0;
+					}
+				}
+				// Remove the extra \ after .. if the \ before .. wasn't deleted
+				else if (Source[2] == '\\') Source++;
+				Source += 2;
+			}
+			else {
+				// Keep the . if not surrounded by \.
+				if ((Source[1] != '\\' && Source[1]) || (Destination > Buffer && Destination[-1] != '\\')) {
+					*Destination++ = *Source++;
+					continue;
+				}
+
+				// Remove the \ before . if the \ is not part of root
+				if (Destination > Buffer && Destination[-1] == '\\' && (!EndOfRoot || Destination - 1 > EndOfRoot)) Destination--;
+				// Remove the extra \ after . if the \ before . wasn't deleted
+				else if (Source[1] == '\\') Source++;
+
+				Source++;
+			}
+
+			// If X:\ is not complete, then complete it
+			if (IsDosDevicePath(Buffer) && Buffer[2] != '\\') {
+				EndOfRoot = Buffer + 2;
+				Destination = Buffer + 3;
+				Buffer[2] = '\\';
+				// If next character is \, use the \ to fill in
+				if (Source[0] == '\\') Source++;
+			}
+		}
+		// Copy over
+		else *Destination++ = *Source++;
+	}
+	// End the path
+	*Destination = 0;
+
+	// Strip multiple trailing .
+	if (!(dwFlags & PATHCCH_DO_NOT_NORMALIZE_SEGMENTS)) {
+		while (Destination > Buffer && Destination[-1] == '.') {
+			// Keep a . after *
+			if (Destination - 1 > Buffer && Destination[-2] == '*') break;
+			// If . follow a : at the second character, remove the . and add a \.
+			else if (Destination - 1 > Buffer && Destination[-2] == ':' && Destination - 2 == Buffer + 1) *--Destination = '\\';
+			else *--Destination = 0;
+		}
+	}
+
+	// If result path is empty, fill in \.
+	if (!*Buffer) {
+		Buffer[0] = '\\';
+		Buffer[1] = 0;
+	}
+
+	// Extend the path if needed
+	Length = wcslen(Buffer);
+	if (((Length + 1 > MAX_PATH && IsDosDevicePath(Buffer)) ||
+		(IsDosDevicePath(Buffer) && dwFlags & PATHCCH_ENSURE_IS_EXTENDED_LENGTH_PATH)) &&
+		!(dwFlags & PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS)) {
+		RtlMoveMemory(Buffer + 4, Buffer, (Length + 1) * sizeof(WCHAR));
+		Buffer[0] = '\\';
+		Buffer[1] = '\\';
+		Buffer[2] = '?';
+		Buffer[3] = '\\';
+	}
+
+	// Add a trailing backslash to the path if needed
+	if (dwFlags & PATHCCH_ENSURE_TRAILING_SLASH) PathCchAddBackslash(Buffer, BufferSize);
+
+	*ppszPathOut = Buffer;
 	return S_OK;
 }
 
 WINPATHCCHAPI HRESULT WINAPI PathAllocCombine(
-	IN	PCWSTR	lpszPathIn OPTIONAL,
-	IN	PCWSTR	lpszMore OPTIONAL,
-	IN	DWORD	dwFlags,
+	IN	PCWSTR	pszPathIn,
+	IN	PCWSTR	pszMore,
+	IN	ULONG	dwFlags,
 	OUT	PWSTR	*ppszPathOut)
 {
-	SIZE_T cchPathIn = 0;
-	SIZE_T cchMore = 0;
-	SIZE_T cchPathOut;
-	PWSTR lpszPathOut;
-	BOOL bAllowLongPaths = dwFlags & PATHCCH_ALLOW_LONG_PATHS;
+	SIZE_T CombinedLength;
+	WCHAR *CombinedPath;
+	BOOL UseMoreAsBase = FALSE;
 	HRESULT hr;
 
-	if (!ppszPathOut) {
+	if ((!pszPathIn && !pszMore) || !ppszPathOut) {
+		if (ppszPathOut) *ppszPathOut = NULL;
 		return E_INVALIDARG;
 	}
 
-	*ppszPathOut = NULL;
+	if (!pszPathIn || !pszMore) return PathAllocCanonicalize(pszPathIn ? pszMore : pszMore, dwFlags, ppszPathOut);
 
-	if (lpszPathIn == NULL && lpszMore == NULL) {
-		return E_INVALIDARG;
+	// If pszMore is fully qualified, use pszMore only
+	if (IsDosDevicePath(pszMore) || (pszMore[0] == '\\' && pszMore[1] == '\\')) {
+		pszPathIn = pszMore;
+		pszMore = NULL;
+		UseMoreAsBase = TRUE;
 	}
 
-	if (lpszPathIn) {
-		cchPathIn = wcslen(lpszPathIn);
-
-		if (cchPathIn > 0) {
-			cchPathIn++; // add space for '\0'
-		}
-
-		if (cchPathIn >= PATHCCH_MAX_CCH) {
-			return PATHCCH_E_FILENAME_TOO_LONG;
-		}
-	}
-
-	if (lpszMore) {
-		cchMore = wcslen(lpszMore);
-
-		if (cchMore > 0) {
-			cchMore++;
-		}
-
-		if (cchMore >= PATHCCH_MAX_CCH) {
-			return PATHCCH_E_FILENAME_TOO_LONG;
-		}
-	}
-
-	cchPathOut = cchMore + cchPathIn;
-
-	if (cchPathOut == 0) {
-		cchPathOut = 2; // for backslash and null terminator
-	} else if (cchPathOut > (bAllowLongPaths ? PATHCCH_MAX_CCH : MAX_PATH)) {
-		cchPathOut = bAllowLongPaths ? PATHCCH_MAX_CCH : MAX_PATH;
-	}
-
-	if (cchPathOut > MAX_PATH && bAllowLongPaths) {
-		cchPathOut += 6; // for \\?\ or \\?\UNC\ 
-	}
-
-	lpszPathOut = (PWSTR) LocalAlloc(LMEM_ZEROINIT, cchPathOut * sizeof(WCHAR));
-
-	if (!lpszPathOut) {
+	// pszPathIn Length + pszMore Length + possible backslash + NULL
+	CombinedLength = wcslen(pszPathIn) + (pszMore ? wcslen(pszMore) : 0) + 2;
+	CombinedPath = SafeAlloc(WCHAR, CombinedLength);
+	if (!CombinedPath) {
+		*ppszPathOut = NULL;
 		return E_OUTOFMEMORY;
 	}
 
-	hr = PathCchCombineEx(lpszPathOut, cchPathOut, lpszPathIn, lpszMore, dwFlags);
+	StringCchCopy(CombinedPath, wcslen(pszPathIn) + 1, pszPathIn);
+	PathCchStripPrefix(CombinedPath, CombinedLength);
+	if (UseMoreAsBase) PathCchAddBackslashEx(CombinedPath, CombinedLength, NULL, NULL);
 
-	if (FAILED(hr)) {
-		LocalFree(lpszPathOut);
-		return hr;
+	if (pszMore && pszMore[0]) {
+		if (pszMore[0] == '\\' && pszMore[1] != '\\') {
+			PathCchStripToRoot(CombinedPath, CombinedLength);
+			pszMore++;
+		}
+		PathCchAddBackslashEx(CombinedPath, CombinedLength, NULL, NULL);
+		StringCchCat(CombinedPath, wcslen(CombinedPath) + wcslen(pszMore) + 1, pszMore);
 	}
 
-	*ppszPathOut = lpszPathOut;
-	return S_OK;
+	hr = PathAllocCanonicalize(CombinedPath, dwFlags, ppszPathOut);
+	SafeFree(CombinedPath);
+	return hr;
 }
 
 // ALL TESTS PASSED, DO NOT MODIFY
@@ -591,90 +678,27 @@ WINPATHCCHAPI HRESULT WINAPI PathCchCombineEx(
 	IN	PCWSTR	lpszMore OPTIONAL,
 	IN	DWORD	dwFlags)
 {
-	SIZE_T cchBuf = cchPathOut;
-	PWSTR lpszBuf = NULL;
 	HRESULT hr;
+	PWSTR ppszPathOut;
+	SIZE_T cchLength;
 
-	if (!lpszPathOut || !cchPathOut || cchPathOut > PATHCCH_MAX_CCH) {
-		return E_INVALIDARG;
+	if (!lpszPathOut || !cchPathOut || cchPathOut > PATHCCH_MAX_CCH) return E_INVALIDARG;
+
+	hr = PathAllocCombine(lpszPathIn, lpszMore, dwFlags, &ppszPathOut);
+	if (FAILED(hr)) {
+		lpszPathOut[0] = 0;
+		return hr;
 	}
-
-	if (!lpszPathIn && !lpszMore) {
-		HRCHECKED(E_INVALIDARG);
+	cchLength = wcslen(ppszPathOut);
+	if (cchLength + 1 > cchPathOut) {
+		lpszPathOut[0] = 0;
+		LocalFree(ppszPathOut);
+		return STRSAFE_E_INSUFFICIENT_BUFFER;
+	} else {
+		StringCchCopy(lpszPathOut, cchLength + 1, ppszPathOut);
+		LocalFree(ppszPathOut);
+		return S_OK;
 	}
-
-	if (lpszPathIn && wcslen(lpszPathIn) >= PATHCCH_MAX_CCH) {
-		HRCHECKED(PATHCCH_E_FILENAME_TOO_LONG);
-	}
-
-	if (lpszMore && wcslen(lpszMore) >= PATHCCH_MAX_CCH) {
-		HRCHECKED(PATHCCH_E_FILENAME_TOO_LONG);
-	}
-
-	// If lpszPathIn is a blank string or NULL, or if lpszMore is fully qualified,
-	// it is canonicalized directly to the output buffer without being combined.
-	if (!lpszPathIn || *lpszPathIn == '\0' || (lpszMore && IsFullyQualifiedPath(lpszMore))) {
-		if (lpszMore) {
-			return PathCchCanonicalizeEx(lpszPathOut, cchPathOut, lpszMore, dwFlags);
-		}
-	}
-
-	// If lpszMore is a blank string or NULL, canonicalize lpszPathIn directly to the
-	// output buffer.
-	if (!lpszMore || *lpszMore == '\0') {
-		if (lpszPathIn) {
-			return PathCchCanonicalizeEx(lpszPathOut, cchPathOut, lpszPathIn, dwFlags);
-		}
-	}
-
-	// If lpszMore begins with a backslash:
-	// - copy the root of lpszPathIn to temporary buffer
-	// - append lpszMore to temporary buffer
-	// - canonicalize temporary buffer to lpszPathOut
-	if (*lpszMore == '\\') {
-		PWSTR lpszPathInRootEnd;
-		HRCHECKED(PathCchSkipRoot(lpszPathIn, &lpszPathInRootEnd));
-
-		if (lpszPathInRootEnd > lpszPathIn) {
-			// lpszPathIn contains a root
-
-			if (lpszPathInRootEnd[-1] == '\\') {
-				// ensure no backslash - since we know lpszMore already starts with one
-				lpszPathInRootEnd--;
-			}
-
-			lpszBuf = (PWSTR) StackAlloc(WCHAR, cchBuf);
-
-			HRCHECKED(StringCchCopyN(lpszBuf, cchBuf, lpszPathIn, lpszPathInRootEnd - lpszPathIn));
-			HRCHECKED(StringCchCat(lpszBuf, cchBuf, lpszMore));
-			HRCHECKED(PathCchCanonicalizeEx(lpszPathOut, cchPathOut, lpszBuf, dwFlags));
-
-			return S_OK;
-		} else {
-			// lpszPathIn does not contain a root
-			return PathCchCanonicalizeEx(lpszPathOut, cchPathOut, lpszMore, dwFlags);
-		}
-	}
-
-	// Otherwise:
-	// - copy lpszPathIn to temporary buffer
-	// - add backslash (if not already present)
-	// - append lpszMore
-	// - canonicalize temporary buffer to lpszPathOut
-	{
-		lpszBuf = (PWSTR) StackAlloc(WCHAR, cchBuf);
-
-		HRCHECKED(StringCchCopy(lpszBuf, cchBuf, lpszPathIn));
-		HRCHECKED(PathCchAddBackslash(lpszBuf, cchBuf));
-		HRCHECKED(StringCchCat(lpszBuf, cchBuf, lpszMore));
-		HRCHECKED(PathCchCanonicalizeEx(lpszPathOut, cchPathOut, lpszBuf, dwFlags));
-	}
-
-	return S_OK;
-
-Error:
-	StringCchCopy(lpszPathOut, cchPathOut, L"");
-	return hr;
 }
 
 // ALL TESTS PASSED, DO NOT MODIFY
@@ -886,7 +910,7 @@ WINPATHCCHAPI HRESULT WINAPI PathCchRemoveExtension(
 		return E_INVALIDARG;
 	}
 
-	// Limit non-\\?\ paths to a maximum length of MAX_PATH
+	// Limit non-\\?\ paths to a maximum Length of MAX_PATH
 	if (wcsncmp(lpszPath, L"\\\\?\\", 4) && cchPath > MAX_PATH) {
 		cchPath = MAX_PATH;
 	}
