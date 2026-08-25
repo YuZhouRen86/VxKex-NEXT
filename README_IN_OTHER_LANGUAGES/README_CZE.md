@@ -1,31 +1,25 @@
-# Úvod
+Úvod
+============
 
-VxKex NEXT je sada rozšíření API pro Windows 7, která umožňují spouštět některé aplikace dostupné pouze ve Windows 8, 8.1 a 10 na Windows 7.
+VxKex NEXT je sada rozšíření API pro Windows, která umožňuje spouštět některé nové programy určené výhradně pro novější verze Windows na starších verzích.
 
-Ke stažení a instalaci přejděte na stránku vydání ([GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)).
+Pro stažení a instalaci navštivte stránku vydání ([GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)).
 
 **Před instalací se doporučuje provést následující kroky.**
 
-- **Odstranit**
-  
-  - **0patch Agent**  
-    To může způsobit selhání prohlížečů založených na Chromiu a IDE JetBrains po zapnutí a spuštění VxKex NEXT.
+- **Odstraňte**  
+  - **0patch Agent** – může způsobovat pády prohlížečů založených na Chromiu a IDE JetBrains po zapnutí VxKex NEXT a jeho spuštění.
 
-- **Aktualizovat**
-  
-  - **MacType → 2025.6.9+**  
-    Starší verze MacType může způsobit selhání spuštění všech programů po zapnutí VxKex NEXT.
+- **Aktualizujte**  
+  - **MacType → verze 2025.6.9 nebo novější** – stará verze MacType může způsobit, že po zapnutí VxKex NEXT nepůjde spustit žádný program.
 
-Po instalaci je použití velmi jednoduché. Zde jsou způsoby, jak zapnout VxKex NEXT:
-
-1. Jednoduše klikněte pravým tlačítkem myši na program, otevřete dialogové okno „Vlastnosti“ a vyberte záložku „VxKex“. Poté zaškrtněte políčko „Povolit VxKex NEXT pro tento program“ a zkuste program spustit.
-2. V nabídce Start vyhledejte „VxKex NEXT Global Settings“ a otevřete jej, klikněte na tlačítko „Přidat“, vyberte program, klikněte na tlačítko „Otevřít“ a zkuste program spustit.
+Po instalaci je použití jednoduché: klepněte pravým tlačítkem na program, otevřete dialog „Vlastnosti“, vyberte kartu „VxKex“. Poté zaškrtněte políčko „Povolit VxKex NEXT pro tento program“ a zkuste program spustit.
 
 ![VxKex configuration GUI](/example-screenshot.png)
 
-Některé programy vyžadují dodatečnou konfiguraci. V instalační složce VxKex NEXT (standardně C:\Program Files\VxKex) se nachází soubor „**Application Compatibility List.docx**“, který tyto kroky podrobně popisuje, ale ve většině případů je konfigurace srozumitelná bez dalších vysvětlení.
+Některé programy vyžadují dodatečnou konfiguraci. V instalační složce VxKex NEXT (ve výchozím nastavení `C:\Program Files\VxKex`) se nachází soubor „**Application Compatibility List.docx**“, který podrobně popisuje tyto kroky, ale ve většině případů je konfigurace intuitivní.
 
-Pokud jste vývojář, zdrojový kód je poskytován jako soubor 7z na stránce vydání.
+Pokud jste vývojář, zdrojový kód je poskytován jako 7z archiv na stránce vydání.
 
 Často kladené otázky
 ===
@@ -77,35 +71,31 @@ Pokud jste vývojář, zdrojový kód je poskytován jako soubor 7z na stránce 
 
 Další podrobnosti naleznete v souboru **Application Compatibility List.docx**, který se instaluje spolu s VxKex NEXT.
 
-Většina aplikací Qt6 bude fungovat, stejně jako mnoho Electron aplikací.
+Většina aplikací na Qt6 a mnoho aplikací na Electron budou fungovat.
 
-**Otázka: Mění VxKex NEXT systémové soubory? Způsobí to nestabilitu mého systému?**
+**Otázka: Mění VxKex NEXT systémové soubory? Způsobí to nestabilitu systému?**
 
-**Odpověď:** VxKex NEXT nemění žádné systémové soubory. Jeho vliv na celý systém je extrémně minimální. Nepoužívají se žádné služby na pozadí, neinstalují se žádné globální hooky a načítaná rozšíření shellu a DLL knihovny mají minimální dopad a mohou být v případě potřeby deaktivovány. Můžete si být jisti, že vaše Windows 7 zůstanou stejně stabilní jako vždy.
+**Odpověď:** VxKex NEXT nemění žádné systémové soubory. Jeho vliv na systém je minimální. Nepoužívají se žádné služby na pozadí, neinstalují se žádné globální háky a načítaná rozšíření prostředí a DLL knihovny mají minimální dopad a mohou být v případě potřeby zakázány. Můžete si být jisti, že vaše Windows zůstanou stejně stabilní jako vždy.
 
-**Otázka: Je potřeba nainstalovat konkrétní aktualizace?**
+**Otázka: Je nutné nainstalovat konkrétní aktualizace?**
 
-**Odpověď:** Uživatelé Windows 7 bez jakýchkoli aktualizací stále mohou tento systém používat, ale pro fungování mnoha programů je vyžadován Service Pack 1, KB2533623 (aktualizace DllDirectories) a KB2670838 (aktualizace platformy). Doporučuje se tyto aktualizace nainstalovat.
+**Odpověď:** Uživatelé Windows 7 bez jakýchkoli aktualizací mohou VxKex NEXT stále používat, ale pro fungování mnoha programů je vyžadován Service Pack 1, KB2533623 (aktualizace DllDirectories) a KB2670838 (aktualizace platformy). Doporučuje se tyto aktualizace nainstalovat.
 
 **Otázka: Pokud mám nainstalovány ESU (rozšířené bezpečnostní aktualizace), mohu používat VxKex NEXT?**
 
-**Odpověď:** Ano. S ESU nejsou žádné problémy.
+**Odpověď:** Ano, s ESU nejsou žádné problémy.
 
-**Otázka: Lze to používat s Windows 8 nebo 8.1?**
+**Otázka: Které verze Windows VxKex NEXT podporuje?**
 
-**Odpověď:** V současné době VxKex NEXT oficiálně podporuje pouze Windows 7. Pro některé programy však VxKex NEXT funguje i ve Windows 8 a 8.1. Plánujeme poskytnout oficiální podporu pro Windows 8 a 8.1.
+**Odpověď:** V současné době VxKex NEXT podporuje Windows 7, 8 a 8.1.
 
-**Otázka: Mohu VxKex nebo VxKex NEXT odinstalovat po upgradu na Windows 8/8.1/10/11?**
+**Otázka: Lze VxKex nebo VxKex NEXT odinstalovat po upgradu Windows?**
 
-**Odpověď:** Ano. Pokud je VxKex nainstalován, aktualizujte jej na VxKex NEXT a poté odinstalujte z Ovládacích panelů.
+**Odpověď:** Ano. Pokud je VxKex nainstalován, aktualizujte jej na VxKex NEXT a poté jej odinstalujte přes Ovládací panely.
 
 **Otázka: Jak VxKex NEXT funguje?**
 
-**Odpověď:** VxKex NEXT funguje tak, že načítá DLL do každého programu, kde je VxKex NEXT povolen. Toho je dosaženo pomocí klíče registru IFEO (Image File Execution Options).
-
-Konkrétně je nastavena hodnota „VerifierDlls“, aby odkazovala na DLL VxKex NEXT. Tato DLL je poté načtena do procesu.
-
-Rozšíření API je provedeno úpravou importní tabulky DLL programu, aby se místo importu z DLL Windows 8/8.1/10/11 importovaly DLL VxKex NEXT. Tyto DLL VxKex NEXT obsahují implementace funkcí Windows API, které byly zavedeny v novějších verzích Windows.
+**Odpověď:** VxKex NEXT načítá DLL do každého programu, pro který je zapnutý. Toho je dosaženo pomocí klíče registru IFEO (Image File Execution Options). Konkrétně hodnota „VerifierDlls“ ukazuje na DLL VxKex NEXT, která se poté načte do procesu. Rozšíření API se provádí úpravou importní tabulky DLL programu tak, aby místo importu z novějších DLL Windows používal DLL VxKex NEXT, které obsahují implementace funkcí API zavedených v nových verzích Windows.
 
 Příspěvky
 =========
@@ -117,5 +107,5 @@ Pokud chcete podpořit vývoj, zvažte možnost přispět.
 - Bitcoin (BTC/USDT) : 32XgoYcRVy3CTcga3DUBtua5QCToRtS78G
 - Cosmos (ATOM) : cosmos1fs2twk3du55gz3cllwm76cey5rrtnu2v5gcrmr
 - TRC10/TRC20 (TRX/USDT) : TEyobAt82WMJN2sXvRTKNrXPf3sVHE2KQT
-- Alipay 支付宝 / WeChat Pay 微信支付
+- Alipay 支付宝 / WeChat Pay 微信支付  
   ![Scan the QR codes and donate](/donation.png)
