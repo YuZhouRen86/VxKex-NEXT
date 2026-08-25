@@ -131,6 +131,166 @@ NTSTATUS NTAPI KexLdrFindDllInitRoutine(
 	return STATUS_SUCCESS;
 }
 
+#ifndef KEX_ARCH_X64
+typedef struct _IMAGE_NT_HEADERS_COMMON {
+	DWORD				Signature;
+	IMAGE_FILE_HEADER	FileHeader;
+} TYPEDEF_TYPE_NAME(IMAGE_NT_HEADERS_COMMON);
+
+NTSTATUS NTAPI KexLdrMiniGetProcedureAddress_Wow64(
+	IN	PVOID64	DllBase,
+	IN	PCSTR	ProcedureName,
+	OUT	PVOID64	*ProcedureAddress)
+{
+	NTSTATUS Status;
+	NT_WOW64_READ_VIRTUAL_MEMORY64 NtWow64ReadVirtualMemory64;
+	HANDLE ProcessHandle;
+	IMAGE_DOS_HEADER DosHeader;
+	ULONGLONG ReadAddr;
+	ULONGLONG BytesRead;
+	IMAGE_NT_HEADERS_COMMON NtCommon;
+	ULONG ExportDirRva = 0;
+	IMAGE_EXPORT_DIRECTORY ExportDir;
+	ULONG NameCount;
+	ULONG Index;
+	CHAR NameBuffer[256];
+	ULONG NameRva, FuncRva;
+	USHORT Ordinal;
+	ULONGLONG NameArrayAddr, OrdArrayAddr, FuncArrayAddr, StringAddr;
+
+	PVOID SystemDllBase = KexLdrGetSystemDllBase();
+	ANSI_STRING NtWow64ReadVirtualMemory64Name;
+
+	if (!DllBase || !ProcedureName || !ProcedureAddress) return STATUS_INVALID_PARAMETER;
+	*ProcedureAddress = 0;
+
+	RtlInitConstantAnsiString(&NtWow64ReadVirtualMemory64Name, "NtWow64ReadVirtualMemory64");
+	ASSERT(SystemDllBase != NULL);
+
+	Status = LdrGetProcedureAddress(
+		SystemDllBase,
+		&NtWow64ReadVirtualMemory64Name,
+		0,
+		(PPVOID)&NtWow64ReadVirtualMemory64);
+
+	ASSERT(NT_SUCCESS(Status));
+	ASSERT(NtWow64ReadVirtualMemory64 != NULL);
+
+	ProcessHandle = GetCurrentProcess();
+
+	Status = NtWow64ReadVirtualMemory64(
+		ProcessHandle,
+		(PVOID64)DllBase,
+		&DosHeader,
+		sizeof(DosHeader),
+		&BytesRead);
+	if (!NT_SUCCESS(Status) || BytesRead != sizeof(DosHeader) || DosHeader.e_magic != IMAGE_DOS_SIGNATURE)
+		return STATUS_INVALID_IMAGE_FORMAT;
+
+	ReadAddr = (ULONGLONG)DllBase + DosHeader.e_lfanew;
+	Status = NtWow64ReadVirtualMemory64(
+		ProcessHandle,
+		(PVOID64)ReadAddr,
+		&NtCommon,
+		sizeof(NtCommon),
+		&BytesRead);
+	if (!NT_SUCCESS(Status) || BytesRead != sizeof(NtCommon) ||
+		NtCommon.Signature != IMAGE_NT_SIGNATURE)
+		return STATUS_INVALID_IMAGE_FORMAT;
+
+	if (NtCommon.FileHeader.Machine == IMAGE_FILE_MACHINE_I386) {
+		IMAGE_NT_HEADERS32 NtHeaders32;
+		Status = NtWow64ReadVirtualMemory64(
+			ProcessHandle,
+			(PVOID64)ReadAddr,
+			&NtHeaders32,
+			sizeof(NtHeaders32),
+			&BytesRead);
+		if (!NT_SUCCESS(Status) || BytesRead != sizeof(NtHeaders32) ||
+			NtHeaders32.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+			return STATUS_INVALID_IMAGE_FORMAT;
+
+		ExportDirRva = NtHeaders32.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	} else if (NtCommon.FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) {
+		IMAGE_NT_HEADERS64 NtHeaders64;
+		Status = NtWow64ReadVirtualMemory64(
+			ProcessHandle,
+			(PVOID64)ReadAddr,
+			&NtHeaders64,
+			sizeof(NtHeaders64),
+			&BytesRead);
+		if (!NT_SUCCESS(Status) || BytesRead != sizeof(NtHeaders64) ||
+			NtHeaders64.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+			return STATUS_INVALID_IMAGE_FORMAT;
+
+		ExportDirRva = NtHeaders64.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	} else return STATUS_INVALID_IMAGE_FORMAT;
+
+	if (ExportDirRva == 0) return STATUS_ENTRYPOINT_NOT_FOUND;
+
+	ReadAddr = (ULONGLONG)DllBase + ExportDirRva;
+	Status = NtWow64ReadVirtualMemory64(
+		ProcessHandle,
+		(PVOID64)ReadAddr,
+		&ExportDir,
+		sizeof(ExportDir),
+		&BytesRead);
+	if (!NT_SUCCESS(Status) || BytesRead != sizeof(ExportDir)) return STATUS_INVALID_IMAGE_FORMAT;
+
+	NameCount = ExportDir.NumberOfNames;
+	for (Index = 0; Index < NameCount; ++Index) {
+		ULONGLONG ReadLen = 0;
+		NameArrayAddr = (ULONGLONG)DllBase + ExportDir.AddressOfNames + Index * sizeof(ULONG);
+
+		Status = NtWow64ReadVirtualMemory64(
+			ProcessHandle,
+			(PVOID64)NameArrayAddr,
+			&NameRva,
+			sizeof(NameRva),
+			&BytesRead);
+		if (!NT_SUCCESS(Status) || BytesRead != sizeof(NameRva)) continue;
+
+		OrdArrayAddr = (ULONGLONG)DllBase + ExportDir.AddressOfNameOrdinals + Index * sizeof(USHORT);
+		Status = NtWow64ReadVirtualMemory64(
+			ProcessHandle,
+			(PVOID64)OrdArrayAddr,
+			&Ordinal,
+			sizeof(Ordinal),
+			&BytesRead);
+		if (!NT_SUCCESS(Status) || BytesRead != sizeof(Ordinal)) continue;
+
+		StringAddr = (ULONGLONG)DllBase + NameRva;
+		while (ReadLen < sizeof(NameBuffer) - 1) {
+			CHAR Char;
+			Status = NtWow64ReadVirtualMemory64(
+				ProcessHandle,
+				(PVOID64)(StringAddr + ReadLen),
+				&Char,
+				1,
+				&BytesRead);
+			if (!NT_SUCCESS(Status) || BytesRead != 1)
+				break;
+			NameBuffer[ReadLen] = Char;
+			ReadLen++;
+			if (Char == '\0')
+				break;
+		}
+		NameBuffer[ReadLen] = '\0';
+
+		if (StringEqualA(ProcedureName, NameBuffer)) {
+			FuncArrayAddr = (ULONGLONG)DllBase + ExportDir.AddressOfFunctions + Ordinal * sizeof(ULONG);
+			Status = NtWow64ReadVirtualMemory64(ProcessHandle, (PVOID64)FuncArrayAddr, &FuncRva, sizeof(FuncRva), &BytesRead);
+			if (!NT_SUCCESS(Status) || BytesRead != sizeof(FuncRva)) return STATUS_UNSUCCESSFUL;
+
+			*ProcedureAddress = (PVOID64)((ULONGLONG)DllBase + FuncRva);
+			return STATUS_SUCCESS;
+		}
+	}
+
+	return STATUS_ENTRYPOINT_NOT_FOUND;
+}
+#endif
+
 //
 // Main reason for using this is to:
 //   - get proc address in DLLs mapped but not registered with loader
@@ -141,9 +301,9 @@ NTSTATUS NTAPI KexLdrFindDllInitRoutine(
 // as it is far slower than LdrGetProcedureAddress.
 //
 NTSTATUS NTAPI KexLdrMiniGetProcedureAddress(
-	IN	PVOID	DllBase,
+	IN	PVOID64	DllBase,
 	IN	PCSTR	ProcedureName,
-	OUT	PPVOID	ProcedureAddress)
+	OUT	PVOID64	*ProcedureAddress)
 {
 	PIMAGE_EXPORT_DIRECTORY ExportDirectory;
 	ULONG ExportDirectorySize;
@@ -171,6 +331,10 @@ NTSTATUS NTAPI KexLdrMiniGetProcedureAddress(
 	ASSERT (ExportDirectory != NULL);
 
 	if (!ExportDirectory) {
+#ifndef KEX_ARCH_X64
+		if (KexRtlOperatingSystemBitness() != KexRtlCurrentProcessBitness())
+			return KexLdrMiniGetProcedureAddress_Wow64(DllBase, ProcedureName, ProcedureAddress);
+#endif
 		return STATUS_INVALID_IMAGE_FORMAT;
 	}
 
@@ -219,7 +383,7 @@ KEXAPI PVOID NTAPI KexLdrGetSystemDllBase(
 // This function returns the address of 32-bit NTDLL for a
 // 32-bit process, and 64-bit NTDLL for a 64-bit process.
 //
-KEXAPI PVOID NTAPI KexLdrGetRemoteSystemDllBase(
+KEXAPI PVOID64 NTAPI KexLdrGetRemoteSystemDllBase(
 	IN	HANDLE	ProcessHandle)
 {
 	NTSTATUS Status;
@@ -328,12 +492,167 @@ KEXAPI PVOID NTAPI KexLdrGetRemoteSystemDllBase(
 	return NULL;
 }
 
+#ifndef KEX_ARCH_X64
+typedef struct _LDR64 {
+	ULONG			Length;
+	BOOLEAN			Initialized;
+	ULONGLONG		SsHandle;
+	LIST_ENTRY64	InLoadOrderModuleList;
+	LIST_ENTRY64	InMemoryOrderModuleList;
+	LIST_ENTRY64	InInitializationOrderModuleList;
+	ULONGLONG		EntryInProgress;
+} TYPEDEF_TYPE_NAME(LDR64);
+
+typedef struct _UNICODE_STRING64 {
+	USHORT	Length;
+	USHORT	MaximumLength;
+	PVOID64	Buffer;
+} TYPEDEF_TYPE_NAME(UNICODE_STRING64);
+
+typedef struct _LDR_DATA_TABLE_ENTRY64 {
+	LIST_ENTRY64		InLoadOrderLinks;
+	LIST_ENTRY64		InMemoryOrderLinks;
+	LIST_ENTRY64		InInitializationOrderLinks;
+	PVOID64				DllBase;
+	PVOID64				EntryPoint;
+	ULONG				SizeOfImage;
+	UNICODE_STRING64	FullDllName;
+	UNICODE_STRING64	BaseDllName;
+	ULONG				Flags;
+	USHORT				LoadCount;
+	USHORT				TlsIndex;
+} TYPEDEF_TYPE_NAME(LDR_DATA_TABLE_ENTRY64);
+
+PVOID64 GetNativeNtdllAddress_Wow64(
+	VOID)
+{
+	HANDLE ProcessHandle;
+	NT_WOW64_QUERY_INFORMATION_PROCESS64 NtWow64QueryInformationProcess64;
+	NT_WOW64_READ_VIRTUAL_MEMORY64 NtWow64ReadVirtualMemory64;
+	ULONGLONG Peb64;
+	CONST ULONG InfoSize = 48;
+	BYTE BufferArray[48];
+	ULONG ReturnLength = 0;
+	NTSTATUS Status;
+	PVOID64 LdrAddress;
+	ULONGLONG BytesRead = 0;
+	LDR64 LdrData;
+	ULONGLONG HeadLink;
+	ULONGLONG CurrentEntry;
+	LDR_DATA_TABLE_ENTRY64 EntryData;
+	PWSTR FullPath = NULL;
+	PVOID64 Result = NULL;
+	PVOID SystemDllBase = KexLdrGetSystemDllBase();
+	ANSI_STRING NtWow64QueryInformationProcess64Name;
+	ANSI_STRING NtWow64ReadVirtualMemory64Name;
+
+	ProcessHandle = GetCurrentProcess();
+	RtlZeroMemory(BufferArray, sizeof(BufferArray));
+	RtlZeroMemory(&LdrData, sizeof(LdrData));
+	RtlZeroMemory(&EntryData, sizeof(EntryData));
+
+	if (!SystemDllBase) {
+		return Result;
+	}
+
+	RtlInitConstantAnsiString(&NtWow64QueryInformationProcess64Name, "NtWow64QueryInformationProcess64");
+	RtlInitConstantAnsiString(&NtWow64ReadVirtualMemory64Name, "NtWow64ReadVirtualMemory64");
+	ASSERT (SystemDllBase != NULL);
+
+	Status = LdrGetProcedureAddress(
+		SystemDllBase,
+		&NtWow64QueryInformationProcess64Name,
+		0,
+		(PPVOID) &NtWow64QueryInformationProcess64);
+
+	ASSERT (NT_SUCCESS(Status));
+	ASSERT (NtWow64QueryInformationProcess64 != NULL);
+
+	Status = LdrGetProcedureAddress(
+		SystemDllBase,
+		&NtWow64ReadVirtualMemory64Name,
+		0,
+		(PPVOID) &NtWow64ReadVirtualMemory64);
+
+	ASSERT (NT_SUCCESS(Status));
+	ASSERT (NtWow64ReadVirtualMemory64 != NULL);
+
+	if (!NtWow64QueryInformationProcess64 || !NtWow64ReadVirtualMemory64) return Result;
+
+	Status = NtWow64QueryInformationProcess64(ProcessHandle, 0, BufferArray, InfoSize, &ReturnLength);
+	if (NT_SUCCESS(Status) && ReturnLength >= 16) {
+		Peb64 = *(ULONGLONG*)(BufferArray + 8);
+	} else return Result;
+
+	BytesRead = 0;
+	Status = NtWow64ReadVirtualMemory64(ProcessHandle, (PVOID64)(Peb64 + 0x18), &LdrAddress, sizeof(LdrAddress), &BytesRead);
+	if (Status != 0 || BytesRead != sizeof(LdrAddress)) return Result;
+
+	BytesRead = 0;
+	Status = NtWow64ReadVirtualMemory64(ProcessHandle, LdrAddress, (PVOID)&LdrData, sizeof(LdrData), &BytesRead);
+	if (Status != 0 || BytesRead != sizeof(LdrData)) return Result;
+
+	HeadLink = LdrData.InLoadOrderModuleList.Flink;
+	CurrentEntry = HeadLink;
+
+	while (CurrentEntry != 0) {
+		SIZE_T FullPathLength = 0;
+		BytesRead = 0;
+		Status = NtWow64ReadVirtualMemory64(ProcessHandle, (PVOID64)CurrentEntry, &EntryData, sizeof(EntryData), &BytesRead);
+		if (Status != 0 || BytesRead != sizeof(EntryData)) return Result;
+
+		if (EntryData.InLoadOrderLinks.Flink == HeadLink) {
+			break;
+		}
+
+		FullPath = NULL;
+		if (EntryData.FullDllName.Buffer != 0 && EntryData.FullDllName.Length != 0) {
+			ULONG FullDllNameLength = EntryData.FullDllName.Length;
+			FullPathLength = FullDllNameLength / sizeof(WCHAR);
+			FullPath = SafeAlloc(WCHAR, FullPathLength + 1);
+			if (FullPath != NULL) {
+				Status = NtWow64ReadVirtualMemory64(
+					ProcessHandle,
+					EntryData.FullDllName.Buffer,
+					FullPath,
+					FullDllNameLength,
+					&BytesRead);
+				if (NT_SUCCESS(Status) && BytesRead == FullDllNameLength) {
+					FullPath[FullPathLength] = L'\0';
+				}
+				else SafeFree(FullPath);
+			}
+		}
+
+		if (FullPath != NULL) {
+			BOOL IsValidNtdllPath = FALSE;
+			if (wcslen(FullPath) > 0) {
+				PCWSTR Suffix = L"\\system32\\ntdll.dll";
+				SIZE_T SuffixLength = wcslen(Suffix);
+				if (FullPathLength >= SuffixLength && StringEqualI(FullPath + FullPathLength - SuffixLength, Suffix)) {
+					IsValidNtdllPath = TRUE;
+				}
+			}
+			SafeFree(FullPath);
+			if (IsValidNtdllPath) {
+				Result = (PVOID64)EntryData.DllBase;
+				break;
+			}
+		}
+
+		CurrentEntry = EntryData.InLoadOrderLinks.Flink;
+	}
+
+	return Result;
+}
+#endif
+
 //
 // Get the base address of the native NTDLL. In other words:
 // if this is a 32-bit process running on a 64-bit operating
 // system, get the 64-bit NTDLL, and so on.
 //
-KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
+KEXAPI PVOID64 NTAPI KexLdrGetNativeSystemDllBase(
 	VOID)
 {
 	NTSTATUS Status;
@@ -356,12 +675,15 @@ KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
 	if (KexRtlCurrentProcessBitness() == KexRtlOperatingSystemBitness()) {
 		Status = LdrGetDllHandle(NULL, NULL, &NtdllBaseName, (PPVOID) &NtdllBaseAddress);
 		ASSERT (NT_SUCCESS(Status));
-		return (PVOID) NtdllBaseAddress;
+		return (PVOID64) NtdllBaseAddress;
 	}
 
 	ASSUME (KexRtlCurrentProcessBitness() == 32);
 	ASSUME (KexRtlOperatingSystemBitness() == 64);
-
+#ifndef KEX_ARCH_X64
+	return GetNativeNtdllAddress_Wow64();
+#endif
+	/*
 	//
 	// This is a 32-bit process running on a 64-bit operating system. We must
 	// search for the 64-bit NTDLL as described.
@@ -420,14 +742,17 @@ KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
 		}
 
 		NtdllBaseAddress = (ULONG_PTR) BasicInformation.AllocationBase;
-		return (PVOID) NtdllBaseAddress;
-	}
+		return (PVOID64) NtdllBaseAddress;
+	}*/
 
 	//
 	// Could not find.
 	//
 
 	ASSERT (FALSE);
+	UNREFERENCED_PARAMETER(NtdllPathFragment);
+	UNREFERENCED_PARAMETER(MappedFileNameInformation);
+	UNREFERENCED_PARAMETER(MappedFileNameLength);
 	return NULL;
 }
 

@@ -268,6 +268,8 @@ NTSTATUS KexRtlInitializeKsec(
 // syscall.c
 //
 
+EXTERN DWORD SSN_NtOpenKey;
+
 BOOL InitializeSsnForAllSyscallFunctions(
 	VOID);
 

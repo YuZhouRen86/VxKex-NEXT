@@ -146,7 +146,7 @@ VOID KexSetupWriteUninstallEntry(
 		StringCchPrintf(UninstallString, ARRAYSIZE(UninstallString), L"%s\\KexSetup.exe /UNINSTALL", KexDir);
 
 		KexSetupRegWriteString(KeyHandle, L"DisplayIcon",		DisplayIcon);
-		KexSetupRegWriteString(KeyHandle, L"DisplayName",		L"VxKex NEXT API Extensions for Windows® 7");
+		KexSetupRegWriteString(KeyHandle, L"DisplayName",		L"VxKex NEXT API Extensions for Windows®");
 		KexSetupRegWriteString(KeyHandle, L"DisplayVersion",	_L(KEX_VERSION_STR));
 		KexSetupRegWriteString(KeyHandle, L"Publisher",			L"YuZhouRen");
 		KexSetupRegWriteString(KeyHandle, L"InstallDate",		FormattedDate);

@@ -275,7 +275,7 @@ typedef struct _KEX_PROCESS_DATA {
 	VXLHANDLE				LogHandle;
 	PVOID					KexDllBase;
 	PVOID					SystemDllBase;				// NTDLL base address
-	PVOID					NativeSystemDllBase;
+	PVOID64					NativeSystemDllBase;
 	PVOID					BaseDllBase;				// Kernel32 base address
 	HANDLE					BaseNamedObjects;			// object directory handle
 	HANDLE					UntrustedNamedObjects;
@@ -405,6 +405,14 @@ KEXAPI NTSTATUS NTAPI KexRtlShiftUnicodeString(
 KEXAPI ULONG NTAPI KexRtlRemoteProcessBitness(
 	IN	HANDLE	ProcessHandle);
 
+#ifndef KEX_ARCH_X64
+KEXAPI NTSTATUS NTAPI KexRtlWow64WriteProcessMemory64(
+	IN	HANDLE		ProcessHandle,
+	IN	ULONGLONG	Destination,
+	IN	PVOID		Source,
+	IN	SIZE_T		Cb);
+#endif
+
 KEXAPI NTSTATUS NTAPI KexRtlWriteProcessMemory(
 	IN	HANDLE		ProcessHandle,
 	IN	ULONG_PTR	Destination,
@@ -514,16 +522,16 @@ KEXAPI LONGLONG NTAPI KexRtlGetSystemTimePrecise(
 KEXAPI PVOID NTAPI KexLdrGetSystemDllBase(
 	VOID);
 
-KEXAPI PVOID NTAPI KexLdrGetRemoteSystemDllBase(
+KEXAPI PVOID64 NTAPI KexLdrGetRemoteSystemDllBase(
 	IN	HANDLE	ProcessHandle);
 
-KEXAPI PVOID NTAPI KexLdrGetNativeSystemDllBase(
+KEXAPI PVOID64 NTAPI KexLdrGetNativeSystemDllBase(
 	VOID);
 
 KEXAPI NTSTATUS NTAPI KexLdrMiniGetProcedureAddress(
-	IN	PVOID	DllBase,
+	IN	PVOID64	DllBase,
 	IN	PCSTR	ProcedureName,
-	OUT	PPVOID	ProcedureAddress);
+	OUT	PVOID64	*ProcedureAddress);
 
 KEXAPI NTSTATUS NTAPI KexLdrFindDllInitRoutine(
 	IN	PVOID	DllBase,

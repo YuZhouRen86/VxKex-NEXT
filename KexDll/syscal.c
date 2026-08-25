@@ -20,6 +20,8 @@ DWORD SSN_NtQueryInformationProcess;
 DWORD SSN_NtAssignProcessToJobObject;
 DWORD SSN_NtMapViewOfSection;
 
+DWORD SSN_NtOpenKey;
+
 // Get SSN from the original ntdll.dll file on disk.
 // Uses only ntdll exported APIs. Immune to in-memory hooks.
 BOOL GetSsnByName(
@@ -163,7 +165,9 @@ BOOL InitializeSsnForAllSyscallFunctions(VOID) {
 		{"NtCreateSection",				&SSN_NtCreateSection},
 		{"NtQueryInformationProcess",	&SSN_NtQueryInformationProcess},
 		{"NtAssignProcessToJobObject",	&SSN_NtAssignProcessToJobObject},
-		{"NtMapViewOfSection",			&SSN_NtMapViewOfSection}
+		{"NtMapViewOfSection",			&SSN_NtMapViewOfSection},
+
+		{"NtOpenKey",					&SSN_NtOpenKey}
 	};
 
 	if (SsnInitialized) return TRUE;
