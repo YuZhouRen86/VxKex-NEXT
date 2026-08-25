@@ -1,7 +1,7 @@
 介紹
 ============
 
-VxKex NEXT 是一套適用於 Windows 7 的 API 擴展，可讓一些 Windows 8、8.1 和 10 獨佔應用程式在 Windows 7 上執行。
+VxKex NEXT 是一套適用於 Windows 的 API 擴展，可讓一些新版 Windows 獨佔應用程式在舊版 Windows 上執行。
 
 如需下載和安裝，請參閱發行版頁面（[GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)）。
 
@@ -17,10 +17,7 @@ VxKex NEXT 是一套適用於 Windows 7 的 API 擴展，可讓一些 Windows 8�
   - **MacType → 2025.6.9+**  
     舊版 MacType 可能導致所有程式在啟用 VxKex NEXT 後無法啟動。
 
-安裝後，使用很簡單。以下是啟用 VxKex NEXT 的方法：
-
-1. 右鍵點一下程式，開啟屬性對話框，選擇「VxKex」選項卡。然後，選中「為此程式啟用 VxKex NEXT」複選框，並嘗試執行程式。
-2. 從開始功能表中找到「VxKex NEXT Global Settings」並開啟，點擊「添加」按鈕，選擇程式，點擊「開啟」按鈕，並嘗試執行程式。
+安裝後，使用很簡單。只需右鍵點一下程式，開啟屬性對話框，選擇「VxKex」選項卡。然後，選中「為此程式啟用 VxKex NEXT」複選框，並嘗試執行程式。
 
 ![VxKex configuration GUI](/example-screenshot.png)
 
@@ -82,7 +79,7 @@ VxKex NEXT 是一套適用於 Windows 7 的 API 擴展，可讓一些 Windows 8�
 
 **問：VxKex NEXT 會修改系統檔案嗎？它會使我的系統不穩定嗎？**
 
-**答**：VxKex NEXT 不會修改任何系統檔案。它對整個系統的影響極小。不使用後臺服務，不安裝全局鉤子，加載的 shell 擴展和 DLL 影響也很小，可以隨時停用。您可以放心，您的 Windows 7 將一如既往地保持穩定。
+**答**：VxKex NEXT 不會修改任何系統檔案。它對整個系統的影響極小。不使用後臺服務，不安裝全局鉤子，加載的 shell 擴展和 DLL 影響也很小，可以隨時停用。您可以放心，您的 Windows 將一如既往地保持穩定。
 
 **問：我需要安裝特定的更新嗎？**
 
@@ -92,9 +89,9 @@ VxKex NEXT 是一套適用於 Windows 7 的 API 擴展，可讓一些 Windows 8�
 
 **答**：是的，ESU 沒有問題。
 
-**問：可以在 Windows 8 或 8.1 中使用嗎？**  
+**問：VxKex NEXT 支援哪些版本的 Windows？**  
 
-**答**：目前，VxKex NEXT 僅為 Windows 7 提供官方支援。但是，對於某些程式，VxKex NEXT 在 Windows 8 和 8.1 上起作用。我們計劃為 Windows 8 和 8.1 提供官方支援。
+**答**：目前，VxKex NEXT 支援 Windows 7、8 和 8.1。
 
 **問：升級到 Windows 8/8.1/10/11 後可以刪除 VxKex 或 VxKex NEXT 嗎？**
 
@@ -106,7 +103,7 @@ VxKex NEXT 是一套適用於 Windows 7 的 API 擴展，可讓一些 Windows 8�
 
 具體來說，「VerifierDlls」值被設定為指向 VxKex NEXT DLL。該 DLL 會加載到處理程序中。
 
-API 擴展是通過編輯程式的動態連結庫導入表來實現的，這樣程式就不會從 Windows 8/8.1/10/11 動態連結庫中導入，而是導入 VxKex NEXT 動態連結庫。這些 VxKex NEXT 動態連結庫包含較新版本 Windows 中引入的 Windows API 函式的實現。
+API 擴展是通過編輯程式的動態連結庫導入表來實現的，這樣程式就不會從新版 Windows 的動態連結庫中導入，而是導入 VxKex NEXT 動態連結庫。這些 VxKex NEXT 動態連結庫包含新版 Windows 中引入的 Windows API 函式的實現。
 
 捐贈
 =========
