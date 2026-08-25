@@ -25,28 +25,28 @@ EXPORTS
 	;;BluetoothEnumerateInstalledServicesEx
 	;;BluetoothFindBrowseGroupClose
 	;;BluetoothFindClassIdClose
-	;;BluetoothFindDeviceClose
+	BluetoothFindDeviceClose = bthprops.cpl.BluetoothFindDeviceClose
 	;;BluetoothFindFirstBrowseGroup
 	;;BluetoothFindFirstClassId
-	;;BluetoothFindFirstDevice
+	BluetoothFindFirstDevice = bthprops.cpl.BluetoothFindFirstDevice
 	;;BluetoothFindFirstProfileDescriptor
 	;;BluetoothFindFirstProtocolDescriptorStack
 	;;BluetoothFindFirstProtocolEntry
-	;;BluetoothFindFirstRadio
+	BluetoothFindFirstRadio = bthprops.cpl.BluetoothFindFirstRadio
 	;;BluetoothFindFirstService
 	;;BluetoothFindFirstServiceEx
 	;;BluetoothFindNextBrowseGroup
 	;;BluetoothFindNextClassId
-	;;BluetoothFindNextDevice
+	BluetoothFindNextDevice = bthprops.cpl.BluetoothFindNextDevice
 	;;BluetoothFindNextProfileDescriptor
 	;;BluetoothFindNextProtocolDescriptorStack
 	;;BluetoothFindNextProtocolEntry
-	;;BluetoothFindNextRadio
+	BluetoothFindNextRadio = bthprops.cpl.BluetoothFindNextRadio
 	;;BluetoothFindNextService
 	;;BluetoothFindProfileDescriptorClose
 	;;BluetoothFindProtocolDescriptorStackClose
 	;;BluetoothFindProtocolEntryClose
-	;;BluetoothFindRadioClose
+	BluetoothFindRadioClose = bthprops.cpl.BluetoothFindRadioClose
 	;;BluetoothFindServiceClose
 	;;BluetoothGetDeviceInfo
 	;;BluetoothGetRadioInfo
