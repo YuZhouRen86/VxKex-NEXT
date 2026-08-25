@@ -38,8 +38,8 @@ VxKex NEXT 是首个支持本地化的 Windows 7 兼容层。如今，VxKex NEXT
 Introduction  介绍
 ============
 
-VxKex NEXT is a set of API extensions for Windows 7 that allow some Windows 8, 8.1 and 10-exclusive applications to run on Windows 7.  
-VxKex NEXT 是一套适用于 Windows 7 的 API 扩展，可让一些 Windows 8、8.1 和 10 独占应用程序在 Windows 7 上运行。
+VxKex NEXT is a set of API extensions for Windows that allows some newer Windows-exclusive applications to run on older Windows versions.  
+VxKex NEXT 是一套适用于 Windows 的 API 扩展，可让一些新版 Windows 独占应用程序在旧版 Windows 上运行。
 
 To download and install, see the releases page ([GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)).  
 如需下载和安装，请参阅发行版页面（[GitHub](https://github.com/YuZhouRen86/VxKex-NEXT/releases) | [Gitee](https://gitee.com/YuZhouRen86/VxKex-NEXT/releases)）。
@@ -59,15 +59,9 @@ To download and install, see the releases page ([GitHub](https://github.com/YuZh
     An old version of MacType might cause all programs to fail to start after enabling VxKex NEXT.  
     旧版 MacType 可能导致所有程序在启用 VxKex NEXT 后无法启动。
 
-After installation, usage is easy. Here are the ways to enable VxKex NEXT:
+After installation, usage is easy. Just right click on a program, open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program.
 
-1. Just right click on a program, open the Properties dialog, and select "VxKex" tab. Then, check the check box which says "Enable VxKex NEXT for this program", and try to run the program.
-2. Find "VxKex NEXT Global Settings" from start menu and open it, click "Add" button, select a program, click "Open" button, and try to run the program.
-
-安装后，使用很简单。以下是启用 VxKex NEXT 的方法：
-
-1. 右键单击程序，打开属性对话框，选择“VxKex”选项卡。然后，选中“为此程序启用 VxKex NEXT”复选框，并尝试运行程序。
-2. 从开始菜单中找到“VxKex NEXT Global Settings”并打开，点击“添加”按钮，选择程序，点击“打开”按钮，并尝试运行程序。
+安装后，使用很简单。只需右键单击程序，打开属性对话框，选择“VxKex”选项卡。然后，选中“为此程序启用 VxKex NEXT”复选框，并尝试运行程序。
 
 ![VxKex configuration GUI](/example-screenshot.png)
 
@@ -136,8 +130,8 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **Q: Does VxKex NEXT modify system files? Will it make my system unstable?**  
 **问：VxKex NEXT 会修改系统文件吗？它会使我的系统不稳定吗？**
 
-**A**: VxKex NEXT does not modify any system files. Its effect on the whole system is extremely minimal. No background services are used, no global hooks are installed, and the shell extensions and DLLs that are loaded have minimal impact and can be disabled if needed. You can rest assured that your Windows 7 will remain as stable as it always is.  
-**答**：VxKex NEXT 不会修改任何系统文件。它对整个系统的影响极小。不使用后台服务，不安装全局钩子，加载的 shell 扩展和 DLL 影响也很小，可以随时禁用。您可以放心，您的 Windows 7 将一如既往地保持稳定。
+**A**: VxKex NEXT does not modify any system files. Its effect on the whole system is extremely minimal. No background services are used, no global hooks are installed, and the shell extensions and DLLs that are loaded have minimal impact and can be disabled if needed. You can rest assured that your Windows will remain as stable as it always is.  
+**答**：VxKex NEXT 不会修改任何系统文件。它对整个系统的影响极小。不使用后台服务，不安装全局钩子，加载的 shell 扩展和 DLL 影响也很小，可以随时禁用。您可以放心，您的 Windows 将一如既往地保持稳定。
 
 **Q: Do I need to have specific updates installed?**  
 **问：我需要安装特定的更新吗？**
@@ -151,14 +145,14 @@ The majority of Qt6 applications will work, and many Electron applications will 
 **A**: Yes. There is no problem with ESUs.  
 **答**：是的，ESU 没有问题。
 
-**Q: Can I use this with Windows 8 or 8.1?**  
-**问：可以在 Windows 8 或 8.1 中使用吗？**  
+**Q: Which versions of Windows does VxKex NEXT support?**  
+**问：VxKex NEXT 支持哪些版本的 Windows？**  
 
-**A**: Currently, VxKex NEXT provides experimental support for Windows 8 and 8.1. For programs such as Chromium and Qt Creator, VxKex NEXT works on Windows 8 and 8.1. We plan to provide official support for Windows 8 and 8.1.  
-**答**：目前，VxKex NEXT 为 Windows 8 和 8.1 提供实验性的支持。对于 Chromium、Qt Creator 等程序，VxKex NEXT 在 Windows 8 和 8.1 上起作用。我们计划为 Windows 8 和 8.1 提供正式支持。
+**A**: Currently, VxKex NEXT supports Windows 7, 8, and 8.1.  
+**答**：目前，VxKex NEXT 支持 Windows 7、8 和 8.1。
 
-**Q: Can I remove VxKex or VxKex NEXT after upgrading to Windows 8/8.1/10/11?**  
-**问：升级到 Windows 8/8.1/10/11 后可以删除 VxKex 或 VxKex NEXT 吗？**
+**Q: Can I remove VxKex or VxKex NEXT after upgrading Windows?**  
+**问：升级 Windows 后可以删除 VxKex 或 VxKex NEXT 吗？**
 
 **A**: Yes. If VxKex is installed, update it to VxKex NEXT, then uninstall it from control panel.  
 **答**：可以。如果 VxKex 已安装，请将其更新为 VxKex NEXT，然后从控制面板卸载它。
@@ -172,8 +166,8 @@ The majority of Qt6 applications will work, and many Electron applications will 
 Specifically, the "VerifierDlls" value is set to point to a VxKex NEXT DLL. This DLL then loads into the process.  
 具体来说，“VerifierDlls”值被设置为指向 VxKex NEXT DLL。该 DLL 会加载到进程中。
 
-API extension is accomplished by editing the program's DLL import table so that instead of importing from Windows 8/8.1/10/11 DLLs, it imports VxKex NEXT DLLs instead. These VxKex NEXT DLLs contain implementations of Windows API functions which were introduced in newer versions of Windows.  
-API 扩展是通过编辑程序的动态链接库导入表来实现的，这样程序就不会从 Windows 8/8.1/10/11 动态链接库中导入，而是导入 VxKex NEXT 动态链接库。这些 VxKex NEXT 动态链接库包含较新版本 Windows 中引入的 Windows API 函数的实现。
+API extension is accomplished by editing the program's DLL import table so that instead of importing from newer Windows DLLs, it imports VxKex NEXT DLLs instead. These VxKex NEXT DLLs contain implementations of Windows API functions which were introduced in newer versions of Windows.  
+API 扩展是通过编辑程序的动态链接库导入表来实现的，这样程序就不会从新版 Windows 的动态链接库中导入，而是导入 VxKex NEXT 动态链接库。这些 VxKex NEXT 动态链接库包含新版 Windows 中引入的 Windows API 函数的实现。
 
 Donations  捐赠
 =========
