@@ -93,7 +93,7 @@ VxKex NEXT 是一套適用於 Windows 的 API 擴展，可讓一些新版 Window
 
 **答**：目前，VxKex NEXT 支援 Windows 7、8 和 8.1。
 
-**問：升級到 Windows 8/8.1/10/11 後可以刪除 VxKex 或 VxKex NEXT 嗎？**
+**問：升級 Windows 後可以刪除 VxKex 或 VxKex NEXT 嗎？**
 
 **答**：可以。如果 VxKex 已安裝，請將其更新為 VxKex NEXT，然後從控制台解除安裝它。
 
