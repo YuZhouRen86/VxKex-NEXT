@@ -1094,7 +1094,7 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 			ULONGLONG RemoteProcessParametersFlags;
 			ULONG ProcessParametersFlags;
 
-			RemoteProcessParametersFlags = RemotePeb + FIELD_OFFSET(PEB, ProcessParameters);
+			RemoteProcessParametersFlags = RemotePeb + 0x20;
 
 			Status = NtWow64ReadVirtualMemory64(
 				*ProcessHandle,
@@ -1262,7 +1262,11 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 			// builds).
 			//
 
-			RemoteProcessParametersFlags = RemotePeb + FIELD_OFFSET(PEB, ProcessParameters);
+			if (ChildProcessBitness == 64) {
+				RemoteProcessParametersFlags = RemotePeb + 0x20;
+			} else {
+				RemoteProcessParametersFlags = RemotePeb + 0x10;
+			}
 
 			Status = NtReadVirtualMemory(
 				*ProcessHandle,
