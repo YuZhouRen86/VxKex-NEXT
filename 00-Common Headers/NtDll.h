@@ -1885,6 +1885,7 @@ typedef struct _KUSER_SHARED_DATA {
 	ULONG								Wow64SharedInformation[0x10];
 	
 	USHORT								UserModeGlobalLogger[16];
+	ULONG								ImageFileExecutionOptions;
 	ULONG								LangGenerationCount;
 	ULONGLONG							Reserved5;
 	ULONGLONG VOLATILE					InterruptTimeBias;

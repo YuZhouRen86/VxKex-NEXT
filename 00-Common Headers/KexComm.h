@@ -294,7 +294,9 @@
 // VA_TO_RVA does the opposite.
 //
 #  define RVA_TO_VA(base, rva) ((PVOID) (((PBYTE) (base)) + (rva)))
+#  define RVA_TO_VA_64(base, rva) ((PVOID64) (((ULONGLONG) (base)) + (rva)))
 #  define VA_TO_RVA(base, va) ((ULONG_PTR) (((PBYTE) (va)) - ((PBYTE) (base))))
+#  define VA_TO_RVA_64(base, va) ((ULONGLONG) (((ULONGLONG) (va)) - ((ULONGLONG) (base))))
 
 //
 // Convert a boolean to a string which can be displayed to the user.

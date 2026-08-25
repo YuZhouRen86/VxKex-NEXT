@@ -19,7 +19,8 @@ do { \
 #define GENERATE_SYSCALL_WIN7(SyscallName, SyscallNumber32, SyscallNumber64, EcxValue, Retn, ...) \
 KEXNTSYSCALLAPI NTSTATUS NTAPI KxUser##SyscallName##_Native32(__VA_ARGS__) { asm { \
 	asm mov eax, SyscallNumber32 \
-	asm call [edx] /* Native 32 bit call */ \
+	asm lea edx, [esp+4] \
+	asm int 0x2E \
 	asm ret Retn \
 }} \
 KEXNTSYSCALLAPI NTSTATUS NTAPI KxUser##SyscallName##_Wow64(__VA_ARGS__) { asm { \

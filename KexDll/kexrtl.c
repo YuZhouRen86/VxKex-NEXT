@@ -639,6 +639,262 @@ KEXAPI ULONG NTAPI KexRtlRemoteProcessBitness(
 	}
 }
 
+#ifndef KEX_ARCH_X64
+
+#define EMIT(a) __asm __emit (a)
+
+#define X64_Start_with_CS(_cs) \
+    { \
+    EMIT(0x6A) EMIT(_cs)                         /*  push   _cs             */ \
+    EMIT(0xE8) EMIT(0) EMIT(0) EMIT(0) EMIT(0)   /*  call   $+5             */ \
+    EMIT(0x83) EMIT(4) EMIT(0x24) EMIT(5)        /*  add    dword [esp], 5  */ \
+    EMIT(0xCB)                                   /*  retf                   */ \
+    }
+
+#define X64_End_with_CS(_cs) \
+    { \
+    EMIT(0xE8) EMIT(0) EMIT(0) EMIT(0) EMIT(0)                                 /*  call   $+5                   */ \
+    EMIT(0xC7) EMIT(0x44) EMIT(0x24) EMIT(4) EMIT(_cs) EMIT(0) EMIT(0) EMIT(0) /*  mov    dword [rsp + 4], _cs  */ \
+    EMIT(0x83) EMIT(4) EMIT(0x24) EMIT(0xD)                                    /*  add    dword [rsp], 0xD      */ \
+    EMIT(0xCB)                                                                 /*  retf                         */ \
+    }
+
+#define X64_Start() X64_Start_with_CS(0x33)
+#define X64_End() X64_End_with_CS(0x23)
+
+#define _RAX  0
+#define _RCX  1
+#define _RDX  2
+#define _RBX  3
+#define _RSP  4
+#define _RBP  5
+#define _RSI  6
+#define _RDI  7
+#define _R8   8
+#define _R9   9
+#define _R10 10
+#define _R11 11
+#define _R12 12
+#define _R13 13
+#define _R14 14
+#define _R15 15
+
+#define X64_Push(r) EMIT(0x48 | ((r) >> 3)) EMIT(0x50 | ((r) & 7))
+#define X64_Pop(r) EMIT(0x48 | ((r) >> 3)) EMIT(0x58 | ((r) & 7))
+
+#define REX_W EMIT(0x48) __asm
+
+//to fool M$ inline asm compiler I'm using 2 DWORDs instead of DWORD64
+//use of DWORD64 will generate wrong 'pop word ptr[]' and it will break stack
+typedef union _reg64 {
+	DWORD64 v;
+	DWORD dw[2];
+} TYPEDEF_TYPE_NAME(reg64);
+
+#define PTR_TO_DWORD64(p) ((DWORD64)(ULONG_PTR)(p))
+
+#pragma warning(push)
+#pragma warning(disable : 4409)
+DWORD64 __cdecl X64Call(
+	DWORD64	func,
+	int		argC, ...)
+{
+	// All variable declarations must appear at the beginning of the block
+	va_list args;
+	reg64 _rcx;
+	reg64 _rdx;
+	reg64 _r8;
+	reg64 _r9;
+	reg64 _rax;
+	reg64 restArgs;
+	reg64 _argC;
+	DWORD back_esp;
+	WORD back_fs;
+
+	// Process variable arguments
+	va_start(args, argC);
+
+	// Load first four arguments (x64 calling convention: rcx, rdx, r8, r9)
+	_rcx.v = (argC > 0) ? (argC--, va_arg(args, DWORD64)) : 0;
+	_rdx.v = (argC > 0) ? (argC--, va_arg(args, DWORD64)) : 0;
+	_r8.v = (argC > 0) ? (argC--, va_arg(args, DWORD64)) : 0;
+	_r9.v = (argC > 0) ? (argC--, va_arg(args, DWORD64)) : 0;
+
+	_rax.v = 0;   // will hold return value
+
+				  // Get address of remaining arguments (to be pushed on stack)
+	restArgs.v = PTR_TO_DWORD64(&va_arg(args, DWORD64));
+
+	// Store number of remaining arguments for stack cleanup
+	_argC.v = (DWORD64)argC;
+
+	back_esp = 0;
+	back_fs = 0;
+
+	// Inline assembly (MSVC extension)
+	__asm
+	{
+		;// reset FS segment, to properly handle RFG
+		mov    back_fs, fs
+			mov    eax, 0x2B
+			mov    fs, ax
+
+			;// keep original esp in back_esp variable
+		mov    back_esp, esp
+
+			;// align esp to 0x10 (required for SSE instructions)
+		and    esp, 0xFFFFFFF0
+
+			X64_Start();
+
+		;// The following code is compiled as x86 inline asm but executed as x64 code.
+		;// Fill first four arguments into registers
+		REX_W mov    ecx, _rcx.dw[0];// mov rcx, qword ptr [_rcx]
+		REX_W mov    edx, _rdx.dw[0];// mov rdx, qword ptr [_rdx]
+		push   _r8.v;// push qword ptr [_r8]
+		X64_Pop(_R8); ;// pop  r8
+		push   _r9.v;// push qword ptr [_r9]
+		X64_Pop(_R9); ;// pop  r9
+
+		REX_W mov    eax, _argC.dw[0];// mov rax, qword ptr [_argC]
+
+		;// Adjust stack so that number of arguments above 4 is even (for alignment)
+		test   al, 1
+			jnz    _no_adjust
+			sub    esp, 8;// sub rsp, 8
+	_no_adjust:
+
+		push   edi;// push rdi
+		REX_W mov    edi, restArgs.dw[0];// mov rdi, qword ptr [restArgs]
+
+		;// Push remaining arguments onto the stack (right-to-left)
+		REX_W test   eax, eax
+			jz     _ls_e
+			REX_W lea    edi, dword ptr[edi + 8 * eax - 8];// lea rdi, [rdi + rax*8 - 8]
+	_ls:
+		REX_W test   eax, eax
+			jz     _ls_e
+			push   dword ptr[edi];// push qword ptr [rdi]
+		REX_W sub    edi, 8;// sub rdi, 8
+		REX_W sub    eax, 1;// sub rax, 1
+		jmp    _ls
+			_ls_e :
+
+		;// Reserve 32-byte shadow space (home space) for the callee
+		REX_W sub    esp, 0x20;// sub rsp, 20h
+
+		call   func;// call qword ptr [func]
+
+		;// Cleanup: remove pushed arguments and shadow space
+		REX_W mov    ecx, _argC.dw[0];// mov rcx, qword ptr [_argC]
+		REX_W lea    esp, dword ptr[esp + 8 * ecx + 0x20];// lea rsp, [rsp + rcx*8 + 20h]
+
+		pop    edi;// pop rdi
+
+		;// Save return value
+		REX_W mov    _rax.dw[0], eax;// mov qword ptr [_rax], rax
+
+		X64_End();
+
+		;// Restore original stack and segment registers
+		mov    ax, ds
+			mov    ss, ax
+			mov    esp, back_esp
+
+			mov    ax, back_fs
+			mov    fs, ax
+	}
+
+	return _rax.v;
+}
+
+KEXAPI NTSTATUS NTAPI KexRtlWow64WriteProcessMemory64(
+	IN	HANDLE		ProcessHandle,
+	IN	ULONGLONG	Destination,
+	IN	PVOID		Source,
+	IN	SIZE_T		Cb)
+{
+	PVOID64 DestinationPageAddress;
+	ULONGLONG DestinationPageSize;
+	ULONG OldProtect;
+	NTSTATUS Status;
+	NTSTATUS Status2;
+	DWORD64 NativeNtProtectVirtualMemoryAddress;
+	NT_WOW64_WRITE_VIRTUAL_MEMORY64 NtWow64WriteVirtualMemory64;
+	ANSI_STRING NtWow64WriteVirtualMemory64Name;
+
+	DestinationPageAddress = (PVOID64) Destination;
+	DestinationPageSize = Cb;
+
+	//
+	// Note to future self: NtProtectVirtualMemory can return
+	// STATUS_CONFLICTING_ADDRESSES when the address specified in the remote
+	// process is not allocated.
+	//
+
+	RtlInitConstantAnsiString(&NtWow64WriteVirtualMemory64Name, "NtWow64WriteVirtualMemory64");
+
+	Status = LdrGetProcedureAddress(
+		KexLdrGetSystemDllBase(),
+		&NtWow64WriteVirtualMemory64Name,
+		0,
+		(PPVOID) &NtWow64WriteVirtualMemory64);
+
+	ASSERT (NT_SUCCESS(Status));
+	ASSERT (NtWow64WriteVirtualMemory64 != NULL);
+
+	Status = KexLdrMiniGetProcedureAddress(
+		KexLdrGetNativeSystemDllBase(),
+		"NtProtectVirtualMemory",
+		(PVOID64*) &NativeNtProtectVirtualMemoryAddress);
+
+	ASSERT (NT_SUCCESS(Status));
+	ASSERT (NativeNtProtectVirtualMemoryAddress != 0);
+
+	Status = (NTSTATUS)X64Call(
+		NativeNtProtectVirtualMemoryAddress,
+		5, // Number of arguments
+		(DWORD64)ProcessHandle,
+		(DWORD64)&DestinationPageAddress,
+		(DWORD64)&DestinationPageSize,
+		(DWORD64)PAGE_READWRITE,
+		(DWORD64)&OldProtect);
+
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
+	Status = NtWow64WriteVirtualMemory64(
+		ProcessHandle,
+		(PVOID64)Destination,
+		Source,
+		Cb,
+		NULL);
+
+	ASSERT(NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
+	Status2 = (NTSTATUS)X64Call(
+		NativeNtProtectVirtualMemoryAddress,
+		5, // Number of arguments
+		(DWORD64)ProcessHandle,
+		(DWORD64)&DestinationPageAddress,
+		(DWORD64)&DestinationPageSize,
+		(DWORD64)OldProtect,
+		(DWORD64)&OldProtect);
+
+	ASSERT (NT_SUCCESS(Status2));
+
+	return Status;
+}
+
+#endif
+
 //
 // This API will automatically change the memory protections for you
 // and then set them back to what they originally were.

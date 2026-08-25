@@ -37,24 +37,78 @@
 #include "kexdllp.h"
 
 STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
-    OUT		CONST PHANDLE						ProcessHandle,
-    OUT		CONST PHANDLE						ThreadHandle,
-    IN		CONST ACCESS_MASK					ProcessDesiredAccess,
-    IN		CONST ACCESS_MASK					ThreadDesiredAccess,
-    IN		CONST POBJECT_ATTRIBUTES			ProcessObjectAttributes OPTIONAL,
-    IN		CONST POBJECT_ATTRIBUTES			ThreadObjectAttributes OPTIONAL,
-    IN		CONST ULONG							ProcessFlags,
-    IN		CONST ULONG							ThreadFlags,
-    IN		CONST PRTL_USER_PROCESS_PARAMETERS	ProcessParameters,
-    IN OUT	CONST PPS_CREATE_INFO				CreateInfo,
-    IN		CONST PPS_ATTRIBUTE_LIST			AttributeList OPTIONAL);
+	OUT		CONST PHANDLE						ProcessHandle,
+	OUT		CONST PHANDLE						ThreadHandle,
+	IN		CONST ACCESS_MASK					ProcessDesiredAccess,
+	IN		CONST ACCESS_MASK					ThreadDesiredAccess,
+	IN		CONST POBJECT_ATTRIBUTES			ProcessObjectAttributes OPTIONAL,
+	IN		CONST POBJECT_ATTRIBUTES			ThreadObjectAttributes OPTIONAL,
+	IN		CONST ULONG							ProcessFlags,
+	IN		CONST ULONG							ThreadFlags,
+	IN		CONST PRTL_USER_PROCESS_PARAMETERS	ProcessParameters,
+	IN OUT	CONST PPS_CREATE_INFO				CreateInfo,
+	IN		CONST PPS_ATTRIBUTE_LIST			AttributeList OPTIONAL);
 
-STATIC ULONG_PTR NativeNtOpenKeyRva;
+STATIC ULONGLONG NativeNtOpenKeyRva;
 STATIC ULONG_PTR Wow64NtOpenKeyRva;
 STATIC NT_WOW64_QUERY_INFORMATION_PROCESS64 NtWow64QueryInformationProcess64;
+STATIC NT_WOW64_READ_VIRTUAL_MEMORY64 NtWow64ReadVirtualMemory64;
 STATIC NT_WOW64_WRITE_VIRTUAL_MEMORY64 NtWow64WriteVirtualMemory64;
 
-STATIC CONST BYTE KexpNtOpenKeyHook32_Win7[] = {
+//	KexpNtOpenKeyHook32:
+//		;; Get the address of the data segment. We need to use a "call" to get
+//		;; an address relative to IP, since this is position independent code.
+//
+//		call		.GetDataSegmentPointer
+//	.GetDataSegmentPointer:
+//		pop			eax
+//		add			eax, 6
+//		jmp			.CodeSegment
+//
+//	;; DATA SEGMENT
+//	.DataSegment:
+//	.bAlreadyRewritten:
+//		db			0
+//
+//	.usRewrittenRegKeyName:
+//	.usLength:			dw	0x38
+//	.usMaximumLength:	dw	0x3A
+//	.usBuffer:			dd	0
+//	.usText:			dw	'{','V','x','K','e','x','P','r','o','p','a','g','a','t'
+//						dw	'i','o','n','V','i','r','t','u','a','l','K','e','y','}',0
+//	;; END OF DATA SEGMENT
+//
+//	.CodeSegment:
+//		;; Check if we've already rewritten the key name, and if so, don't do it again.
+//		cmp			[eax], 0							; check if bAlreadyRewritten == 1
+//		jnz			.DontRewrite						; if so, don't rewrite reg key name
+//
+//		;; Clear RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING flag.
+//		mov			edx, fs:0x30						; get PEB address
+//		mov			edx, [edx+0x10]						; get Peb->ProcessParameters
+//		and			dword [edx+8], ~0x4000				; Peb->ProcessParameters->Flags &= ~(RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING)
+//
+//		;; If ObjectAttributes->RootDirectory is NULL, don't rewrite.
+//		mov			edx, [esp+0x0C]						; get ObjectAttributes address
+//		mov			ecx, [edx+4]						; get ObjectAttributes->RootDirectory
+//		test		ecx, ecx							; if ObjectAttributes->RootDirectory == NULL
+//		jz			.DontRewrite						; if it's NULL, then don't rewrite
+//
+//		;; Rewrite the reg key name.
+//		inc			byte [eax]							; set bAlreadyRewritten = 1
+//		lea			ecx, [eax+1]						; ecx = &usRewrittenRegKeyName
+//		add			eax, 9								; eax = &usText
+//		mov			[ecx+4], eax						; usBuffer = &usText
+//		mov			[edx+8], ecx						; ObjectAttributes->ObjectName = &usRewrittenRegKeyName
+//
+//	.DontRewrite:
+//		mov			eax, 0xB6							; NtOpenKey syscall ID for 32-bit Windows 7
+//		lea			edx, [esp+4]						; edx points to first argument on the stack
+//		int			0x2E								; invoke kernel via interrupt
+//		ret			0x0C								; return, cleaning 3 arguments (12 bytes)
+//
+
+STATIC BYTE KexpNtOpenKeyHook32_Win7[] = {
 	0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x83, 0xC0, 0x06, 0xEB, 0x43, 0x00, 0x38, 0x00, 0x3A, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x7B, 0x00, 0x56, 0x00, 0x78, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x78, 0x00,
 	0x50, 0x00, 0x72, 0x00, 0x6F, 0x00, 0x70, 0x00, 0x61, 0x00, 0x67, 0x00, 0x61, 0x00, 0x74, 0x00,
@@ -63,9 +117,46 @@ STATIC CONST BYTE KexpNtOpenKeyHook32_Win7[] = {
 	0x00, 0x75, 0x2A, 0x64, 0x8B, 0x15, 0x30, 0x00, 0x00, 0x00, 0x8B, 0x52, 0x10, 0x81, 0x62, 0x08,
 	0xFF, 0xBF, 0xFF, 0xFF, 0x8B, 0x54, 0x24, 0x0C, 0x8B, 0x4A, 0x04, 0x85, 0xC9, 0x74, 0x0E, 0xFE,
 	0x00, 0x8D, 0x48, 0x01, 0x83, 0xC0, 0x09, 0x89, 0x41, 0x04, 0x89, 0x4A, 0x08, 0xB8, 0xB6, 0x00,
-	0x00, 0x00, 0xBA, 0x00, 0x03, 0xFE, 0x7F, 0x83, 0x3A, 0x00, 0x74, 0x05, 0xFF, 0x12, 0xC2, 0x0C,
-	0x00, 0xB8, 0x0F, 0x00, 0x00, 0x00, 0x31, 0xC9, 0x8D, 0x54, 0x24, 0x04, 0x64, 0xFF, 0x15, 0xC0,
-	0x00, 0x00, 0x00, 0x83, 0xC4, 0x04, 0xC2, 0x0C, 0x00
+	0x00, 0x00, 0xBA, 0x00, 0x03, 0xFE, 0x7F, 0x83, 0x3A, 0x00, 0x74, 0x09, 0x8D, 0x54, 0x24, 0x04,
+	0xCD, 0x2E, 0xC2, 0x0C, 0x00, 0xB8, 0x0F, 0x00, 0x00, 0x00, 0x31, 0xC9, 0x8D, 0x54, 0x24, 0x04,
+	0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00, 0x83, 0xC4, 0x04, 0xC2, 0x0C, 0x00
+};
+
+STATIC BYTE KexpNtOpenKeyHook32_Native32[] = {
+	0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x83, 0xC0, 0x06, 0xEB, 0x43, 0x00, 0x38, 0x00, 0x3A, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x7B, 0x00, 0x56, 0x00, 0x78, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x78, 0x00,
+	0x50, 0x00, 0x72, 0x00, 0x6F, 0x00, 0x70, 0x00, 0x61, 0x00, 0x67, 0x00, 0x61, 0x00, 0x74, 0x00,
+	0x69, 0x00, 0x6F, 0x00, 0x6E, 0x00, 0x56, 0x00, 0x69, 0x00, 0x72, 0x00, 0x74, 0x00, 0x75, 0x00,
+	0x61, 0x00, 0x6C, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x79, 0x00, 0x7D, 0x00, 0x00, 0x00, 0x80, 0x38,
+	0x00, 0x75, 0x2A, 0x64, 0x8B, 0x15, 0x30, 0x00, 0x00, 0x00, 0x8B, 0x52, 0x10, 0x81, 0x62, 0x08,
+	0xFF, 0xBF, 0xFF, 0xFF, 0x8B, 0x54, 0x24, 0x0C, 0x8B, 0x4A, 0x04, 0x85, 0xC9, 0x74, 0x0E, 0xFE,
+	0x00, 0x8D, 0x48, 0x01, 0x83, 0xC0, 0x09, 0x89, 0x41, 0x04, 0x89, 0x4A, 0x08, 0xB8, 0xB6, 0x00,
+	0x00, 0x00, 0x8D, 0x54, 0x24, 0x04, 0xCD, 0x2E, 0xC2, 0x0C, 0x00
+};
+
+STATIC BYTE KexpNtOpenKeyHook32_Wow64_Legacy[] = {
+	0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x83, 0xC0, 0x06, 0xEB, 0x43, 0x00, 0x38, 0x00, 0x3A, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x7B, 0x00, 0x56, 0x00, 0x78, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x78, 0x00,
+	0x50, 0x00, 0x72, 0x00, 0x6F, 0x00, 0x70, 0x00, 0x61, 0x00, 0x67, 0x00, 0x61, 0x00, 0x74, 0x00,
+	0x69, 0x00, 0x6F, 0x00, 0x6E, 0x00, 0x56, 0x00, 0x69, 0x00, 0x72, 0x00, 0x74, 0x00, 0x75, 0x00,
+	0x61, 0x00, 0x6C, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x79, 0x00, 0x7D, 0x00, 0x00, 0x00, 0x80, 0x38,
+	0x00, 0x75, 0x2A, 0x64, 0x8B, 0x15, 0x30, 0x00, 0x00, 0x00, 0x8B, 0x52, 0x10, 0x81, 0x62, 0x08,
+	0xFF, 0xBF, 0xFF, 0xFF, 0x8B, 0x54, 0x24, 0x0C, 0x8B, 0x4A, 0x04, 0x85, 0xC9, 0x74, 0x0E, 0xFE,
+	0x00, 0x8D, 0x48, 0x01, 0x83, 0xC0, 0x09, 0x89, 0x41, 0x04, 0x89, 0x4A, 0x08, 0xB8, 0x0F, 0x00,
+	0x00, 0x00, 0x31, 0xC9, 0x8D, 0x54, 0x24, 0x04, 0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00, 0x83,
+	0xC4, 0x04, 0xC2, 0x0C, 0x00
+};
+
+STATIC BYTE KexpNtOpenKeyHook32_Wow64_Modern[] = {
+	0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, 0x83, 0xC0, 0x06, 0xEB, 0x43, 0x00, 0x38, 0x00, 0x3A, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x7B, 0x00, 0x56, 0x00, 0x78, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x78, 0x00,
+	0x50, 0x00, 0x72, 0x00, 0x6F, 0x00, 0x70, 0x00, 0x61, 0x00, 0x67, 0x00, 0x61, 0x00, 0x74, 0x00,
+	0x69, 0x00, 0x6F, 0x00, 0x6E, 0x00, 0x56, 0x00, 0x69, 0x00, 0x72, 0x00, 0x74, 0x00, 0x75, 0x00,
+	0x61, 0x00, 0x6C, 0x00, 0x4B, 0x00, 0x65, 0x00, 0x79, 0x00, 0x7D, 0x00, 0x00, 0x00, 0x80, 0x38,
+	0x00, 0x75, 0x2A, 0x64, 0x8B, 0x15, 0x30, 0x00, 0x00, 0x00, 0x8B, 0x52, 0x10, 0x81, 0x62, 0x08,
+	0xFF, 0xBF, 0xFF, 0xFF, 0x8B, 0x54, 0x24, 0x0C, 0x8B, 0x4A, 0x04, 0x85, 0xC9, 0x74, 0x0E, 0xFE,
+	0x00, 0x8D, 0x48, 0x01, 0x83, 0xC0, 0x09, 0x89, 0x41, 0x04, 0x89, 0x4A, 0x08, 0xB8, 0x0F, 0x00,
+	0x00, 0x00, 0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00, 0xC2, 0x0C, 0x00
 };
 
 // KexpNtOpenKeyHook64:
@@ -119,7 +210,7 @@ STATIC CONST BYTE KexpNtOpenKeyHook32_Win7[] = {
 //		dw		'i', 'o', 'n', 'V', 'i', 'r', 't', 'u', 'a', 'l', 'K', 'e', 'y', '}', 0
 //
 
-STATIC CONST BYTE KexpNtOpenKeyHook64_Win7[] = {
+STATIC BYTE KexpNtOpenKeyHook64[] = {
 	0x80, 0x3D, 0x43, 0x00, 0x00, 0x00, 0x00, 0x75, 0x36, 0x65, 0x48, 0x8B, 0x04, 0x25, 0x60, 0x00,
 	0x00, 0x00, 0x48, 0x8B, 0x40, 0x20, 0x81, 0x60, 0x08, 0xFF, 0xBF, 0xFF, 0xFF, 0x49, 0x8B, 0x40,
 	0x08, 0x85, 0xC0, 0x74, 0x1A, 0xFE, 0x05, 0x1F, 0x00, 0x00, 0x00, 0x48, 0x8D, 0x05, 0x1E, 0x00,
@@ -186,7 +277,7 @@ STATIC VOID KexpCleanupPropagationRemains(
 
 		BaseAddress = HookDestination;
 		RegionSize = 4096; // page size
-		ASSERT (max(sizeof(KexpNtOpenKeyHook32_Win7), sizeof(KexpNtOpenKeyHook64_Win7)) <= RegionSize);
+		//ASSERT (max(sizeof(KexpNtOpenKeyHook32_Win7), sizeof(KexpNtOpenKeyHook64)) <= RegionSize);
 
 		Status = NtFreeVirtualMemory(
 			NtCurrentProcess(),
@@ -232,12 +323,13 @@ STATIC VOID KexpCleanupPropagationRemains(
 			// We are 64 bit, native
 			//
 
-			CONST BYTE SyscallTemplate[] = {
+			BYTE SyscallTemplate[] = {
 				0x4C, 0x8B, 0xD1,					// mov r10, rcx
 				0xB8, 0x0F, 0x00, 0x00, 0x00,		// mov eax, 0x0F
 				0x0F, 0x05,							// syscall
 				0xC3								// ret
 			};
+			SyscallTemplate[4] = (BYTE)SSN_NtOpenKey;
 
 			RtlCopyMemory(NtOpenKey, SyscallTemplate, sizeof(SyscallTemplate));
 		} else if (KexRtlOperatingSystemBitness() == 64) {
@@ -245,27 +337,40 @@ STATIC VOID KexpCleanupPropagationRemains(
 			// We are 32 bit, WOW64
 			//
 
-			CONST BYTE SyscallTemplate[] = {
-				0xB8, 0x0F, 0x00, 0x00, 0x00,				// mov eax, 0x0F
-				0x33, 0xC9,									// xor ecx, ecx
-				0x8D, 0x54, 0x24, 0x04,						// lea edx, [esp+4]
-				0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00,	// call [fs:0xC0]
-				0x83, 0xC4, 0x04,							// add esp, 4
-				0xC2, 0x0C, 0x00							// ret 12
-			};
+			if (LOWORD(OriginalBuildNumber) >= 8102) {
+				BYTE SyscallTemplate[] = {
+					0xB8, 0x0F, 0x00, 0x00, 0x00,				// mov eax, 0x0F
+					0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00,	// call fs:[0xC0]
+					0xC2, 0x0C, 0x00							// ret 12
+				};
+				SyscallTemplate[1] = (BYTE)SSN_NtOpenKey;
 
-			RtlCopyMemory(NtOpenKey, SyscallTemplate, sizeof(SyscallTemplate));
+				RtlCopyMemory(NtOpenKey, SyscallTemplate, sizeof(SyscallTemplate));
+			} else {
+				BYTE SyscallTemplate[] = {
+					0xB8, 0x0F, 0x00, 0x00, 0x00,				// mov eax, 0x0F
+					0xB9, 0x00, 0x00, 0x00, 0x00,				// mov ecx, 0
+					0x8D, 0x54, 0x24, 0x04,						// lea edx, [esp+4]
+					0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00,	// call [fs:0xC0]
+					0x83, 0xC4, 0x04,							// add esp, 4
+					0xC2, 0x0C, 0x00							// ret 12
+				};
+				SyscallTemplate[1] = (BYTE)SSN_NtOpenKey;
+
+				RtlCopyMemory(NtOpenKey, SyscallTemplate, sizeof(SyscallTemplate));
+			}
 		} else {
 			//
 			// We are 32 bit, native
 			//
 
-			CONST BYTE SyscallTemplate[] = {
+			BYTE SyscallTemplate[] = {
 				0xB8, 0xB6, 0x00, 0x00, 0x00,		// mov eax, 0xB6
-				0xBA, 0x00, 0x03, 0xFE, 0x7F,		// mov edx, 0x7ffe0300
-				0xFF, 0x12,							// call [edx]
+				0x8D, 0x54, 0x24, 0x04,				// lea edx, [esp+4]
+				0xCD, 0x2E,							// int 0x2E
 				0xC2, 0x0C, 0x00					// ret 12
 			};
+			SyscallTemplate[1] = (BYTE)SSN_NtOpenKey;
 			
 			RtlCopyMemory(NtOpenKey, SyscallTemplate, sizeof(SyscallTemplate));
 		}
@@ -288,9 +393,15 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 	PPEB Peb;
 
 	NtWow64QueryInformationProcess64 = NULL;
+	NtWow64ReadVirtualMemory64 = NULL;
 	NtWow64WriteVirtualMemory64 = NULL;
 	NativeNtOpenKeyRva = 0;
 	Wow64NtOpenKeyRva = 0;
+
+	KexpNtOpenKeyHook64[67] = (BYTE)SSN_NtOpenKey;
+	KexpNtOpenKeyHook32_Wow64_Modern[126] = (BYTE)SSN_NtOpenKey;
+	KexpNtOpenKeyHook32_Wow64_Legacy[126] = (BYTE)SSN_NtOpenKey;
+	KexpNtOpenKeyHook32_Native32[126] = (BYTE)SSN_NtOpenKey;
 
 	//
 	// Check the SubSystemData pointer. If it's non-null, it points to a
@@ -385,6 +496,7 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 
 	if (KexRtlOperatingSystemBitness() != KexRtlCurrentProcessBitness()) {
 		ANSI_STRING NtWow64QueryInformationProcess64Name;
+		ANSI_STRING NtWow64ReadVirtualMemory64Name;
 		ANSI_STRING NtWow64WriteVirtualMemory64Name;
 
 		//
@@ -395,16 +507,19 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 		Status = KexLdrMiniGetProcedureAddress(
 			KexData->NativeSystemDllBase,
 			"NtOpenKey",
-			(PPVOID) &NativeNtOpenKeyRva);
+			(PVOID64*) &NativeNtOpenKeyRva);
 
 		ASSERT (NT_SUCCESS(Status));
 		ASSERT (NativeNtOpenKeyRva != 0);
 
 		if (!NT_SUCCESS(Status)) {
+			KexLogErrorEvent(L"Failed to get NtOpenKey RVA in native NTDLL\r\n\r\n"
+				L"NTSTATUS error code: %s (0x%08lx)",
+				KexRtlNtStatusToString(Status), Status);
 			return Status;
 		}
 
-		NativeNtOpenKeyRva = VA_TO_RVA(KexData->NativeSystemDllBase, NativeNtOpenKeyRva);
+		NativeNtOpenKeyRva = VA_TO_RVA_64(KexData->NativeSystemDllBase, NativeNtOpenKeyRva);
 		ASSERT (NativeNtOpenKeyRva != 0);
 
 		//
@@ -413,6 +528,7 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 		//
 
 		RtlInitConstantAnsiString(&NtWow64QueryInformationProcess64Name, "NtWow64QueryInformationProcess64");
+		RtlInitConstantAnsiString(&NtWow64ReadVirtualMemory64Name, "NtWow64ReadVirtualMemory64");
 		RtlInitConstantAnsiString(&NtWow64WriteVirtualMemory64Name, "NtWow64WriteVirtualMemory64");
 		ASSERT (KexData->SystemDllBase != NULL);
 
@@ -428,6 +544,23 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 		if (!NT_SUCCESS(Status)) {
 			KexLogWarningEvent(
 				L"Failed to get procedure address of NtWow64QueryInformationProcess64\r\n\r\n"
+				L"NTSTATUS error code: %s (0x%08lx)",
+				KexRtlNtStatusToString(Status), Status);
+			return Status;
+		}
+
+		Status = LdrGetProcedureAddress(
+			KexData->SystemDllBase,
+			&NtWow64ReadVirtualMemory64Name,
+			0,
+			(PPVOID) &NtWow64ReadVirtualMemory64);
+
+		ASSERT (NT_SUCCESS(Status));
+		ASSERT (NtWow64ReadVirtualMemory64 != NULL);
+
+		if (!NT_SUCCESS(Status)) {
+			KexLogWarningEvent(
+				L"Failed to get procedure address of NtWow64ReadVirtualMemory64\r\n\r\n"
 				L"NTSTATUS error code: %s (0x%08lx)",
 				KexRtlNtStatusToString(Status), Status);
 			return Status;
@@ -569,7 +702,7 @@ KEXAPI NTSTATUS NTAPI KexInitializePropagation(
 	// a syscall when it wants to call the original function.
 	//
 
-	if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) Status = KexHkInstallBasicHook(&NtCreateUserProcess, Ext_NtCreateUserProcess, NULL);
+	Status = KexHkInstallBasicHook(&NtCreateUserProcess, Ext_NtCreateUserProcess, NULL);
 
 	if (NT_SUCCESS(Status)) {
 		KexLogInformationEvent(L"Successfully initialized propagation system.");
@@ -608,7 +741,7 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	ULONG HookTemplateCb;
 	PVOID RemoteHookBaseAddress;
 	SIZE_T RemoteHookSize;
-	ULONG_PTR RemoteNtOpenKey;
+	ULONGLONG RemoteNtOpenKey;
 
 	PVOID IfeoParametersBaseAddress;
 	SIZE_T IfeoParametersSize;
@@ -658,7 +791,6 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	//
 
 	ChildProcessBitness = KexRtlRemoteProcessBitness(*ProcessHandle);
-
 	KexLogDebugEvent(
 		L"The current process is %d-bit and the remote process is %d-bit.",
 		KexRtlCurrentProcessBitness(),
@@ -673,9 +805,14 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	RemoteHookBaseAddress = NULL;
 
 	if (ChildProcessBitness == 64) {
-		RemoteHookSize = sizeof(KexpNtOpenKeyHook64_Win7);
+		RemoteHookSize = sizeof(KexpNtOpenKeyHook64);
 	} else {
-		RemoteHookSize = sizeof(KexpNtOpenKeyHook32_Win7);
+		if (ChildProcessBitness != KexRtlOperatingSystemBitness()) {
+			if (LOWORD(OriginalBuildNumber) >= 8102) RemoteHookSize = sizeof(KexpNtOpenKeyHook32_Wow64_Modern);
+			else RemoteHookSize = sizeof(KexpNtOpenKeyHook32_Wow64_Legacy);
+		} else {
+			RemoteHookSize = sizeof(KexpNtOpenKeyHook32_Native32);
+		}
 	}
 
 	Status = NtAllocateVirtualMemory(
@@ -705,15 +842,17 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 		Status = NtWriteVirtualMemory(
 			*ProcessHandle,
 			RemoteHookBaseAddress,
-			KexpNtOpenKeyHook64_Win7,
-			sizeof(KexpNtOpenKeyHook64_Win7),
+			KexpNtOpenKeyHook64,
+			RemoteHookSize,
 			NULL);
 	} else {
 		Status = NtWriteVirtualMemory(
 			*ProcessHandle,
 			RemoteHookBaseAddress,
-			KexpNtOpenKeyHook32_Win7,
-			sizeof(KexpNtOpenKeyHook32_Win7),
+			(ChildProcessBitness != KexRtlOperatingSystemBitness() ?
+			(LOWORD(OriginalBuildNumber) >= 8102 ? KexpNtOpenKeyHook32_Wow64_Modern : KexpNtOpenKeyHook32_Wow64_Legacy) :
+			KexpNtOpenKeyHook32_Native32),
+			RemoteHookSize,
 			NULL);
 	}
 
@@ -734,9 +873,9 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	//
 
 	if (ChildProcessBitness == KexRtlCurrentProcessBitness()) {
-		RemoteNtOpenKey = (ULONG_PTR) NtOpenKey;
+		RemoteNtOpenKey = (ULONGLONG) NtOpenKey;
 	} else {
-		PVOID RemoteNtdllBase;
+		PVOID64 RemoteNtdllBase;
 
 		RemoteNtdllBase = KexLdrGetRemoteSystemDllBase(*ProcessHandle);
 
@@ -745,12 +884,12 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 		//
 
 		ASSERT (RemoteNtdllBase != NULL);
-		ASSERT ((ULONG_PTR) RemoteNtdllBase >= 0x70000000);
-		ASSERT ((ULONG_PTR) RemoteNtdllBase <= 0x7FFD0000);
+		//ASSERT ((ULONG_PTR) RemoteNtdllBase >= 0x70000000);
+		//ASSERT ((ULONG_PTR) RemoteNtdllBase <= 0x7FFD0000);
 
-		if (RemoteNtdllBase == NULL ||
+		if (RemoteNtdllBase == NULL/* ||
 			(ULONG_PTR) RemoteNtdllBase < 0x70000000 ||
-			(ULONG_PTR) RemoteNtdllBase > 0x7FFD0000) {
+			(ULONG_PTR) RemoteNtdllBase > 0x7FFD0000*/) {
 
 			KexLogWarningEvent(L"Failed to get NTDLL address in the child process.");
 			goto BailOut;
@@ -762,12 +901,12 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 			// Child is 64 bit, we are 32 bit.
 			ASSERT (KexRtlCurrentProcessBitness() == 32);
 			ASSERT (NativeNtOpenKeyRva != 0);
-			RemoteNtOpenKey = (ULONG_PTR) RVA_TO_VA(RemoteNtdllBase, NativeNtOpenKeyRva);
+			RemoteNtOpenKey = (ULONGLONG) RVA_TO_VA_64(RemoteNtdllBase, NativeNtOpenKeyRva);
 		} else {
 			// Child is 32 bit, we are 64 bit.
 			ASSERT (KexRtlCurrentProcessBitness() == 64);
 			ASSERT (Wow64NtOpenKeyRva != 0);
-			RemoteNtOpenKey = (ULONG_PTR) RVA_TO_VA(RemoteNtdllBase, Wow64NtOpenKeyRva);
+			RemoteNtOpenKey = (ULONGLONG) RVA_TO_VA_64(RemoteNtdllBase, Wow64NtOpenKeyRva);
 		}
 	}
 
@@ -801,10 +940,10 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	// Write hook into remote process.
 	//
 
-	if (OriginalMajorVersion == 6 && OriginalMinorVersion == 1) {
+	if (ChildProcessBitness <= KexRtlCurrentProcessBitness()) {
 		Status = KexRtlWriteProcessMemory(
 			*ProcessHandle,
-			RemoteNtOpenKey,
+			(ULONG_PTR)RemoteNtOpenKey,
 			HookTemplate,
 			HookTemplateCb);
 
@@ -817,6 +956,24 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 				KexRtlNtStatusToString(Status), Status);
 			goto BailOut;
 		}
+	} else {
+#ifndef KEX_ARCH_X64
+		Status = KexRtlWow64WriteProcessMemory64(
+			*ProcessHandle,
+			(ULONGLONG)RemoteNtOpenKey,
+			HookTemplate,
+			HookTemplateCb);
+
+		ASSERT (NT_SUCCESS(Status));
+
+		if (!NT_SUCCESS(Status)) {
+			KexLogWarningEvent(
+				L"Failed to write hook template to remote process.\r\n\r\n"
+				L"NTSTATUS error code: %s (0x%08lx)",
+				KexRtlNtStatusToString(Status), Status);
+			goto BailOut;
+		}
+#endif
 	}
 
 	//
@@ -870,6 +1027,7 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	if (KexRtlCurrentProcessBitness() == 32 && ChildProcessBitness == 64) {
 		PROCESS_BASIC_INFORMATION64 BasicInformation64;
 		PVOID64 IfeoParametersBaseAddress64;
+		ULONGLONG RemotePeb;
 		ULONGLONG RemoteSubSystemData;
 
 		//
@@ -912,8 +1070,8 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 		// The 0x28 is a hard-coded offset for the 64-bit FIELD_OFFSET(PEB, SubSystemData).
 		//
 
-		RemoteSubSystemData = (ULONGLONG) (BasicInformation64.PebBaseAddress);
-		RemoteSubSystemData += 0x28;
+		RemotePeb = (ULONGLONG) (BasicInformation64.PebBaseAddress);
+		RemoteSubSystemData = RemotePeb + 0x28;
 
 		Status = NtWow64WriteVirtualMemory64(
 			*ProcessHandle,
@@ -930,6 +1088,77 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 				L"NTSTATUS error code: %s (0x%08lx)",
 				KexRtlNtStatusToString(Status), Status);
 			goto BailOut;
+		}
+
+		{
+			ULONGLONG RemoteProcessParametersFlags;
+			ULONG ProcessParametersFlags;
+
+			RemoteProcessParametersFlags = RemotePeb + FIELD_OFFSET(PEB, ProcessParameters);
+
+			Status = NtWow64ReadVirtualMemory64(
+				*ProcessHandle,
+				(PVOID64) RemoteProcessParametersFlags,
+				&RemoteProcessParametersFlags,
+				ChildProcessBitness / 8,
+				NULL);
+
+			ASSERT (NT_SUCCESS(Status));
+
+			if (!NT_SUCCESS(Status)) {
+				KexLogWarningEvent(
+					L"Failed to read Peb->ProcessParameters pointer of child process\r\n\r\n"
+					L"NTSTATUS error code: %s (0x%08lx)",
+					KexRtlNtStatusToString(Status), Status);
+				goto BailOut;
+			}
+
+			//
+			// RemoteProcessParametersFlags now contains a pointer to a
+			// RTL_USER_PROCESS_PARAMETERS structure within the child process.
+			//
+
+			RemoteProcessParametersFlags += FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Flags);
+
+			Status = NtWow64ReadVirtualMemory64(
+				*ProcessHandle,
+				(PVOID64) RemoteProcessParametersFlags,
+				&ProcessParametersFlags,
+				sizeof(ProcessParametersFlags),
+				NULL);
+
+			ASSERT (NT_SUCCESS(Status));
+
+			if (!NT_SUCCESS(Status)) {
+				KexLogWarningEvent(
+					L"Failed to read ProcessParameters->Flags of child process\r\n\r\n"
+					L"NTSTATUS error code: %s (0x%08lx)",
+					KexRtlNtStatusToString(Status), Status);
+				goto BailOut;
+			}
+
+			//
+			// Clear the flag and write back the new value to the child process.
+			//
+
+			ProcessParametersFlags &= ~RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING;
+
+			Status = NtWow64WriteVirtualMemory64(
+				*ProcessHandle,
+				(PVOID64) RemoteProcessParametersFlags,
+				&ProcessParametersFlags,
+				sizeof(ProcessParametersFlags),
+				NULL);
+
+			ASSERT (NT_SUCCESS(Status));
+
+			if (!NT_SUCCESS(Status)) {
+				KexLogWarningEvent(
+					L"Failed to write ProcessParameters->Flags of child process\r\n\r\n"
+					L"NTSTATUS error code: %s (0x%08lx)",
+					KexRtlNtStatusToString(Status), Status);
+				goto BailOut;
+			}
 		}
 	} else {
 		ULONG_PTR RemotePeb;
@@ -1001,12 +1230,13 @@ STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 			goto BailOut;
 		}
 
-		if (KexRtlOperatingSystemBitness() == 32) {
+		//if (KexRtlOperatingSystemBitness() == 32)
+		{
 			ULONG_PTR RemoteProcessParametersFlags;
 			ULONG ProcessParametersFlags;
 
-			ASSUME (KexRtlCurrentProcessBitness() == 32);
-			ASSUME (ChildProcessBitness == 32);
+			//ASSUME (KexRtlCurrentProcessBitness() == 32);
+			//ASSUME (ChildProcessBitness == 32);
 
 			//
 			// Clear RTL_USER_PROCESS_PARAMETERS_IMAGE_KEY_MISSING in the remote
