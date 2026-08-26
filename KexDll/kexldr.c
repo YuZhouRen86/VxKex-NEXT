@@ -328,7 +328,8 @@ NTSTATUS NTAPI KexLdrMiniGetProcedureAddress(
 		IMAGE_DIRECTORY_ENTRY_EXPORT, 
 		&ExportDirectorySize);
 
-	ASSERT (ExportDirectory != NULL);
+	if (KexRtlOperatingSystemBitness() == KexRtlCurrentProcessBitness())
+		ASSERT (ExportDirectory != NULL);
 
 	if (!ExportDirectory) {
 #ifndef KEX_ARCH_X64

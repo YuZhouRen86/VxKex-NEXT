@@ -233,13 +233,17 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 {
 	HMODULE ModuleHandle;
 	BOOLEAN ReEntrant;
+	DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
 	STATIC BOOL (WINAPI *SetDefaultDllDirectories) (ULONG) = NULL;
 
 	InterceptedKernelBaseLoaderCallEntry(&ReEntrant);
 	BasepGetDllDirectoryProcedure("SetDefaultDllDirectories", (PPVOID) &SetDefaultDllDirectories);
 	if (SetDefaultDllDirectories) {
-		if (KexShouldUseWorkaroundsForNewerWindows()) {
-			UNICODE_STRING DllName, RewrittenDll;
+		BOOL DatafileFlagSpecified = (Flags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) != 0;
+		BOOL RewrittenOnNewerWindows = FALSE;
+		UNICODE_STRING RewrittenDll;
+		if (KexShouldUseWorkaroundsForNewerWindows() && !DatafileFlagSpecified) {
+			UNICODE_STRING DllName;
 			NTSTATUS Status;
 			RtlInitUnicodeString(&DllName, FileName);
 
@@ -250,12 +254,25 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 			ASSERT(NT_SUCCESS(Status) ||
 				Status == STATUS_STRING_MAPPER_ENTRY_NOT_FOUND ||
 				Status == STATUS_DLL_NOT_IN_SYSTEM_ROOT);
-			if (NT_SUCCESS(Status)) FileName = RewrittenDll.Buffer;
+			if (NT_SUCCESS(Status)) {
+				Flags &= ~LOAD_WITH_ALTERED_SEARCH_PATH;
+				RewrittenOnNewerWindows = TRUE;
+				FileName = RewrittenDll.Buffer;
+			}
 		}
 		ModuleHandle = LoadLibraryExW(FileName, FileHandle, Flags);
+		if (!ModuleHandle && GetLastError() == ERROR_MOD_NOT_FOUND && RewrittenOnNewerWindows) {
+			WCHAR DllFullPath[MAX_PATH] = {0};
+			Flags &= ~LOAD_LIBRARY_REQUIRE_SIGNED_TARGET;
+			Flags &= ~LOAD_LIBRARY_SAFE_CURRENT_DIRS;
+			Flags &= ~LoadLibrarySearchMarks;
+			StringCchCopy(DllFullPath, MAX_PATH, KexData->Kex3264DirPath.Buffer);
+			StringCchCat(DllFullPath, MAX_PATH, L"\\");
+			StringCchCat(DllFullPath, MAX_PATH, FileName);
+			ModuleHandle = LoadLibraryExW(DllFullPath, FileHandle, Flags);
+		}
 	} else {
 		ULONG OriginalFlags = Flags;
-		DWORD LoadLibrarySearchMarks = 0xFFFFFF00ul;
 
 		ModuleHandle = NULL;
 		if (((0xFFFFE000 | 0x00000004) & Flags) || ((LOAD_WITH_ALTERED_SEARCH_PATH & Flags) && (LoadLibrarySearchMarks & Flags)) || FileName == NULL || FileHandle) {

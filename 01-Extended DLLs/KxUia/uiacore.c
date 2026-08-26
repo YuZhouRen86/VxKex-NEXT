@@ -25,3 +25,11 @@ KXUIAAPI HRESULT WINAPI UiaDisconnectAllProviders(
 {
 	return E_NOTIMPL;
 }
+
+KXUIAAPI HRESULT WINAPI UiaRaiseChangesEvent(
+	IN	IUnknown		*Provider,
+	IN	int				EventIdCount,
+	IN	UiaChangeInfo	*UiaChanges)
+{
+	return E_NOTIMPL;
+}

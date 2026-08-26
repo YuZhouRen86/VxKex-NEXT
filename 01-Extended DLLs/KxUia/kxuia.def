@@ -3,4 +3,5 @@ EXPORTS
 	;; uiacore.c
 	UiaDisconnectAllProviders
 	UiaDisconnectProvider
+	UiaRaiseChangesEvent
 	UiaRaiseNotificationEvent

@@ -191,11 +191,14 @@ KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgQueryUnstableExplorerCpiwBypass(
 {
 	HRESULT Result;
 	WCHAR ExplorerFullPath[MAX_PATH];
+	KXCFG_PROGRAM_CONFIGURATION Configuration;
 
 	Result = KxCfgpGetExplorerFullPath(ExplorerFullPath, ARRAYSIZE(ExplorerFullPath));
 	ASSERT (SUCCEEDED(Result));
 
-	return KxCfgGetConfiguration(ExplorerFullPath, NULL);
+	if (KxCfgGetConfiguration(ExplorerFullPath, &Configuration)) {
+		return Configuration.Enabled;
+	} else return FALSE;
 }
 
 KXCFGDECLSPEC BOOLEAN KXCFGAPI KxCfgEnableUnstableExplorerCpiwBypass(
