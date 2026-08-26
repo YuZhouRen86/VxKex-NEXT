@@ -309,19 +309,47 @@ BOOL WINAPI DllMain(
 			&NtCurrentPeb()->ProcessParameters->ImagePathName);
 
 		if (!NT_SUCCESS(Status) && Status != STATUS_IMAGE_NO_IMPORT_DIRECTORY) {
-			KexLogCriticalEvent(
-				L"Failed to rewrite DLL imports of the main process image.\r\n\r\n"
-				L"NTSTATUS error code: %s (0x%08lx)\r\n"
-				L"Image base address: 0x%p\r\n",
-				KexRtlNtStatusToString(Status), Status,
-				NtCurrentPeb()->ImageBaseAddress);
+			BOOL IsOpenWithExe = FALSE;
+			PCWSTR OpenWithExeName = L"openwith.exe";
+			PCWSTR System32Name = L"system32";
+			PCWSTR SysWOW64Name = L"syswow64";
+			SIZE_T OpenWithExeNameCch = (
+				KexData->WinDir.Length / sizeof(WCHAR)) + 1 +
+				wcslen(System32Name) + 1 +
+				wcslen(OpenWithExeName) + 1;
+			PWSTR OpenWithExeNameFullPathBuffer = SafeAlloc(WCHAR, OpenWithExeNameCch);
+			if (OpenWithExeNameFullPathBuffer) {
+				UNICODE_STRING OpenWithExeNameFullPath;
+				OpenWithExeNameFullPath.Buffer = OpenWithExeNameFullPathBuffer;
+				OpenWithExeNameFullPath.Length = 0;
+				OpenWithExeNameFullPath.MaximumLength = (USHORT)OpenWithExeNameCch * sizeof(WCHAR);
+				RtlCopyUnicodeString(&OpenWithExeNameFullPath, &KexData->WinDir);
+				RtlAppendUnicodeToString(&OpenWithExeNameFullPath, L"\\");
+				RtlAppendUnicodeToString(&OpenWithExeNameFullPath, (
+					KexRtlOperatingSystemBitness() == KexRtlCurrentProcessBitness() ?
+					System32Name : SysWOW64Name));
+				RtlAppendUnicodeToString(&OpenWithExeNameFullPath, L"\\");
+				RtlAppendUnicodeToString(&OpenWithExeNameFullPath, OpenWithExeName);
+				if (RtlEqualUnicodeString(&OpenWithExeNameFullPath, &Peb->ProcessParameters->ImagePathName, TRUE)) {
+					IsOpenWithExe = TRUE;
+				}
+				SafeFree(OpenWithExeNameFullPathBuffer);
+			}
+			if (!IsOpenWithExe) {
+				KexLogCriticalEvent(
+					L"Failed to rewrite DLL imports of the main process image.\r\n\r\n"
+					L"NTSTATUS error code: %s (0x%08lx)\r\n"
+					L"Image base address: 0x%p\r\n",
+					KexRtlNtStatusToString(Status), Status,
+					NtCurrentPeb()->ImageBaseAddress);
 
-			KexHeErrorBox(_(
-				L"VxKex NEXT could not start because the DLL imports of the main "
-				L"process image could not be rewritten. If the problem persists, "
-				L"please disable VxKex NEXT for this program."));
+				KexHeErrorBox(_(
+					L"VxKex NEXT could not start because the DLL imports of the main "
+					L"process image could not be rewritten. If the problem persists, "
+					L"please disable VxKex NEXT for this program."));
 
-			NOT_REACHED;
+				NOT_REACHED;
+			}
 		}
 
 	} else if (Reason == DLL_PROCESS_ATTACH) {

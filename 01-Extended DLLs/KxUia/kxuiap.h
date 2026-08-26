@@ -4,24 +4,23 @@
 EXTERN PKEX_PROCESS_DATA KexData;
 
 typedef enum _NotificationKind {
-	NotificationKind_ItemAdded = 0,
-	NotificationKind_ItemRemoved = 1,
-	NotificationKind_ActionCompleted = 2,
-	NotificationKind_ActionAborted = 3,
-	NotificationKind_Other = 4
-} NotificationKind;
+	NotificationKind_ItemAdded,
+	NotificationKind_ItemRemoved,
+	NotificationKind_ActionCompleted,
+	NotificationKind_ActionAborted,
+	NotificationKind_Other
+} TYPEDEF_TYPE_NAME(NotificationKind);
 
 typedef enum _NotificationProcessing {
-	NotificationProcessing_ImportantAll = 0,
-	NotificationProcessing_ImportantMostRecent = 1,
-	NotificationProcessing_All = 2,
-	NotificationProcessing_MostRecent = 3,
-	NotificationProcessing_CurrentThenMostRecent = 4
-} NotificationProcessing;
+	NotificationProcessing_ImportantAll,
+	NotificationProcessing_ImportantMostRecent,
+	NotificationProcessing_All,
+	NotificationProcessing_MostRecent,
+	NotificationProcessing_CurrentThenMostRecent
+} TYPEDEF_TYPE_NAME(NotificationProcessing);
 
-KXUIAAPI HRESULT WINAPI UiaRaiseNotificationEvent(
-	IN	DWORD					*provider,
-	NotificationKind		notificationKind,
-	NotificationProcessing	notificationProcessing,
-	IN	BSTR					displayString	OPTIONAL,
-	IN	BSTR					activityId);
+typedef struct _UiaChangeInfo {
+	int		uiaId;
+	VARIANT	payload;
+	VARIANT	extraInfo;
+} TYPEDEF_TYPE_NAME(UiaChangeInfo);
