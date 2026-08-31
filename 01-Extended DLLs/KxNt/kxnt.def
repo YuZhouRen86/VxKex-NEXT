@@ -30,7 +30,7 @@ EXPORTS
 	RtlGetDeviceFamilyInfoEnum						= KexDll.KexRtlGetDeviceFamilyInfoEnum
 	RtlGetPersistedStateLocation					= KexDll.KexRtlGetPersistedStateLocation
 	RtlCanonicalizeDomainName						= KexDll.KexRtlCanonicalizeDomainName
-	RtlIsProcessorFeaturePresent					= KexDll.KexRtlGetPersistedStateLocation
+	RtlIsProcessorFeaturePresent					= KexDll.KexRtlIsProcessorFeaturePresent
 
 	ApiSetQueryApiSetPresence						= KexDll.ApiSetQueryApiSetPresence
 
