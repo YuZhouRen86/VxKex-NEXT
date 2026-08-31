@@ -127,9 +127,9 @@ NTSTATUS KexpAddKex3264ToDllPath(
 	DllPathOriginalLength = DllPath->Length;
 
 	RtlInitAnsiString(&LdrAddDllDirectoryName, "LdrAddDllDirectory");
-	LdrGetProcedureAddress(KexData->SystemDllBase, &LdrAddDllDirectoryName, FALSE, (PPVOID) &pLdrAddDllDirectory);
+	Status = LdrGetProcedureAddress(KexData->SystemDllBase, &LdrAddDllDirectoryName, FALSE, (PPVOID) &pLdrAddDllDirectory);
 	
-	if (pLdrAddDllDirectory != NULL && DllPathOriginalLength == 0) {
+	if (NT_SUCCESS(Status) && DllPathOriginalLength == 0) {
 		PVOID Cookie;
 		UNICODE_STRING PathName, OriginalPath, Path;
 		SIZE_T OriginalPathLength = 0;

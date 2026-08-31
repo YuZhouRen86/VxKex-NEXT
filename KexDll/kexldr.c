@@ -874,6 +874,7 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 	UNICODE_STRING TbsDllName;
 	BOOLEAN ShouldRewrite = NtCurrentTeb()->KexLdrShouldRewriteDll;
 	BOOLEAN RewriteTbs = FALSE;
+	BOOLEAN IsWindows8DllPath = KexShouldUseWorkaroundsForNewerWindows();
 
 	ASSERT (VALID_UNICODE_STRING(DllName));
 	ASSERT (DllHandle != NULL);
@@ -889,15 +890,21 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 	// alternate path.
 	//
 
-	if (DllPath && (((ULONG_PTR) DllPath) & 1)) {
-		ULONG_PTR DllPathPointer;
-		PPCWSTR DllPathIndirect;
+	try {
+		if (DllPath && (((ULONG_PTR) DllPath) & 1)) {
+			ULONG_PTR DllPathPointer;
+			PPCWSTR DllPathIndirect;
 
-		DllPathPointer = (ULONG_PTR) DllPath;
-		DllPathPointer &= ~1;
-		DllPathIndirect = (PPCWSTR) DllPathPointer;
-		DllPath = *DllPathIndirect;
+			DllPathPointer = (ULONG_PTR) DllPath;
+			DllPathPointer &= ~1;
+			DllPathIndirect = (PPCWSTR) DllPathPointer;
+			DllPath = *DllPathIndirect;
+		}
+	} except (EXCEPTION_EXECUTE_HANDLER) {
+		IsWindows8DllPath = TRUE;
 	}
+	
+	if (IsWindows8DllPath) goto BailOut;
 
 	if (DllName->Length == 0) {
 		goto BailOut;
@@ -960,7 +967,7 @@ KEXAPI NTSTATUS NTAPI KexLdrLoadDll(
 	DllCharacteristicsIndirect = &DllCharacteristics;
 
 BailOut:
-	if (DllPath) {
+	if (DllPath && !IsWindows8DllPath) {
 		PWSTR NewDllPathBuffer;
 		SIZE_T NewDllPathCch;
 		UNICODE_STRING NewDllPath;

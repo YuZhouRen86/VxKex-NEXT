@@ -909,6 +909,272 @@ SkipNormalImportRewrite:
 	return STATUS_SUCCESS;
 }
 
+typedef struct _FUNCTION_MAP {
+	ANSI_STRING	NtName;
+	ANSI_STRING	KexName;
+} TYPEDEF_TYPE_NAME(FUNCTION_MAP);
+
+STATIC CONST FUNCTION_MAP NtToKexMap[] = {
+	{RTL_CONSTANT_STRING("LdrResolveDelayLoadedAPI"),						RTL_CONSTANT_STRING("KexLdrResolveDelayLoadedAPI")},
+	{RTL_CONSTANT_STRING("LdrGetDllFullName"),								RTL_CONSTANT_STRING("KexLdrGetDllFullName")},
+	{RTL_CONSTANT_STRING("LdrLoadDll"),										RTL_CONSTANT_STRING("KexLdrLoadDll")},
+	{RTL_CONSTANT_STRING("LdrGetDllHandle"),								RTL_CONSTANT_STRING("KexLdrGetDllHandle")},
+	{RTL_CONSTANT_STRING("LdrGetDllHandleEx"),								RTL_CONSTANT_STRING("KexLdrGetDllHandleEx")},
+	{RTL_CONSTANT_STRING("LdrGetProcedureAddress"),							RTL_CONSTANT_STRING("KexLdrGetProcedureAddress")},
+	{RTL_CONSTANT_STRING("LdrGetProcedureAddressEx"),						RTL_CONSTANT_STRING("KexLdrGetProcedureAddressEx")},
+
+	{RTL_CONSTANT_STRING("RtlWaitOnAddress"),								RTL_CONSTANT_STRING("KexRtlWaitOnAddress")},
+	{RTL_CONSTANT_STRING("RtlWakeAddressAll"),								RTL_CONSTANT_STRING("KexRtlWakeAddressAll")},
+	{RTL_CONSTANT_STRING("RtlWakeAddressSingle"),							RTL_CONSTANT_STRING("KexRtlWakeAddressSingle")},
+	{RTL_CONSTANT_STRING("RtlWow64GetProcessMachines"),						RTL_CONSTANT_STRING("KexRtlWow64GetProcessMachines")},
+	{RTL_CONSTANT_STRING("RtlSetBit"),										RTL_CONSTANT_STRING("KexRtlSetBit")},
+	{RTL_CONSTANT_STRING("RtlClearBit"),									RTL_CONSTANT_STRING("KexRtlClearBit")},
+	{RTL_CONSTANT_STRING("RtlQueryPackageIdentity"),						RTL_CONSTANT_STRING("KexRtlQueryPackageIdentity")},
+	{RTL_CONSTANT_STRING("RtlQueryPackageIdentityEx"),						RTL_CONSTANT_STRING("KexRtlQueryPackageIdentityEx")},
+	{RTL_CONSTANT_STRING("RtlCheckPortableOperatingSystem"),				RTL_CONSTANT_STRING("KexRtlCheckPortableOperatingSystem")},
+	{RTL_CONSTANT_STRING("RtlUnsubscribeWnfNotificationWaitForCompletion"),	RTL_CONSTANT_STRING("KexRtlUnsubscribeWnfNotificationWaitForCompletion")},
+	{RTL_CONSTANT_STRING("RtlUnsubscribeWnfStateChangeNotification"),		RTL_CONSTANT_STRING("KexRtlUnsubscribeWnfStateChangeNotification")},
+	{RTL_CONSTANT_STRING("RtlQueryWnfStateData"),							RTL_CONSTANT_STRING("KexRtlQueryWnfStateData")},
+	{RTL_CONSTANT_STRING("RtlPublishWnfStateData"),							RTL_CONSTANT_STRING("KexRtlPublishWnfStateData")},
+	{RTL_CONSTANT_STRING("RtlSubscribeWnfStateChangeNotification"),			RTL_CONSTANT_STRING("KexRtlSubscribeWnfStateChangeNotification")},
+	{RTL_CONSTANT_STRING("RtlAddGrowableFunctionTable"),					RTL_CONSTANT_STRING("KexRtlAddGrowableFunctionTable")},
+	{RTL_CONSTANT_STRING("RtlDeleteGrowableFunctionTable"),					RTL_CONSTANT_STRING("KexRtlDeleteGrowableFunctionTable")},
+	{RTL_CONSTANT_STRING("RtlGetSystemTimePrecise"),						RTL_CONSTANT_STRING("KexRtlGetSystemTimePrecise")},
+	{RTL_CONSTANT_STRING("RtlGetDeviceFamilyInfoEnum"),						RTL_CONSTANT_STRING("KexRtlGetDeviceFamilyInfoEnum")},
+	{RTL_CONSTANT_STRING("RtlGetPersistedStateLocation"),					RTL_CONSTANT_STRING("KexRtlGetPersistedStateLocation")},
+	{RTL_CONSTANT_STRING("RtlCanonicalizeDomainName"),						RTL_CONSTANT_STRING("KexRtlCanonicalizeDomainName")},
+	{RTL_CONSTANT_STRING("RtlIsProcessorFeaturePresent"),					RTL_CONSTANT_STRING("KexRtlIsProcessorFeaturePresent")},
+	{RTL_CONSTANT_STRING("RtlInitializeCriticalSectionAndSpinCount"),		RTL_CONSTANT_STRING("Ext_RtlInitializeCriticalSectionAndSpinCount")},
+	{RTL_CONSTANT_STRING("RtlInitializeCriticalSectionEx"),					RTL_CONSTANT_STRING("Ext_RtlInitializeCriticalSectionEx")},
+
+	{RTL_CONSTANT_STRING("ApiSetQueryApiSetPresence"),						RTL_CONSTANT_STRING("ApiSetQueryApiSetPresence")},
+
+	{RTL_CONSTANT_STRING("EtwEventSetInformation"),							RTL_CONSTANT_STRING("KexEtwEventSetInformation")},
+
+	{RTL_CONSTANT_STRING("NtQueryInformationThread"),						RTL_CONSTANT_STRING("Ext_NtQueryInformationThread")},
+	{RTL_CONSTANT_STRING("NtNotifyChangeKey"),								RTL_CONSTANT_STRING("Ext_NtNotifyChangeKey")},
+	{RTL_CONSTANT_STRING("NtNotifyChangeMultipleKeys"),						RTL_CONSTANT_STRING("Ext_NtNotifyChangeMultipleKeys")},
+	{RTL_CONSTANT_STRING("NtCreateSection"),								RTL_CONSTANT_STRING("Ext_NtCreateSection")},
+	{RTL_CONSTANT_STRING("NtAssignProcessToJobObject"),						RTL_CONSTANT_STRING("Ext_NtAssignProcessToJobObject")},
+	{RTL_CONSTANT_STRING("NtWriteFile"),									RTL_CONSTANT_STRING("Ext_NtWriteFile")},
+	{RTL_CONSTANT_STRING("NtSetInformationFile"),							RTL_CONSTANT_STRING("Ext_NtSetInformationFile")},
+	{RTL_CONSTANT_STRING("NtCompareObjects"),								RTL_CONSTANT_STRING("NtCompareObjects")},
+	{RTL_CONSTANT_STRING("NtQueryWnfStateData"),							RTL_CONSTANT_STRING("NtQueryWnfStateData")},
+	{RTL_CONSTANT_STRING("NtWaitForAlertByThreadId"),						RTL_CONSTANT_STRING("NtWaitForAlertByThreadId")},
+	{RTL_CONSTANT_STRING("NtAlertThreadByThreadId"),						RTL_CONSTANT_STRING("NtAlertThreadByThreadId")},
+
+	{RTL_CONSTANT_STRING("ZwQueryInformationThread"),						RTL_CONSTANT_STRING("Ext_NtQueryInformationThread")},
+	{RTL_CONSTANT_STRING("ZwNotifyChangeKey"),								RTL_CONSTANT_STRING("Ext_NtNotifyChangeKey")},
+	{RTL_CONSTANT_STRING("ZwNotifyChangeMultipleKeys"),						RTL_CONSTANT_STRING("Ext_NtNotifyChangeMultipleKeys")},
+	{RTL_CONSTANT_STRING("ZwCreateSection"),								RTL_CONSTANT_STRING("Ext_NtCreateSection")},
+	{RTL_CONSTANT_STRING("ZwAssignProcessToJobObject"),						RTL_CONSTANT_STRING("Ext_NtAssignProcessToJobObject")},
+	{RTL_CONSTANT_STRING("ZwWriteFile"),									RTL_CONSTANT_STRING("Ext_NtWriteFile")},
+	{RTL_CONSTANT_STRING("ZwSetInformationFile"),							RTL_CONSTANT_STRING("Ext_NtSetInformationFile")},
+	{RTL_CONSTANT_STRING("ZwCompareObjects"),								RTL_CONSTANT_STRING("NtCompareObjects")},
+	{RTL_CONSTANT_STRING("ZwQueryWnfStateData"),							RTL_CONSTANT_STRING("NtQueryWnfStateData")},
+	{RTL_CONSTANT_STRING("ZwWaitForAlertByThreadId"),						RTL_CONSTANT_STRING("NtWaitForAlertByThreadId")},
+	{RTL_CONSTANT_STRING("ZwAlertThreadByThreadId"),						RTL_CONSTANT_STRING("NtAlertThreadByThreadId")}
+};
+
+NTSTATUS KexRewriteKernelDllImageImportDirectory(
+	IN		PVOID						ImageBase,
+	IN		PCUNICODE_STRING			BaseImageName,
+	IN		PCUNICODE_STRING			FullImageName)
+{
+	NTSTATUS Status;
+	PIMAGE_NT_HEADERS NtHeaders;
+	PIMAGE_FILE_HEADER CoffHeader;
+	PIMAGE_OPTIONAL_HEADER OptionalHeader;
+	PIMAGE_DATA_DIRECTORY ImportDirectory;
+	PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor;
+	PVOID ImportSectionBase;
+	SIZE_T ImportSectionSize;
+	BOOLEAN AtLeastOneImportWasRewritten;
+	ULONG OldProtect;
+
+	AtLeastOneImportWasRewritten = FALSE;
+
+	ASSERT (DllRewriteStringMapper != NULL);
+	ASSERT (ImageBase != NULL);
+	ASSERT (VALID_UNICODE_STRING(BaseImageName));
+	ASSERT (VALID_UNICODE_STRING(FullImageName));
+
+	Status = RtlImageNtHeaderEx(
+		RTL_IMAGE_NT_HEADER_EX_FLAG_NO_RANGE_CHECK,
+		ImageBase,
+		0,
+		&NtHeaders);
+
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
+	CoffHeader = &NtHeaders->FileHeader;
+	OptionalHeader = &NtHeaders->OptionalHeader;
+	ImportDirectory = &OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+
+	if ((KexRtlCurrentProcessBitness() == 64) != (CoffHeader->Machine == 0x8664)) {
+		//
+		// 32-bit dll loaded in 64-bit process or vice versa
+		// This can happen with resource-only DLLs, in which case there are no
+		// imports to rewrite anyway. Many .NET dlls have this characteristic.
+		//
+
+		return STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+	}
+
+	if (OptionalHeader->NumberOfRvaAndSizes < (IMAGE_DIRECTORY_ENTRY_IMPORT + 1) ||
+		ImportDirectory->VirtualAddress == 0) {
+		//
+		// There is no import directory in the image (e.g. resource-only DLL).
+		//
+
+		return STATUS_IMAGE_NO_IMPORT_DIRECTORY;
+	}
+
+	ImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR) RVA_TO_VA(ImageBase, ImportDirectory->VirtualAddress);
+
+	if (ImportDescriptor->Name == 0) {
+		//
+		// There shouldn't be an import directory if it has no entries.
+		//
+
+		return STATUS_INVALID_IMAGE_FORMAT;
+	}
+
+	//
+	// Set the entire section that contains the image import directory to read-write.
+	//
+
+	Status = KexLdrGetImageImportSection(
+		ImageBase,
+		&ImportSectionBase,
+		&ImportSectionSize);
+
+	ASSERT (NT_SUCCESS(Status));
+
+	if (!NT_SUCCESS(Status)) {
+		return Status;
+	}
+
+	// Locate the import descriptor for ntdll.dll
+	while (ImportDescriptor->Name) {
+		PSTR NamePtr = (PSTR) RVA_TO_VA(ImageBase, ImportDescriptor->Name);
+		if (StringEqualIA(NamePtr, "ntdll.dll")) {
+			break;
+		}
+		ImportDescriptor++;
+	}
+
+	if (ImportDescriptor && ImportDescriptor->Name) {
+		HMODULE KexDllHandle = NULL;
+		UNICODE_STRING KexDllName = RTL_CONSTANT_STRING(L"kexdll.dll");
+		Status = LdrGetDllHandle(NULL, NULL, &KexDllName, &KexDllHandle);
+		if (KexDllHandle) {
+			// Obtain IAT and INT
+			PIMAGE_THUNK_DATA ImportAddressTable = (PIMAGE_THUNK_DATA) RVA_TO_VA(ImageBase, ImportDescriptor->FirstThunk);
+			PIMAGE_THUNK_DATA ImportNameTable = (PIMAGE_THUNK_DATA) RVA_TO_VA(ImageBase, ImportDescriptor->OriginalFirstThunk);
+			PIMAGE_THUNK_DATA TemporaryPointer = ImportNameTable;
+			ULONG Count = 0;
+			SIZE_T IatSize = 0;
+			PVOID iatBase = ImportAddressTable;
+			// Walk through each imported function
+			if (ImportDescriptor->OriginalFirstThunk == 0) {
+				KexLogErrorEvent(L"OriginalFirstThunk is 0, cannot modify this import");
+				goto SkipNormalImportRewrite;
+			}
+			while (TemporaryPointer->u1.Ordinal || TemporaryPointer->u1.AddressOfData) {
+				Count++;
+				TemporaryPointer++;
+			}
+			IatSize = Count * sizeof(IMAGE_THUNK_DATA);
+			Status = NtProtectVirtualMemory(
+				NtCurrentProcess(),
+				&iatBase,
+				&IatSize,
+				PAGE_READWRITE,
+				&OldProtect);
+			while (ImportNameTable->u1.Ordinal || ImportNameTable->u1.AddressOfData) {
+				PVOID ProxyAddress = NULL;
+				if ((ImportNameTable->u1.Ordinal & IMAGE_ORDINAL_FLAG) == 0) {
+					INT Index;
+					// Import by name
+					PIMAGE_IMPORT_BY_NAME ImageImportByName = (PIMAGE_IMPORT_BY_NAME)
+						RVA_TO_VA(ImageBase, ImportNameTable->u1.AddressOfData);
+					PCANSI_STRING KexFunctionName = NULL;
+					for (Index = 0; Index < ARRAYSIZE(NtToKexMap); ++Index) {
+						if (StringEqualA(NtToKexMap[Index].NtName.Buffer, (PCSTR)ImageImportByName->Name)) {
+							KexFunctionName = &NtToKexMap[Index].KexName;
+							break;
+						}
+					}
+					if (KexFunctionName) Status = LdrGetProcedureAddress(KexDllHandle, KexFunctionName, 0, &ProxyAddress);
+					else Status = STATUS_UNSUCCESSFUL;
+				}
+
+				if (NT_SUCCESS(Status) && ProxyAddress) {
+					// Replace the IAT entry
+					ImportAddressTable->u1.Function = (ULONG_PTR)ProxyAddress;
+				}
+				ImportAddressTable++;
+				ImportNameTable++;
+			}
+			NtProtectVirtualMemory(NtCurrentProcess(), &iatBase, &IatSize, OldProtect, &OldProtect);
+			AtLeastOneImportWasRewritten = TRUE;
+		}
+	}
+SkipNormalImportRewrite:
+
+	if (AtLeastOneImportWasRewritten) {
+		PIMAGE_DATA_DIRECTORY BoundImportDirectory;
+		PVOID DataDirectoryPtr;
+		SIZE_T DataDirectorySize;
+
+		//
+		// A Bound Import Directory will cause process initialization to fail if we have rewritten
+		// anything. So we simply zero it out.
+		// Bound imports are a performance optimization, but basically we can't use it because
+		// the bound import addresses are dependent on the "real" function addresses within the
+		// imported DLL - and since we have replaced one or more imported DLLs, these pre-calculated
+		// function addresses are no longer valid, so we just have to delete it.
+		//
+
+		BoundImportDirectory = &OptionalHeader->DataDirectory[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT];
+
+		DataDirectoryPtr = BoundImportDirectory;
+		DataDirectorySize = sizeof(IMAGE_DATA_DIRECTORY);
+
+		Status = NtProtectVirtualMemory(
+			NtCurrentProcess(),
+			&DataDirectoryPtr,
+			&DataDirectorySize,
+			PAGE_READWRITE,
+			&OldProtect);
+
+		ASSERT (NT_SUCCESS(Status));
+
+		if (!NT_SUCCESS(Status)) {
+			return Status;
+		}
+
+		// Zero it out.
+		RtlZeroMemory(BoundImportDirectory, sizeof(*BoundImportDirectory));
+
+		Status = NtProtectVirtualMemory(
+			NtCurrentProcess(),
+			&DataDirectoryPtr,
+			&DataDirectorySize,
+			OldProtect,
+			&OldProtect);
+
+		ASSERT (NT_SUCCESS(Status));
+	}
+
+	return STATUS_SUCCESS;
+}
+
 //
 // This function expects Win32 paths.
 //

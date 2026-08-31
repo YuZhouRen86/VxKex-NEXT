@@ -244,8 +244,18 @@ BOOL WINAPI GetPointerDevices(
 
 KXUSERAPI BOOL WINAPI GetPointerType(
 	IN	DWORD				PointerId,
-	OUT	POINTER_INPUT_TYPE	*PointerType)
+	OUT	PPOINTER_INPUT_TYPE	PointerType)
 {
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pGetPointerType) (DWORD, PPOINTER_INPUT_TYPE);
+	pGetPointerType = (BOOL (WINAPI *) (DWORD, PPOINTER_INPUT_TYPE)) GetProcAddress(User32, "GetPointerType");
+	if (pGetPointerType) {
+		BOOL Result = pGetPointerType(PointerId, PointerType);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
+
 	if (PointerType == NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -259,8 +269,18 @@ KXUSERAPI BOOL WINAPI GetPointerType(
 
 KXUSERAPI BOOL WINAPI GetPointerInfo(
 	IN	DWORD			PointerId,
-	OUT	POINTER_INFO	*PointerInfo)
+	OUT	PPOINTER_INFO	PointerInfo)
 {
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pGetPointerInfo) (DWORD, PPOINTER_INFO);
+	pGetPointerInfo = (BOOL (WINAPI *) (DWORD, PPOINTER_INFO)) GetProcAddress(User32, "GetPointerInfo");
+	if (pGetPointerInfo) {
+		BOOL Result = pGetPointerInfo(PointerId, PointerInfo);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
+
 	if (PointerInfo == NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -327,6 +347,16 @@ KXUSERAPI BOOL WINAPI GetPointerTouchInfo(
 {
 	INT Index;
 	PTOUCH_POINT_ENTRY Entry;
+
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pGetPointerTouchInfo) (DWORD, PPOINTER_TOUCH_INFO);
+	pGetPointerTouchInfo = (BOOL (WINAPI *) (DWORD, PPOINTER_TOUCH_INFO)) GetProcAddress(User32, "GetPointerTouchInfo");
+	if (pGetPointerTouchInfo) {
+		BOOL Result = pGetPointerTouchInfo(PointerId, TouchInfo);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
 
 	if (TouchInfo == NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
@@ -446,6 +476,16 @@ KXUSERAPI BOOL WINAPI GetPointerPenInfo(
 {
 	INT Index;
 	PPEN_POINT_ENTRY Entry;
+
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pGetPointerPenInfo) (DWORD, PPOINTER_PEN_INFO);
+	pGetPointerPenInfo = (BOOL (WINAPI *) (DWORD, PPOINTER_PEN_INFO)) GetProcAddress(User32, "GetPointerPenInfo");
+	if (pGetPointerPenInfo) {
+		BOOL Result = pGetPointerPenInfo(PointerId, PenInfo);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
 
 	if (PenInfo == NULL) {
 		SetLastError(ERROR_INVALID_PARAMETER);
@@ -594,6 +634,16 @@ KXUSERAPI BOOL WINAPI SetWindowFeedbackSetting(
 KXUSERAPI BOOL WINAPI IsMouseInPointerEnabled(
 	VOID)
 {
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pIsMouseInPointerEnabled) (VOID);
+	pIsMouseInPointerEnabled = (BOOL (WINAPI *) (VOID)) GetProcAddress(User32, "IsMouseInPointerEnabled");
+	if (pIsMouseInPointerEnabled) {
+		BOOL Result = pIsMouseInPointerEnabled();
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
+
 	return g_MouseInPointerEnabled;
 }
 
@@ -601,6 +651,16 @@ KXUSERAPI BOOL WINAPI EnableMouseInPointer(
 	IN	BOOL	Enabled)
 {
 	STATIC BOOLEAN AlreadyCalled = FALSE;
+
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pEnableMouseInPointer) (BOOL);
+	pEnableMouseInPointer = (BOOL (WINAPI *) (BOOL)) GetProcAddress(User32, "EnableMouseInPointer");
+	if (pEnableMouseInPointer) {
+		BOOL Result = pEnableMouseInPointer(Enabled);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
 
 	// normalize boolean into the range (0,1)
 	Enabled = !!Enabled;

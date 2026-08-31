@@ -361,6 +361,8 @@ STATIC BOOLEAN ProcessWindowMessageInPlace(
 	HWND ParentWindow;
 	ASSERT (Message != NULL);
 
+	if (KexShouldUseWorkaroundsForNewerWindows()) return FALSE;
+
 	if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
 		!(KexData->Flags & KEXDATA_FLAG_QT6) &&
 		Message->message == WM_TOUCH) {
@@ -786,7 +788,7 @@ STATIC LRESULT KxUserDefWindowProcAorW(
 {
 	MSG Msg;
 
-	if (g_WindowMessageInterceptionEnabled == FALSE) {
+	if (g_WindowMessageInterceptionEnabled == FALSE || KexShouldUseWorkaroundsForNewerWindows()) {
 		// Window message interception is not enabled. Do nothing.
 		goto CallOriginalDefWindowProc;
 	}
@@ -981,17 +983,23 @@ KXUSERAPI BOOL WINAPI Ext_RegisterTouchWindow(
 	IN	HWND	Window,
 	IN	ULONG	Flags)
 {
-	BOOL Result = RegisterTouchWindow(Window, Flags);
-	if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)TRUE);
-	return Result;
+	if (KexShouldUseWorkaroundsForNewerWindows()) return RegisterTouchWindow(Window, Flags);
+	else {
+		BOOL Result = RegisterTouchWindow(Window, Flags);
+		if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)TRUE);
+		return Result;
+	}
 }
 
 KXUSERAPI BOOL WINAPI Ext_UnregisterTouchWindow(
 	IN	HWND	Window)
 {
-	BOOL Result = RegisterTouchWindow(Window, 0);
-	if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)FALSE);
-	return Result;
+	if (KexShouldUseWorkaroundsForNewerWindows()) return UnregisterTouchWindow(Window);
+	else {
+		BOOL Result = RegisterTouchWindow(Window, 0);
+		if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)FALSE);
+		return Result;
+	}
 }
 
 KXUSERAPI HWND WINAPI Ext_CreateWindowExA(
@@ -1009,6 +1017,7 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExA(
 	IN	LPVOID		Param)
 {
 	HWND Window = CreateWindowExA(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
+	if (KexShouldUseWorkaroundsForNewerWindows()) return Window;
 	if (Window) Ext_UnregisterTouchWindow(Window);
 	unless(KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
@@ -1034,6 +1043,7 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExW(
 	IN	LPVOID		Param)
 {
 	HWND Window = CreateWindowExW(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
+	if (KexShouldUseWorkaroundsForNewerWindows()) return Window;
 	if (Window) Ext_UnregisterTouchWindow(Window);
 	unless(KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&

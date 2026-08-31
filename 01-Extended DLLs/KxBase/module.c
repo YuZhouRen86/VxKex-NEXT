@@ -292,10 +292,13 @@ KXBASEAPI HMODULE WINAPI Ext_LoadLibraryExW(
 				for (Directory = (PDLL_DIRECTORY_DATA)DllDirectoryData.Next; Directory && Directory->String != NULL; Directory = (PDLL_DIRECTORY_DATA)Directory->Next) {
 					SIZE_T NewFileNameLength = wcslen(FileName) + wcslen(Directory->String) + 2;
 					PWSTR NewFileName = SafeAlloc(WCHAR, NewFileNameLength);
-					StringCchCopy(NewFileName, NewFileNameLength, Directory->String);
-					StringCchCat(NewFileName, NewFileNameLength, L"\\");
-					StringCchCat(NewFileName, NewFileNameLength, FileName);
-					ModuleHandle = LoadLibraryExW(NewFileName, FileHandle, Flags);
+					if (NewFileName) {
+						StringCchCopy(NewFileName, NewFileNameLength, Directory->String);
+						StringCchCat(NewFileName, NewFileNameLength, L"\\");
+						StringCchCat(NewFileName, NewFileNameLength, FileName);
+						ModuleHandle = LoadLibraryExW(NewFileName, FileHandle, Flags);
+						SafeFree(NewFileName);
+					}
 					if (ModuleHandle || GetLastError() != ERROR_MOD_NOT_FOUND) break;
 				}
 

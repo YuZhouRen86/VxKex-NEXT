@@ -314,7 +314,7 @@ NTSTATUS NTAPI Ext_NtMapViewOfSection(
 		AllocationType,
 		MemoryProtection);
 	try {
-		if (DllLoaderInitialized && NT_SUCCESS(Status) && ProcessHandle == GetCurrentProcess() && BaseAddress && *BaseAddress) {
+		if (NT_SUCCESS(Status) && ProcessHandle == GetCurrentProcess() && BaseAddress && *BaseAddress) {
 			PIMAGE_DOS_HEADER DosHeader = (PIMAGE_DOS_HEADER)*BaseAddress;
 			if (ViewSize && *ViewSize >= sizeof(IMAGE_DOS_HEADER) && DosHeader->e_magic == IMAGE_DOS_SIGNATURE && DosHeader->e_lfanew >= sizeof(IMAGE_DOS_HEADER) && *ViewSize >= DosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS)) {
 				PVOID DllBase = *BaseAddress;
@@ -353,8 +353,11 @@ VOID NTAPI KexDllNotificationCallbackForWindows8AndAbove(
 	IN	PCLDR_DLL_NOTIFICATION_DATA	NotificationData,
 	IN	PVOID						Context OPTIONAL)
 {
-	if (!DllLoaderInitialized) {
-		DllLoaderInitialized = TRUE;
+	if (!DllLoaderInitialized && Reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
+		KexRewriteKernelDllImageImportDirectory(
+			NotificationData->DllBase,
+			NotificationData->BaseDllName,
+			NotificationData->FullDllName);
 	}
 }
 
@@ -401,6 +404,19 @@ VOID NTAPI KexDllNotificationCallback(
 
 	if (Reason == LDR_DLL_NOTIFICATION_REASON_LOADED) {
 		BOOLEAN ShouldRewriteImports;
+		STATIC BOOL Kernel32DllLoaded = FALSE;
+		UNICODE_STRING Kernel32DllName, KernelBaseDllName;
+		RtlInitConstantUnicodeString(&Kernel32DllName, L"kernel32.dll");
+		RtlInitConstantUnicodeString(&KernelBaseDllName, L"kernelbase.dll");
+		if (!Kernel32DllLoaded &&
+			RtlEqualUnicodeString(NotificationData->BaseDllName, &Kernel32DllName, TRUE)) {
+			Kernel32DllLoaded = TRUE;
+		}
+		if (!DllLoaderInitialized && Kernel32DllLoaded &&
+			!RtlEqualUnicodeString(NotificationData->BaseDllName, &Kernel32DllName, TRUE) &&
+			!RtlEqualUnicodeString(NotificationData->BaseDllName, &KernelBaseDllName, TRUE)) {
+			DllLoaderInitialized = TRUE;
+		}
 
 		ShouldRewriteImports = KexShouldRewriteStaticImportsOfDll(
 			NotificationData->FullDllName,
@@ -413,10 +429,12 @@ VOID NTAPI KexDllNotificationCallback(
 		}
 
 		if (ShouldRewriteImports) {
-			Status = KexRewriteImageImportDirectory(
-				NotificationData->DllBase,
-				NotificationData->BaseDllName,
-				NotificationData->FullDllName);
+			if (!KexShouldUseWorkaroundsForNewerWindows() || DllLoaderInitialized) {
+				Status = KexRewriteImageImportDirectory(
+					NotificationData->DllBase,
+					NotificationData->BaseDllName,
+					NotificationData->FullDllName);
+			}
 		}
 	}
 }
