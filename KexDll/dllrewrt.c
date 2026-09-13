@@ -582,6 +582,7 @@ KEXAPI BOOLEAN NTAPI KexIsRewriteForcedWindowsDll(
 	UNICODE_STRING WebIo;
 	UNICODE_STRING WinInet;
 	UNICODE_STRING SspiCli;
+	UNICODE_STRING GdiPlus;
 
 	//
 	// If the DLL is WebIO (used by WinHTTP) or WinInet, then we will rewrite
@@ -599,9 +600,18 @@ KEXAPI BOOLEAN NTAPI KexIsRewriteForcedWindowsDll(
 
 	RtlInitConstantUnicodeString(&SspiCli, L"sspicli.dll");
 
+	//
+	// This is used to fix a bug in GDI+ which caused GdipCreateFontFromLogfontA/W
+	// failed with NotTrueTypeFont error and breaks any text rendering after.
+	// See Ext_LoadLibraryExW in KxBase\module.c.
+	//
+
+	RtlInitConstantUnicodeString(&GdiPlus, L"GdiPlus.dll");
+
 	if (RtlEqualUnicodeString(BaseDllName, &WebIo, TRUE) ||
 		RtlEqualUnicodeString(BaseDllName, &WinInet, TRUE) ||
-		RtlEqualUnicodeString(BaseDllName, &SspiCli, TRUE)) {
+		RtlEqualUnicodeString(BaseDllName, &SspiCli, TRUE) ||
+		RtlEqualUnicodeString(BaseDllName, &GdiPlus, TRUE)) {
 
 		return TRUE;
 	}
