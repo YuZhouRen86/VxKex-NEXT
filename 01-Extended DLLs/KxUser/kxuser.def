@@ -129,6 +129,8 @@ EXPORTS
 	GetPointerDeviceRects
 	EnableMouseInPointer
 	IsMouseInPointerEnabled
+	InitializeTouchInjection
+	InjectTouchInput
 	RegisterPointerDeviceNotifications
 	GetWindowFeedbackSetting
 	SetWindowFeedbackSetting
