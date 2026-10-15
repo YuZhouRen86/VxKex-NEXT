@@ -25,28 +25,28 @@ EXPORTS
 	;;BluetoothEnumerateInstalledServicesEx
 	;;BluetoothFindBrowseGroupClose
 	;;BluetoothFindClassIdClose
-	;;BluetoothFindDeviceClose
+	BluetoothFindDeviceClose
 	;;BluetoothFindFirstBrowseGroup
 	;;BluetoothFindFirstClassId
-	;;BluetoothFindFirstDevice
+	BluetoothFindFirstDevice
 	;;BluetoothFindFirstProfileDescriptor
 	;;BluetoothFindFirstProtocolDescriptorStack
 	;;BluetoothFindFirstProtocolEntry
-	;;BluetoothFindFirstRadio
+	BluetoothFindFirstRadio
 	;;BluetoothFindFirstService
 	;;BluetoothFindFirstServiceEx
 	;;BluetoothFindNextBrowseGroup
 	;;BluetoothFindNextClassId
-	;;BluetoothFindNextDevice
+	BluetoothFindNextDevice
 	;;BluetoothFindNextProfileDescriptor
 	;;BluetoothFindNextProtocolDescriptorStack
 	;;BluetoothFindNextProtocolEntry
-	;;BluetoothFindNextRadio
+	BluetoothFindNextRadio
 	;;BluetoothFindNextService
 	;;BluetoothFindProfileDescriptorClose
 	;;BluetoothFindProtocolDescriptorStackClose
 	;;BluetoothFindProtocolEntryClose
-	;;BluetoothFindRadioClose
+	BluetoothFindRadioClose
 	;;BluetoothFindServiceClose
 	;;BluetoothGetDeviceInfo
 	;;BluetoothGetRadioInfo
