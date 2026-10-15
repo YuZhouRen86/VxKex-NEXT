@@ -64,7 +64,7 @@ PWSTR GetDeviceFriendlyName(
 	if (DeviceInfoSet == INVALID_HANDLE_VALUE) goto Exit;
 
 	DeviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-	if (!SetupDiOpenDeviceInfoW(DeviceInfoSet, TargetInstanceId, NULL, 0, &DeviceInfoData)) return NULL;
+	if (!SetupDiOpenDeviceInfoW(DeviceInfoSet, TargetInstanceId, NULL, 0, &DeviceInfoData)) goto Exit;
 	Success = SetupDiGetDeviceRegistryPropertyW(
 		DeviceInfoSet,
 		&DeviceInfoData,
@@ -84,8 +84,7 @@ Exit:
 #pragma warning(pop)
 }
 
-
-BOOL WINAPI GetPointerDevices(
+KXUSERAPI BOOL WINAPI GetPointerDevices(
 	IN OUT	PUINT32					DeviceCount,
 	OUT		PPOINTER_DEVICE_INFO	PointerDevices)
 {
@@ -683,6 +682,52 @@ KXUSERAPI BOOL WINAPI EnableMouseInPointer(
 	}
 
 	return TRUE;
+}
+
+KXUSERAPI BOOL WINAPI InitializeTouchInjection(
+	IN	UINT32	MaxCount,
+	IN	DWORD	Mode)
+{
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pInitializeTouchInjection) (UINT32, DWORD);
+	pInitializeTouchInjection = (BOOL (WINAPI *) (UINT32, DWORD)) GetProcAddress(User32, "InitializeTouchInjection");
+	if (pInitializeTouchInjection) {
+		BOOL Result = pInitializeTouchInjection(MaxCount, Mode);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
+
+	if (MaxCount == 0 || MaxCount > 256) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
+}
+
+KXUSERAPI BOOL WINAPI InjectTouchInput(
+	IN	UINT32					Count,
+	IN	PCPOINTER_TOUCH_INFO	Contacts)
+{
+	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
+	BOOL (WINAPI *pInjectTouchInput) (UINT32, PCPOINTER_TOUCH_INFO);
+	pInjectTouchInput = (BOOL (WINAPI *) (UINT32, PCPOINTER_TOUCH_INFO)) GetProcAddress(User32, "InjectTouchInput");
+	if (pInjectTouchInput) {
+		BOOL Result = pInjectTouchInput(Count, Contacts);
+		FreeLibrary(User32);
+		return Result;
+	}
+	FreeLibrary(User32);
+
+	if (Count == 0 || Count > 256 || Contacts == NULL) {
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return FALSE;
 }
 
 VOID InitializeTouchAndPenPoints(
