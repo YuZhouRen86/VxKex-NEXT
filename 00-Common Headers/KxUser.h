@@ -58,12 +58,28 @@ typedef ULONG_PTR DPI_AWARENESS_CONTEXT;
 #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2	((DPI_AWARENESS_CONTEXT) -4)
 #define DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED		((DPI_AWARENESS_CONTEXT) -5)
 
+//
+// These values must match the Windows SDK exactly. They are not an arbitrary
+// local enumeration: they are handed to applications, which were compiled
+// against the SDK's definition and compare the returned value against it.
+//
+// The SDK numbers this enumeration from 1, not from 0:
+//
+//   PT_POINTER  = 1,  PT_TOUCH = 2,  PT_PEN = 3,  PT_MOUSE = 4,  PT_TOUCHPAD = 5
+//
+// This header previously started at 0, which made every value one lower than
+// what callers expect. GetPointerType would report "PT_TOUCH" as 1, and a
+// caller compiled against the SDK would read 1 as PT_POINTER and take its
+// default branch. That is exactly how Chromium's OnPointerEvent behaved: it
+// received 1, found neither PT_PEN nor PT_TOUCH, and declined every pointer
+// message the touch shim synthesized.
+//
 typedef enum _POINTER_INPUT_TYPE {
-	PT_POINTER,
-	PT_TOUCH,
-	PT_PEN,
-	PT_MOUSE,
-	PT_TOUCHPAD
+	PT_POINTER	= 1,
+	PT_TOUCH	= 2,
+	PT_PEN		= 3,
+	PT_MOUSE	= 4,
+	PT_TOUCHPAD	= 5
 } TYPEDEF_TYPE_NAME(POINTER_INPUT_TYPE);
 
 typedef enum _POINTER_BUTTON_CHANGE_TYPE {

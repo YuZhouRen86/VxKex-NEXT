@@ -50,6 +50,27 @@ typedef struct _PEN_POINT_ENTRY {
 } TYPEDEF_TYPE_NAME(PEN_POINT_ENTRY);
 
 //
+// Tri-state registration status of a window for touch input. This is stored in
+// the "VxKex_NEXT_Touch_Window_State" window property.
+//
+// The application-registered state must be kept separate from the VxKex-
+// registered state: when the application registers the window itself, its own
+// window procedure is expected to handle WM_TOUCH and our translation layer must
+// stay out of the way. When VxKex registered it on the application's behalf,
+// there is nobody else to consume WM_TOUCH, so the translation layer must run.
+//
+// Mixing the two up is catastrophic in one direction only: if VxKex's own
+// registration were recorded as "application registered", ProcessTouchMessage
+// would skip every WM_TOUCH it was supposed to translate and the entire touch
+// pipeline would silently do nothing.
+//
+typedef enum _KXUSER_TOUCH_REGISTRATION_STATE {
+	TouchRegistrationNone = 0,
+	TouchRegistrationByApplication = 1,
+	TouchRegistrationByVxKex = 2
+} KXUSER_TOUCH_REGISTRATION_STATE;
+
+//
 // loadsyslib.c
 //
 
@@ -79,6 +100,16 @@ PTOUCH_POINT_ENTRY FindOrCreateTouchPoint(
 VOID DeactivateTouchPoint(
 	DWORD	PointerId);
 
+//
+// Releases a cached touch point, writing the supplied (already rebuilt) score
+// back first. DeactivateTouchPoint on its own only ORs POINTER_FLAG_UP into the
+// cached flags, which leaves the POINTER_FLAG_DOWN bit set from the way down and
+// makes the release indistinguishable from a fresh press.
+//
+VOID ReleaseTouchPoint(
+	DWORD					PointerId,
+	PCPOINTER_TOUCH_INFO	TouchInfo);
+
 VOID RemoveTouchPoint(
 	DWORD	PointerId);
 
@@ -87,6 +118,10 @@ PPEN_POINT_ENTRY FindOrCreatePenPoint(
 
 VOID DeactivatePenPoint(
 	DWORD	PointerId);
+
+VOID ReleasePenPoint(
+	DWORD				PointerId,
+	PCPOINTER_PEN_INFO	PenInfo);
 
 VOID RemovePenPoint(
 	DWORD	PointerId);
@@ -98,6 +133,11 @@ PVOID FindOrCreateTouchOrPenPoint(
 VOID DeactivateTouchOrPenPoint(
 	DWORD	PointerId,
 	BOOL	IsPenMessage);
+
+VOID ReleaseTouchOrPenPoint(
+	DWORD	PointerId,
+	BOOL	IsPenMessage,
+	PVOID	PointInfo);
 
 VOID RemoveTouchOrPenPoint(
 	DWORD	PointerId,
