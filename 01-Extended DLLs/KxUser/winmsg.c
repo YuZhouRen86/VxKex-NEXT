@@ -36,12 +36,76 @@
 #include "kxuserp.h"
 #include <WindowsX.h>
 
+//
+// This file contains the fixes made by rsp4jack.
+// Pull request link: https://github.com/YuZhouRen86/VxKex-NEXT/pull/485
+//
+
+//
+// buildcfg.h defines NOWINSTYLES, so the WS_* style constants are not declared
+// in this translation unit. Only this one is needed here; it is a stable value
+// that has been part of the SDK since the first release of Windows NT.
+//
+#ifndef WS_CHILD
+#  define WS_CHILD			0x40000000L
+#endif
+
 #define GET_POINTERID_WPARAM(wParam) ((UINT)(wParam) & 0xFFFF)
 
 STATIC BOOLEAN g_WindowMessageInterceptionEnabled = FALSE;
 STATIC PFN_DISPATCH g_pfnDWORD = NULL;
 STATIC ULONGLONG LastGestureNotifyTimeStamp_100ns = 0;
 STATIC LPARAM LastPointerLParam = 0;
+
+//
+// Non-zero while we are inside SendMessage() synthesizing a WM_POINTERxxx
+// message on behalf of a WM_TOUCH message.
+//
+// There are two translation paths that point in opposite directions:
+//
+//   ProcessWindowMessageInPlace   WM_LBUTTONDOWN -> WM_POINTERDOWN  (forward)
+//   KxUserDefWindowProcAorW       WM_POINTERDOWN -> WM_LBUTTONDOWN  (reverse)
+//
+// If the application lets our synthesized pointer message fall through to
+// DefWindowProc, the reverse path turns it back into a mouse message, and the
+// forward path may in turn turn that mouse message into another pointer message.
+// The result is duplicated input, or an outright loop. Both paths check this
+// counter and stand down while it is set, so a synthesized message is never
+// re-translated in either direction.
+//
+STATIC volatile LONG g_SynthesizingPointerMessage = 0;
+
+//
+// Sends a pointer message that we synthesized ourselves, with the re-entrancy
+// guard held for the duration of the call.
+//
+STATIC LRESULT SendSynthesizedPointerMessage(
+	IN	HWND	Window,
+	IN	UINT	Message,
+	IN	WPARAM	WParam,
+	IN	LPARAM	LParam)
+{
+	LRESULT Result;
+
+	InterlockedIncrement(&g_SynthesizingPointerMessage);
+
+	// An exception here is impossible in practice, but the guard must not be
+	// left set if the call unwinds, otherwise all message translation would be
+	// permanently disabled for the process.
+	try {
+		Result = SendMessage(Window, Message, WParam, LParam);
+	} finally {
+		InterlockedDecrement(&g_SynthesizingPointerMessage);
+	}
+
+	return Result;
+}
+
+STATIC BOOLEAN IsSynthesizingPointerMessage(
+	VOID)
+{
+	return g_SynthesizingPointerMessage != 0;
+}
 
 #define VXKEX_DEFAULT_POINTER_FLAGS ( \
 	POINTER_FLAG_PRIMARY | \
@@ -183,6 +247,119 @@ STATIC ULONGLONG GetCurrentTimeStamp_100ns(
 }
 
 //
+// Touch window registration bookkeeping.
+//
+// The state is kept in a window property rather than in a global table so that
+// it is destroyed together with the window and so that ProcessTouchMessage can
+// walk the ancestor chain cheaply.
+//
+STATIC KXUSER_TOUCH_REGISTRATION_STATE GetTouchRegistrationState(
+	IN	HWND	Window)
+{
+	return (KXUSER_TOUCH_REGISTRATION_STATE) (ULONG_PTR)
+		GetProp(Window, L"VxKex_NEXT_Touch_Window_State");
+}
+
+STATIC VOID SetTouchRegistrationState(
+	IN	HWND							Window,
+	IN	KXUSER_TOUCH_REGISTRATION_STATE	State)
+{
+	if (State == TouchRegistrationNone) {
+		RemoveProp(Window, L"VxKex_NEXT_Touch_Window_State");
+	} else {
+		SetProp(Window, L"VxKex_NEXT_Touch_Window_State", (HANDLE) (ULONG_PTR) State);
+	}
+}
+
+//
+// Registers a window for touch input on behalf of the application.
+//
+// The window is marked as VxKex-registered, which is what tells
+// ProcessTouchMessage that it is the one responsible for translating this
+// window's WM_TOUCH messages. Deliberately does not call
+// Ext_RegisterTouchWindow: that function records the application-registered
+// state, which would make ProcessTouchMessage skip our own messages.
+//
+STATIC BOOLEAN RegisterTouchWindowForApplication(
+	IN	HWND	Window)
+{
+	KXUSER_TOUCH_REGISTRATION_STATE State = GetTouchRegistrationState(Window);
+	BOOL Result;
+
+	// Never override a registration that the application made for itself.
+	if (State == TouchRegistrationByApplication) return TRUE;
+
+	Result = RegisterTouchWindow(Window, TWF_WANTPALM);
+	if (!Result) return FALSE;
+
+	SetTouchRegistrationState(Window, TouchRegistrationByVxKex);
+	return TRUE;
+}
+
+//
+// Chromium's actual input target is not the top level window but the child
+// window that hosts the renderer, class Chrome_RenderWidgetHostHWND.
+//
+// Whether the kernel promotes a touch on an unregistered child to its
+// registered top level ancestor, or simply gives up and synthesizes a mouse
+// message, is not documented and cannot be settled by reading the source. When
+// it gives up, only registering the top level window would look like a working
+// registration that never receives anything.
+//
+// Registering this one child as well covers that case. The rule is deliberately
+// limited to Chromium's render widget class rather than applying to child
+// windows in general: registering arbitrary child windows (edit controls and so
+// on) would change their IsTouchWindow semantics for no benefit.
+//
+STATIC BOOLEAN IsChromiumRenderWidgetWindow(
+	IN	HWND	Window)
+{
+	WCHAR ClassName[64];
+
+	if (GetClassNameW(Window, ClassName, ARRAYSIZE(ClassName)) == 0) return FALSE;
+
+	return StringEqualW(ClassName, L"Chrome_RenderWidgetHostHWND");
+}
+
+STATIC BOOLEAN ShouldRegisterTouchWindowForApplication(
+	IN	HWND	Window,
+	IN	ULONG	Style)
+{
+	if (!Window) return FALSE;
+	if (!(KexData->Flags & KEXDATA_FLAG_CHROMIUM)) return FALSE;
+	if (KexData->Flags & KEXDATA_FLAG_QT6) return FALSE;
+	if (KexData->IfeoParameters.DisableAppSpecific) return FALSE;
+
+	// Already registered, by us or by the application. Nothing to do.
+	if (GetTouchRegistrationState(Window) != TouchRegistrationNone) return FALSE;
+
+	// The renderer host window, even though it is a child window. See the
+	// comment on IsChromiumRenderWidgetWindow.
+	if (IsChromiumRenderWidgetWindow(Window)) return TRUE;
+
+	//
+	// Otherwise register any window that is not a child window.
+	//
+	// Two exclusions are deliberately absent here, and both cost a debugging
+	// round to find:
+	//
+	// WS_EX_TOOLWINDOW is included on purpose. Chromium implements its menus and
+	// bubbles as tool windows, so excluding them left those surfaces with no
+	// touch input at all.
+	//
+	// GetParent() must not be used as a "is this top level" test. For a top
+	// level window with WS_POPUP, GetParent returns the *owner*, not NULL. So
+	// every Chromium popup -- the main window's menus, the restore-pages bubble,
+	// any dialog owned by the browser -- looked like a child here and was
+	// skipped. WS_CHILD is the reliable discriminator: owned popups do not carry
+	// it.
+	//
+	if (Style & WS_CHILD) return FALSE;
+
+	return TRUE;
+}
+
+//
 // Converts a WM_TOUCH message into one or more WM_POINTER* messages
 // (DOWN, UP, UPDATE) and updates the internal touch point cache.
 // Returns TRUE if the original WM_TOUCH message was consumed (set to
@@ -218,10 +395,22 @@ STATIC BOOLEAN ProcessTouchMessage(
 
 	for (Index = 0; Index < CInputs; Index++) {
 		TOUCHINPUT *Ti = &Inputs[Index];
-		DWORD PointerId = Ti->dwID;   // Touch identifier, usually > 0
+		//
+		// Chromium reconstructs the pointer id from wParam with
+		// GET_POINTERID_WPARAM, which keeps only the low 16 bits. Our cache is
+		// looked up with the id taken from that same wParam, so the cache must
+		// store the truncated id. If the driver reports an id with the high bits
+		// set, normalizing here is what keeps the cache lookup and the message
+		// consistent.
+		//
+		DWORD PointerId = Ti->dwID & 0xFFFF;
 
-		// Convert himetric coordinates to screen pixels.
+		//
+		// TOUCHINPUT.x/y are screen coordinates in units of 1/100 pixel;
+		// TOUCH_COORD_TO_PIXEL is exactly this division.
+		//
 		POINT Pt = {Ti->x / 100, Ti->y / 100};
+		POINT LogicalPt;
 
 		UINT MessageType = 0;
 		DWORD PointerFlags = POINTER_FLAG_FIRSTBUTTON | POINTER_FLAG_INRANGE | POINTER_FLAG_CONFIDENCE;//VXKEX_DEFAULT_POINTER_FLAGS;
@@ -230,12 +419,26 @@ STATIC BOOLEAN ProcessTouchMessage(
 		POINTER_INFO Info;
 		POINTER_TOUCH_INFO TouchInfo;
 		POINTER_PEN_INFO PenInfo;
-		BOOL IsPenMessage = TRUE;//Ti->dwFlags & TOUCHEVENTF_PEN;
+
+		//
+		// Win7 reports pens through the same WM_TOUCH pipeline, distinguished by
+		// TOUCHEVENTF_PEN. Treating everything as a pen (the previous behaviour)
+		// put the data in the pen cache while Chromium looked for it in the
+		// touch cache, so GetPointerTouchInfo could never find it.
+		//
+		BOOL IsPenMessage = (Ti->dwFlags & TOUCHEVENTF_PEN) != 0;
 
 		if (Index == 0) PointerFlags |= POINTER_FLAG_PRIMARY;
 
-		// Use PhysicalToLogicalPoint for proper DPI scaling.
-		PhysicalToLogicalPoint(Hwnd, &Pt);
+		//
+		// PhysicalToLogicalPoint requires a per-monitor DPI aware process; for
+		// anything else it is a no-op. Only ptPixelLocation gets the logical
+		// value: ptPixelLocationRaw must stay in physical screen coordinates
+		// because Chromium reads *that* field and applies ScreenToClient itself.
+		// Writing a scaled value into the raw field would scale twice.
+		//
+		LogicalPt = Pt;
+		PhysicalToLogicalPoint(Hwnd, &LogicalPt);
 
 		RtlZeroMemory(&Info, sizeof(Info));
 		RtlZeroMemory(&TouchInfo, sizeof(TouchInfo));
@@ -243,8 +446,8 @@ STATIC BOOLEAN ProcessTouchMessage(
 
 		Info.pointerType = (IsPenMessage) ? PT_PEN : PT_TOUCH;
 		Info.pointerId = PointerId;
-		Info.ptPixelLocation = Pt;
-		Info.ptHimetricLocation = Pt;
+		Info.ptPixelLocation = LogicalPt;
+		Info.ptHimetricLocation = LogicalPt;
 		Info.ptPixelLocationRaw = Pt;
 		Info.ptHimetricLocationRaw = Pt;
 		Info.dwTime = Ti->dwTime;
@@ -268,13 +471,16 @@ STATIC BOOLEAN ProcessTouchMessage(
 			TouchInfo.pointerInfo = Info;
 			TouchInfo.touchFlags = 0;
 			TouchInfo.touchMask = 0;
-			// Rough contact rectangle (5 pixels around the point)
-			TouchInfo.rcContact.left = Pt.x - 5;
-			TouchInfo.rcContact.right = Pt.x + 5;
-			TouchInfo.rcContact.top = Pt.y - 5;
-			TouchInfo.rcContact.bottom = Pt.y + 5;
+			// Rough contact rectangle (8 pixels around the point). Note that
+			// Info was copied into TouchInfo above, before pointerFlags is
+			// filled in, so the flags must be written to the copy.
+			TouchInfo.rcContact.left = Pt.x - 8;
+			TouchInfo.rcContact.right = Pt.x + 8;
+			TouchInfo.rcContact.top = Pt.y - 8;
+			TouchInfo.rcContact.bottom = Pt.y + 8;
+			TouchInfo.rcContactRaw = TouchInfo.rcContact;
 			TouchInfo.orientation = 0;
-			TouchInfo.pressure = 10;   // Arbitrary pressure value
+			TouchInfo.pressure = 512;   // Arbitrary non-zero pressure
 		}
 
 		if (Ti->dwFlags & TOUCHEVENTF_DOWN) {
@@ -296,10 +502,33 @@ STATIC BOOLEAN ProcessTouchMessage(
 				}
 			}
 		} else if (Ti->dwFlags & TOUCHEVENTF_UP) {
+			PVOID Entry;
 			MessageType = WM_POINTERUP;
 
-			// Deactivate the point from cache
-			DeactivateTouchOrPenPoint(PointerId, IsPenMessage);
+			//
+			// Rebuild the flags instead of OR-ing POINTER_FLAG_UP into whatever
+			// was cached on the way down.
+			//
+			// DeactivateTouchOrPenPoint only does `pointerFlags |= UP`, so the
+			// DOWN bit written on contact would survive into the up event. Both
+			// GetTouchEventType and our own reverse translation test DOWN first,
+			// so the release would be read as a *new press* on the same id:
+			// clicks would never close and the renderer's id generator would
+			// never release the id.
+			//
+			PointerFlags &= ~(POINTER_FLAG_DOWN | POINTER_FLAG_UPDATE | POINTER_FLAG_INCONTACT);
+			PointerFlags |= POINTER_FLAG_UP;
+
+			Entry = FindOrCreateTouchOrPenPoint(PointerId, IsPenMessage);
+			if (Entry) {
+				if (IsPenMessage) {
+					PenInfo.pointerInfo.pointerFlags = PointerFlags;
+					ReleaseTouchOrPenPoint(PointerId, TRUE, &PenInfo);
+				} else {
+					TouchInfo.pointerInfo.pointerFlags = PointerFlags;
+					ReleaseTouchOrPenPoint(PointerId, FALSE, &TouchInfo);
+				}
+			}
 		} else if (Ti->dwFlags & TOUCHEVENTF_MOVE) {
 			PVOID Entry;
 			PointerFlags |= POINTER_FLAG_UPDATE | POINTER_FLAG_INCONTACT;
@@ -326,7 +555,7 @@ STATIC BOOLEAN ProcessTouchMessage(
 		// Send the synthesized pointer message to the target window
 		// We use SendMessage to preserve order; it will not re-enter our hook
 		// because the hook is called during message retrieval, not during dispatch.
-		SendMessage(Hwnd, MessageType,
+		SendSynthesizedPointerMessage(Hwnd, MessageType,
 			MAKEWPARAM(PointerId, PointerFlags),
 			MAKELPARAM(Pt.x, Pt.y));
 	}
@@ -357,18 +586,33 @@ STATIC BOOLEAN ProcessWindowMessageInPlace(
 	IN OUT	PMSG	Message,
 	IN		BOOLEAN	Unicode)
 {
-	BOOL RegisteredTouchWindow = FALSE;
+	BOOLEAN RegisteredTouchWindow = FALSE;
 	HWND ParentWindow;
 	ASSERT (Message != NULL);
 
 	if (KexShouldUseWorkaroundsForNewerWindows()) return FALSE;
 
+	//
+	// A pointer message that we synthesized ourselves must never be translated
+	// back into a mouse message here, or we would feed our own output back into
+	// the pipeline.
+	//
+	if (IsSynthesizingPointerMessage()) return FALSE;
+
 	if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
 		!(KexData->Flags & KEXDATA_FLAG_QT6) &&
 		Message->message == WM_TOUCH) {
 
+		//
+		// If the application registered touch input for this window or any of
+		// its ancestors, its own window procedure is responsible for WM_TOUCH
+		// and we must not consume the message.
+		//
+		// Only an application-made registration counts here. A VxKex-made one
+		// means there is nobody else to translate the message, so we proceed.
+		//
 		for (ParentWindow = Message->hwnd; ParentWindow != NULL; ParentWindow = GetParent(ParentWindow)) {
-			if (GetProp(ParentWindow, L"VxKex_NEXT_Touch_Window_Registered")) {
+			if (GetTouchRegistrationState(ParentWindow) == TouchRegistrationByApplication) {
 				RegisteredTouchWindow = TRUE;
 				break;
 			}
@@ -793,6 +1037,19 @@ STATIC LRESULT KxUserDefWindowProcAorW(
 		goto CallOriginalDefWindowProc;
 	}
 
+	//
+	// Do not turn a pointer message that we synthesized back into a mouse
+	// message. This is the reverse half of the loop prevention described at
+	// g_SynthesizingPointerMessage.
+	//
+	// Note that this must sit after the interception check above: for a process
+	// with interception disabled there is no loop to prevent, and skipping
+	// straight to DefWindowProc would change existing behaviour.
+	//
+	if (IsSynthesizingPointerMessage()) {
+		goto CallOriginalDefWindowProc;
+	}
+
 	KexRtlZeroMemory(&Msg, sizeof(Msg));
 	Msg.hwnd = Window;
 	Msg.message = Message;
@@ -986,7 +1243,13 @@ KXUSERAPI BOOL WINAPI Ext_RegisterTouchWindow(
 	if (KexShouldUseWorkaroundsForNewerWindows()) return RegisterTouchWindow(Window, Flags);
 	else {
 		BOOL Result = RegisterTouchWindow(Window, Flags);
-		if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)TRUE);
+
+		//
+		// This is the application registering itself, so record it as such:
+		// ProcessTouchMessage must stay out of the way of a window whose owner
+		// handles WM_TOUCH on its own.
+		//
+		if (Result) SetTouchRegistrationState(Window, TouchRegistrationByApplication);
 		return Result;
 	}
 }
@@ -996,8 +1259,13 @@ KXUSERAPI BOOL WINAPI Ext_UnregisterTouchWindow(
 {
 	if (KexShouldUseWorkaroundsForNewerWindows()) return UnregisterTouchWindow(Window);
 	else {
-		BOOL Result = RegisterTouchWindow(Window, 0);
-		if (Result) SetProp(Window, L"VxKex_NEXT_Touch_Window_Registered", (HANDLE)FALSE);
+		//
+		// This used to call RegisterTouchWindow(Window, 0), which registers the
+		// window with flags 0 rather than unregistering it, so the function was
+		// effectively a no-op that also destroyed the registration state.
+		//
+		BOOL Result = UnregisterTouchWindow(Window);
+		if (Result) SetTouchRegistrationState(Window, TouchRegistrationNone);
 		return Result;
 	}
 }
@@ -1018,13 +1286,23 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExA(
 {
 	HWND Window = CreateWindowExA(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
 	if (KexShouldUseWorkaroundsForNewerWindows()) return Window;
-	if (Window) Ext_UnregisterTouchWindow(Window);
 	unless(KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
 			!(KexData->Flags & KEXDATA_FLAG_QT6)) {
 			EnableWindowMessageInterception();
 		}
 	}
+
+	//
+	// Chromium stopped calling RegisterTouchWindow upstream, and without a
+	// registration the system never delivers WM_TOUCH at all, so the whole touch
+	// translation pipeline has no input to work with. Register the window on the
+	// application's behalf.
+	//
+	if (ShouldRegisterTouchWindowForApplication(Window, Style)) {
+		RegisterTouchWindowForApplication(Window);
+	}
+
 	return Window;
 }
 
@@ -1044,12 +1322,19 @@ KXUSERAPI HWND WINAPI Ext_CreateWindowExW(
 {
 	HWND Window = CreateWindowExW(ExStyle, ClassName, WindowName, Style, X, Y, Width, Height, WndParent, Menu, Instance, Param);
 	if (KexShouldUseWorkaroundsForNewerWindows()) return Window;
-	if (Window) Ext_UnregisterTouchWindow(Window);
 	unless(KexData->IfeoParameters.DisableAppSpecific) {
 		if ((KexData->Flags & KEXDATA_FLAG_CHROMIUM) &&
 			!(KexData->Flags & KEXDATA_FLAG_QT6)) {
 			EnableWindowMessageInterception();
 		}
 	}
+
+	//
+	// See the comment in Ext_CreateWindowExA.
+	//
+	if (ShouldRegisterTouchWindowForApplication(Window, Style)) {
+		RegisterTouchWindowForApplication(Window);
+	}
+
 	return Window;
 }

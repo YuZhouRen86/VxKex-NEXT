@@ -241,6 +241,74 @@ KXUSERAPI BOOL WINAPI GetPointerDevices(
 	return TRUE;
 }
 
+//
+// Decides the pointer type that we report for a pointer id that the system
+// knows nothing about (Win7 has no pointer stack, so every id we are asked
+// about came from our own translation layer).
+//
+// The two answers here are chosen so that they are numerically identical to
+// what this function, and GetPointerType before it, have always returned: 4 and
+// 2.
+//
+// Id 0 is the system mouse pointer that our mouse to pointer translation uses,
+// so it really is PT_MOUSE. Everything else is a contact reported through
+// WM_TOUCH, so it really is PT_TOUCH.
+//
+// A cached entry still outranks this; see GetCachedPointerType.
+//
+STATIC POINTER_INPUT_TYPE GetFallbackPointerType(
+	IN	DWORD	PointerId)
+{
+	if (PointerId == 0) return PT_MOUSE;
+
+	return PT_TOUCH;
+}
+
+//
+// The cached entry is the authority on whether an id is a touch point or a pen
+// point, and it outranks the per-process default above.
+//
+// The two have to agree. A genuine pen contact is stored in the pen cache (see
+// TOUCHEVENTF_PEN handling in ProcessTouchMessage), so reporting PT_TOUCH for it
+// would send Chromium to the touch cache, where GetPointerTouchInfo would come
+// back empty and the event would be dropped.
+//
+STATIC BOOLEAN GetCachedPointerType(
+	IN	DWORD					PointerId,
+	OUT	PPOINTER_INPUT_TYPE		PointerType)
+{
+	INT Index;
+	BOOLEAN Found = FALSE;
+
+	if (!g_TouchAndPenPointsInitialized) return FALSE;
+
+	EnterCriticalSection(&g_TouchPointsLock);
+	EnterCriticalSection(&g_PenPointsLock);
+
+	for (Index = 0; Index < MAX_TOUCH_POINTS; Index++) {
+		if (g_TouchPoints[Index].Valid && g_TouchPoints[Index].PointerId == PointerId) {
+			*PointerType = PT_TOUCH;
+			Found = TRUE;
+			break;
+		}
+	}
+
+	if (!Found) {
+		for (Index = 0; Index < MAX_PEN_POINTS; Index++) {
+			if (g_PenPoints[Index].Valid && g_PenPoints[Index].PointerId == PointerId) {
+				*PointerType = PT_PEN;
+				Found = TRUE;
+				break;
+			}
+		}
+	}
+
+	LeaveCriticalSection(&g_PenPointsLock);
+	LeaveCriticalSection(&g_TouchPointsLock);
+
+	return Found;
+}
+
 KXUSERAPI BOOL WINAPI GetPointerType(
 	IN	DWORD				PointerId,
 	OUT	PPOINTER_INPUT_TYPE	PointerType)
@@ -259,10 +327,15 @@ KXUSERAPI BOOL WINAPI GetPointerType(
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	// For some reason we have to set this, and all other pointer type requests,
-	// to touchpad pointer type or otherwise Unity doesn't work.
-	if (PointerId == 0)	*PointerType = PT_TOUCHPAD;
-	else *PointerType = PT_PEN;
+
+	{
+		BOOLEAN FromCache = GetCachedPointerType(PointerId, PointerType);
+
+		if (!FromCache) {
+			*PointerType = GetFallbackPointerType(PointerId);
+		}
+	}
+
 	return TRUE;
 }
 
@@ -285,7 +358,8 @@ KXUSERAPI BOOL WINAPI GetPointerInfo(
 		return FALSE;
 	}
 	if (PointerId == 0) {
-		PointerInfo->pointerType = PT_TOUCHPAD;
+		// id 0 is the system mouse pointer. See GetFallbackPointerType.
+		PointerInfo->pointerType = PT_MOUSE;
 		PointerInfo->pointerId = PointerId;
 		PointerInfo->frameId = 0;
 		PointerInfo->pointerFlags = POINTER_FLAG_NONE;
@@ -332,6 +406,13 @@ KXUSERAPI BOOL WINAPI GetPointerInfo(
 		} else {
 			PTOUCH_POINT_ENTRY TouchPointEntry = (PTOUCH_POINT_ENTRY)Entry;
 			*PointerInfo = TouchPointEntry->TouchInfo.pointerInfo;
+			//
+			// Keep the reported type consistent with GetPointerType. The cached
+			// entry carries whatever pointerType was set when the message was
+			// synthesized, but the entry itself is the authority on whether this
+			// id is a touch or a pen point.
+			//
+			PointerInfo->pointerType = PT_TOUCH;
 		}
 		LeaveCriticalSection(&g_TouchPointsLock);
 		LeaveCriticalSection(&g_PenPointsLock);
@@ -346,7 +427,6 @@ KXUSERAPI BOOL WINAPI GetPointerTouchInfo(
 {
 	INT Index;
 	PTOUCH_POINT_ENTRY Entry;
-
 	HMODULE User32 = LoadSystemLibrary(L"user32.dll");
 	BOOL (WINAPI *pGetPointerTouchInfo) (DWORD, PPOINTER_TOUCH_INFO);
 	pGetPointerTouchInfo = (BOOL (WINAPI *) (DWORD, PPOINTER_TOUCH_INFO)) GetProcAddress(User32, "GetPointerTouchInfo");
@@ -790,6 +870,32 @@ VOID DeactivateTouchPoint(
 	LeaveCriticalSection(&g_TouchPointsLock);
 }
 
+VOID ReleaseTouchPoint(
+	DWORD					PointerId,
+	PCPOINTER_TOUCH_INFO	TouchInfo)
+{
+	INT Index;
+	EnterCriticalSection(&g_TouchPointsLock);
+	for (Index = 0; Index < MAX_TOUCH_POINTS; Index++) {
+		if (g_TouchPoints[Index].Valid && g_TouchPoints[Index].PointerId == PointerId) {
+			//
+			// Overwrite rather than merge: the incoming structure carries a
+			// rebuild flags field plus the coordinates of the release itself.
+			//
+			// Valid stays TRUE on purpose. GetPointerTouchInfo looks entries up
+			// by Valid alone, and the lookup happens while the WM_POINTERUP we
+			// are about to send is being handled, so the entry has to remain
+			// findable. Active going FALSE is what lets the slot be reused by the
+			// next press.
+			//
+			g_TouchPoints[Index].TouchInfo = *TouchInfo;
+			g_TouchPoints[Index].Active = FALSE;
+			break;
+		}
+	}
+	LeaveCriticalSection(&g_TouchPointsLock);
+}
+
 VOID RemoveTouchPoint(
 	DWORD	PointerId)
 {
@@ -844,6 +950,23 @@ VOID DeactivatePenPoint(
 	LeaveCriticalSection(&g_PenPointsLock);
 }
 
+VOID ReleasePenPoint(
+	DWORD				PointerId,
+	PCPOINTER_PEN_INFO	PenInfo)
+{
+	INT Index;
+	EnterCriticalSection(&g_PenPointsLock);
+	for (Index = 0; Index < MAX_PEN_POINTS; Index++) {
+		if (g_PenPoints[Index].Valid && g_PenPoints[Index].PointerId == PointerId) {
+			// See ReleaseTouchPoint for why this overwrites and why Valid stays.
+			g_PenPoints[Index].PenInfo = *PenInfo;
+			g_PenPoints[Index].Active = FALSE;
+			break;
+		}
+	}
+	LeaveCriticalSection(&g_PenPointsLock);
+}
+
 VOID RemovePenPoint(
 	DWORD	PointerId)
 {
@@ -872,6 +995,15 @@ VOID DeactivateTouchOrPenPoint(
 {
 	if (IsPenMessage) DeactivatePenPoint(PointerId);
 	else DeactivateTouchPoint(PointerId);
+}
+
+VOID ReleaseTouchOrPenPoint(
+	DWORD	PointerId,
+	BOOL	IsPenMessage,
+	PVOID	PointInfo)
+{
+	if (IsPenMessage) ReleasePenPoint(PointerId, (PCPOINTER_PEN_INFO)PointInfo);
+	else ReleaseTouchPoint(PointerId, (PCPOINTER_TOUCH_INFO)PointInfo);
 }
 
 VOID RemoveTouchOrPenPoint(
