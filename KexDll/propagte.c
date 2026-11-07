@@ -36,6 +36,11 @@
 #include "buildcfg.h"
 #include "kexdllp.h"
 
+//
+// This file contains the fix made by IS4Code.
+// Pull request link: https://github.com/YuZhouRen86/VxKex-NEXT/pull/497
+//
+
 STATIC NTSTATUS NTAPI Ext_NtCreateUserProcess(
 	OUT		CONST PHANDLE						ProcessHandle,
 	OUT		CONST PHANDLE						ThreadHandle,
@@ -349,7 +354,7 @@ STATIC VOID KexpCleanupPropagationRemains(
 			} else {
 				BYTE SyscallTemplate[] = {
 					0xB8, 0x0F, 0x00, 0x00, 0x00,				// mov eax, 0x0F
-					0xB9, 0x00, 0x00, 0x00, 0x00,				// mov ecx, 0
+					0x33, 0xC9,									// xor ecx, ecx
 					0x8D, 0x54, 0x24, 0x04,						// lea edx, [esp+4]
 					0x64, 0xFF, 0x15, 0xC0, 0x00, 0x00, 0x00,	// call [fs:0xC0]
 					0x83, 0xC4, 0x04,							// add esp, 4
