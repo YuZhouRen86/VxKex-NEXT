@@ -16,7 +16,7 @@ do { \
 
 #define KEXNTSYSCALLAPI __declspec(naked)
 
-#define GENERATE_SYSCALL_WIN7(SyscallName, SyscallNumber32, SyscallNumber64, EcxValue, Retn, ...) \
+#define GENERATE_SYSCALL_WIN7(SyscallName, SyscallNumber32, SyscallNumber64, Retn, ...) \
 KEXNTSYSCALLAPI NTSTATUS NTAPI KxUser##SyscallName##_Native32(__VA_ARGS__) { asm { \
 	asm mov eax, SyscallNumber32 \
 	asm lea edx, [esp+4] \
@@ -25,14 +25,14 @@ KEXNTSYSCALLAPI NTSTATUS NTAPI KxUser##SyscallName##_Native32(__VA_ARGS__) { asm
 }} \
 KEXNTSYSCALLAPI NTSTATUS NTAPI KxUser##SyscallName##_Wow64(__VA_ARGS__) { asm { \
 	asm mov eax, SyscallNumber64 \
-	asm mov ecx, EcxValue \
+	asm xor ecx, ecx \
 	asm lea edx, [esp+4] \
 	asm call fs:0xC0 \
 	asm add esp, 4 \
 	asm ret Retn \
 }}
 
-GENERATE_SYSCALL_WIN7(NtUserGetTouchInputInfo_Win7,			0x1290, 0x12C3, 0x00, 0x10,
+GENERATE_SYSCALL_WIN7(NtUserGetTouchInputInfo_Win7,			0x1290, 0x12C3, 0x10,
 	HTOUCHINPUT	TouchInput,
 	UINT		Inputs,
 	PTOUCHINPUT	InputsPtr,

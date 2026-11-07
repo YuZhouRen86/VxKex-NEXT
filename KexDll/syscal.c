@@ -212,7 +212,7 @@ KEXNTSYSCALLAPI NTSTATUS NTAPI Kex##SyscallName##_Native32(__VA_ARGS__) { asm { 
 }} \
 KEXNTSYSCALLAPI NTSTATUS NTAPI Kex##SyscallName##_Wow64_Legacy(__VA_ARGS__) { asm { \
 	asm mov eax, [SSN_##SyscallName] \
-	asm mov ecx, 0 /* ECX value should always be 0 */ \
+	asm xor ecx, ecx /* ECX value should always be 0 */ \
 	asm lea edx, [esp+4] \
 	asm call fs:0xC0 \
 	asm add esp, 4 \
